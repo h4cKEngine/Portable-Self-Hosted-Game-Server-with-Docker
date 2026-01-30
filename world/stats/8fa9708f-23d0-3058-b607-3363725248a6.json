@@ -1,0 +1,76 @@
+{
+  "stats": {
+    "minecraft:picked_up": {
+      "minecraft:flow_armor_trim_smithing_template": 1,
+      "minecraft:tipped_arrow": 6,
+      "minecraft:ominous_bottle": 2,
+      "minecraft:music_disc_precipice": 1,
+      "minecraft:trident": 1,
+      "minecraft:mangrove_propagule": 1,
+      "minecraft:ominous_trial_key": 1,
+      "minecraft:iron_ingot": 3,
+      "minecraft:honey_bottle": 1,
+      "minecraft:wind_charge": 39,
+      "minecraft:crossbow": 2,
+      "minecraft:heavy_core": 1,
+      "minecraft:birch_hanging_sign": 1,
+      "minecraft:emerald_block": 1,
+      "minecraft:emerald": 43,
+      "minecraft:golden_apple": 1,
+      "minecraft:glow_ink_sac": 1
+    },
+    "minecraft:crafted": {
+      "minecraft:air": 0
+    },
+    "minecraft:used": {
+      "minecraft:glow_item_frame": 1,
+      "minecraft:wind_charge": 18,
+      "minecraft:allay_spawn_egg": 1,
+      "minecraft:ominous_bottle": 1,
+      "minecraft:ominous_trial_key": 4,
+      "minecraft:chiseled_tuff": 1,
+      "minecraft:smithing_table": 1,
+      "minecraft:glow_ink_sac": 1,
+      "minecraft:armadillo_spawn_egg": 1,
+      "minecraft:item_frame": 1,
+      "minecraft:birch_hanging_sign": 1,
+      "minecraft:netherite_chestplate": 1,
+      "minecraft:trial_key": 6
+    },
+    "minecraft:dropped": {
+      "minecraft:chiseled_tuff": 1,
+      "minecraft:ominous_trial_key": 1,
+      "minecraft:mangrove_propagule": 1,
+      "minecraft:birch_hanging_sign": 1,
+      "minecraft:netherite_chestplate": 1
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 21889,
+      "minecraft:walk_one_cm": 21994,
+      "minecraft:leave_game": 1,
+      "minecraft:walk_under_water_one_cm": 16900,
+      "minecraft:mob_kills": 1,
+      "minecraft:damage_taken": 70,
+      "minecraft:play_time": 21889,
+      "minecraft:damage_dealt": 139,
+      "minecraft:jump": 166,
+      "minecraft:time_since_death": 21889,
+      "minecraft:drop": 5,
+      "minecraft:open_barrel": 4,
+      "minecraft:sprint_one_cm": 42875,
+      "minecraft:open_chest": 1,
+      "minecraft:interact_with_smithing_table": 3,
+      "minecraft:fall_one_cm": 2707,
+      "minecraft:total_world_time": 21889,
+      "minecraft:fly_one_cm": 244768,
+      "minecraft:walk_on_water_one_cm": 5861,
+      "minecraft:crouch_one_cm": 1702,
+      "minecraft:sneak_time": 1293,
+      "minecraft:climb_one_cm": 129
+    },
+    "minecraft:killed": {
+      "minecraft:glow_squid": 1
+    }
+  },
+  "DataVersion": 4671
+}

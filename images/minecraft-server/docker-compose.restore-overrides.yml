@@ -1,0 +1,12 @@
+services:
+  mc:
+    depends_on:
+      # Ensure the restore process completes successfully before starting the Minecraft server
+      restore-backup:
+        condition: service_completed_successfully
+
+  backups:
+    depends_on:
+      # Ensure the restore process completes successfully before starting the backup service
+      restore-backup:
+        condition: service_completed_successfully

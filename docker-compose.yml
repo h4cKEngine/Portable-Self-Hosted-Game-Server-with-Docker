@@ -1,0 +1,106 @@
+services:
+  restore-backup:
+    image: restic-rclone
+    build:
+      context: ./images/restic-rclone
+      dockerfile: restic.Dockerfile
+    container_name: ${MC_CONTAINER_NAME}-restore-backup
+    profiles: ["restore"]
+    restart: "no"
+    env_file: env/.env
+    environment:
+      RESTIC_HOSTNAME: ${RESTIC_HOSTNAME}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
+      RCLONE_CONFIG: ${RCLONE_CONFIG}
+      MUTEX_REMOTE_DIR: ${MUTEX_REMOTE_DIR}
+    volumes:
+      - server:/data
+      - ./world:/data/world
+      - ./env/rclone.conf:${RCLONE_CONFIG}:ro
+
+  mc:
+    image: minecraft-server
+    container_name: ${MC_CONTAINER_NAME}
+    build:
+      context: ./images/minecraft-server/
+      dockerfile: ${MC_DOCKERFILE:-mcserver.java21.Dockerfile}
+    ports:
+      - "25565:25565"
+    stop_grace_period: 15m
+    env_file:
+      - env/.env
+    environment:
+      # === Server config ===
+      IP_SERVER: ${IP_SERVER}
+      VERSION: ${VERSION}
+      TYPE: ${TYPE}
+      FORGE_VERSION: ${FORGE_VERSION}
+      INIT_MEMORY: ${INIT_MEMORY:-2G}
+      MEMORY: ${MEMORY:-6G}
+      MOTD: ${MOTD}
+      MAX_PLAYERS: ${MAX_PLAYERS}
+      # SEED: ${SEED}
+      OPS: ${OPS}
+      REMOVE_OLD_MODS: "FALSE"
+      ALLOW_FLIGHT: "TRUE"
+      SPAWN_PROTECTION: 0
+      EULA: "TRUE"
+      ONLINE_MODE: "FALSE"
+
+      # === RCON & DDNS ===
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      DDNS_PROVIDER: ${DDNS_PROVIDER}
+      DDNS_DOMAIN: ${DDNS_DOMAIN}
+      DDNS_TOKEN: ${DDNS_TOKEN}
+
+      # === Restic
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
+      RESTIC_TAG: ${RESTIC_TAG}
+      RESTIC_KEEP_LAST: ${RESTIC_KEEP_LAST}
+      
+      # === Auto/Sleep
+      ENABLE_AUTOSTOP: ${ENABLE_AUTOSTOP}
+      AUTOSTOP_TIMEOUT_EST: ${AUTOSTOP_TIMEOUT_EST}
+      AUTOSTOP_TIMEOUT_INIT: ${AUTOSTOP_TIMEOUT_INIT}
+      ENABLE_AUTOPAUSE: ${ENABLE_AUTOPAUSE}
+      MAX_TICK_TIME: ${MAX_TICK_TIME}
+      PAUSE_WHEN_EMPTY_SECONDS: ${PAUSE_WHEN_EMPTY_SECONDS}
+
+      MUTEX_REMOTE_DIR: ${MUTEX_REMOTE_DIR}
+    volumes:
+      - server:/data
+      - ./world:/data/world
+      - ./mods:/data/mods
+      - ./env/rclone.conf:${RCLONE_CONFIG}:ro
+      - ./data:/overrides:ro
+
+  backups:
+    image: itzg/mc-backup
+    container_name: ${MC_CONTAINER_NAME}-backup
+    stop_signal: SIGINT
+    # entrypoint that “ignores” SIGTERM/SIGINT on stop and exits 0
+    entrypoint: ["/bin/sh","-lc","trap 'exit 0' TERM INT; backup loop"]
+    environment:
+      RCON_HOST: mc
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RCON_RETRIES: -1
+      RESTIC_HOSTNAME: ${RESTIC_HOSTNAME}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
+      RCLONE_CONFIG: ${RCLONE_CONFIG}
+      BACKUP_INTERVAL: "30m"
+      BACKUP_METHOD: restic
+      SRC_DIR: /data/world
+      INITIAL_DELAY: "60" # seconds
+    volumes:
+      - server:/data:ro
+      - ./world:/data/world:ro
+      - ./env/rclone.conf:${RCLONE_CONFIG}:ro
+
+
+volumes:
+  server:
+    name: ${VOLUME_NAME}
+    external: true
