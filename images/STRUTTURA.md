@@ -12,6 +12,7 @@ Lo script `run-server.sh` decide dinamicamente quali file passare a Docker:
 1.  **Avvio Standard (con Restore)**
     Comando: `docker compose -f docker-compose.yml -f docker-compose.restore-overrides.yml up`
     
+    *   **Pre-Restore Sync**: Prima di lanciare Docker, `run-server.sh` esegue `utils/cloud-sync.sh restore`. Questo scarica eventuali file mancanti o aggiornati (escludendo `world/`) dalla cartella `server-data` del Cloud Storage alla directory locale `./data`.
     *   Docker carica la configurazione base (`docker-compose.yml`).
     *   Poi sovrascrive/aggiunge le configurazioni del secondo file (`override`).
     *   **Risultato**: Il servizio `mc` riceve l'istruzione `depends_on: restore-backup`. Quindi **aspetta** che il restore finisca con successo prima di avviarsi.
@@ -25,6 +26,13 @@ Lo script `run-server.sh` decide dinamicamente quali file passare a Docker:
 
 ### Perché è stato fatto così?
 Lasciando solo il `depends_on` nel file principale, si sarebbe dovuto aspettare il controllo del backup ad ogni singolo avvio (anche per semplici riavvii di test). Separando la logica in un file extra, si è reso il restore **opzionale** ma attivo di default per sicurezza.
+
+### Modalità Detached (`-d`)
+Quando eseguito con `./run-server.sh -d`:
+- Lo script esegue `docker compose up -d`.
+- L'output viene reindirizzato su `logs/compose-up.log`.
+- Lo script termina subito dopo (i demoni di monitoraggio `auto-op` e `auto-fml` **non** vengono avviati).
+- Il ciclo di vita Backup/Restore rimane gestito dai container stessi (restore-backup all'avvio, restic allo stop via trap in `java-start.sh`).
 
 ---
 
@@ -71,4 +79,5 @@ Puoi usare `utils/restic-tools.sh` per interagire manualmente col repo:
 - **/images**: Dockerfile personalizzati.
   - `minecraft-server`: Immagine base itzg personalizzata con i nostri script di avvio.
   - `restic-rclone`: Immagine helper per i backup.
-- **/utils**: Script di servizio (mutex, installazione, gestione restic).
+- **/utils**: Script di servizio (mutex, installazione, gestione restic, disabilitazione mod).
+  - `disablemods.sh`: Utility per disabilitare temporaneamente mod specifiche.

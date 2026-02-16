@@ -3,7 +3,7 @@ services:
     image: restic-rclone
     build:
       context: ./images/restic-rclone
-      dockerfile: restic.Dockerfile
+      dockerfile: restic-rclone.Dockerfile
     container_name: ${MC_CONTAINER_NAME}-restore-backup
     profiles: ["restore"]
     restart: "no"
@@ -14,9 +14,10 @@ services:
       RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
       RCLONE_CONFIG: ${RCLONE_CONFIG}
       MUTEX_REMOTE_DIR: ${MUTEX_REMOTE_DIR}
+      XDG_CACHE_HOME: /data/.cache
+    user: "${TARGET_UID}:${TARGET_GID}"
     volumes:
-      - server:/data
-      - ./world:/data/world
+      - ./data:/data
       - ./env/rclone.conf:${RCLONE_CONFIG}:ro
 
   mc:
@@ -31,28 +32,35 @@ services:
     env_file:
       - env/.env
     environment:
+      UID: ${TARGET_UID}
+      GID: ${TARGET_GID}
       # === Server config ===
       IP_SERVER: ${IP_SERVER}
       VERSION: ${VERSION}
       TYPE: ${TYPE}
       FORGE_VERSION: ${FORGE_VERSION}
+      NEOFORGE_VERSION: ${NEOFORGE_VERSION}
+      FABRIC_LAUNCHER_VERSION: ${FABRIC_LAUNCHER_VERSION}
+      FABRIC_LOADER_VERSION: ${FABRIC_LOADER_VERSION}
       INIT_MEMORY: ${INIT_MEMORY:-2G}
       MEMORY: ${MEMORY:-6G}
       MOTD: ${MOTD}
       MAX_PLAYERS: ${MAX_PLAYERS}
       # SEED: ${SEED}
-      OPS: ${OPS}
+      OPERATORS: ${OPERATORS}
       REMOVE_OLD_MODS: "FALSE"
       ALLOW_FLIGHT: "TRUE"
       SPAWN_PROTECTION: 0
       EULA: "TRUE"
       ONLINE_MODE: "FALSE"
+      JVM_OPTS: "-Dfml.queryResult=confirm"
 
       # === RCON & DDNS ===
       RCON_PASSWORD: ${RCON_PASSWORD}
       DDNS_PROVIDER: ${DDNS_PROVIDER}
       DDNS_DOMAIN: ${DDNS_DOMAIN}
       DDNS_TOKEN: ${DDNS_TOKEN}
+      BACKUP: ${BACKUP:-true}
 
       # === Restic
       RESTIC_PASSWORD: ${RESTIC_PASSWORD}
@@ -70,19 +78,18 @@ services:
 
       MUTEX_REMOTE_DIR: ${MUTEX_REMOTE_DIR}
     volumes:
-      - server:/data
-      - ./world:/data/world
-      - ./mods:/data/mods
+      - ./data:/data
       - ./env/rclone.conf:${RCLONE_CONFIG}:ro
-      - ./data:/overrides:ro
+      - ./overrides:/overrides:ro
 
   backups:
     image: itzg/mc-backup
     container_name: ${MC_CONTAINER_NAME}-backup
-    stop_signal: SIGINT
-    # entrypoint that “ignores” SIGTERM/SIGINT on stop and exits 0
-    entrypoint: ["/bin/sh","-lc","trap 'exit 0' TERM INT; backup loop"]
+    # removed stop_signal: SIGINT (default is SIGTERM, which is correct)
+    # removed custom entrypoint (trap exit 0) so container handles shutdown natively if needed
     environment:
+      UID: ${TARGET_UID}
+      GID: ${TARGET_GID}
       RCON_HOST: mc
       RCON_PASSWORD: ${RCON_PASSWORD}
       RCON_RETRIES: -1
@@ -94,13 +101,13 @@ services:
       BACKUP_METHOD: restic
       SRC_DIR: /data/world
       INITIAL_DELAY: "60" # seconds
+      # BACKUP_ON_STOP: "true" # Optional if we want container to do it too, 
+      # but we do it in script now (offline backup is safer). 
+      # Let's leave it off in container to avoid double backup or conflict?
+      # User said "non mi parte il backup in chiusura", implying they expected it.
+      # The script offline backup covers this requirement perfectly.
+    stop_grace_period: 2m
     volumes:
-      - server:/data:ro
-      - ./world:/data/world:ro
+      - ./data:/data:ro
       - ./env/rclone.conf:${RCLONE_CONFIG}:ro
-
-
-volumes:
-  server:
-    name: ${VOLUME_NAME}
-    external: true
+      - ./backups:/backups

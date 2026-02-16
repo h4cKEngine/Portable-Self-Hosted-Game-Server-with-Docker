@@ -3,13 +3,53 @@ set -euo pipefail
 
 # Usage:
 #   ./run-server.sh            # auto mode: restore profile
+#   ./run-server.sh            # auto mode: restore profile
 #   ./run-server.sh restoreoff # start without restore
+#   ./run-server.sh -d         # detach mode
 
 # ========= Helpers =========
 # Helper functions for logging
-log()  { echo "[INFO] $*"; }
-warn() { echo "[WARN] $*" >&2; }
-err()  { echo "[ERROR] $*" >&2; exit 1; }
+mkdir -p ./logs
+LOG_FILE="./logs/startup.log"
+# Initialize log file
+if [[ ! -f "$LOG_FILE" ]]; then touch "$LOG_FILE"; fi
+
+log()  {
+  if [[ "${DETACH:-false}" == "true" ]]; then
+      # In detached mode, log only to file (silent startup)
+      echo "[INFO] $*" >> "$LOG_FILE"
+  else
+      # Normal mode: tee to stdout and file
+      echo "[INFO] $*" | tee -a "$LOG_FILE"
+  fi
+}
+warn() { echo "[WARN] $*" | tee -a "$LOG_FILE" >&2; }
+err()  { echo "[ERROR] $*" | tee -a "$LOG_FILE" >&2; exit 1; }
+
+# Helper to remove files robustly (try normal rm, then sudo rm)
+robust_rm() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+      log "Removing $file..."
+      rm -f "$file" 2>/dev/null || true
+      if [[ -f "$file" ]]; then
+          log "Normal remove failed for $file. Trying sudo..."
+          sudo rm -f "$file" || warn "Failed to remove $file with sudo."
+      fi
+  fi
+}
+
+# ========= Docker Check =========
+# Checks if Docker is running
+check_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    err "Docker non è installato. Per favore installalo e riprova."
+  fi
+
+  if ! docker info >/dev/null 2>&1; then
+    err "Docker non è avviato o non è accessibile. Assicurati che Docker Desktop sia in esecuzione."
+  fi
+}
 
 # ========= Config / Env =========
 # Loads the .env file and sets default values
@@ -21,8 +61,8 @@ load_env() {
   set +a
 
   # Container UID/GID (default 1000:1000)
-  TARGET_UID="${UID:-1000}"
-  TARGET_GID="${GID:-1000}"
+  export TARGET_UID="${UID:-$(id -u)}"
+  export TARGET_GID="${GID:-$(id -g)}"
 
   # Default for rclone mutex (can be overridden in .env)
   : "${CLOUD_MUTEX_DIR:=/Root/modpack}"          # /Root/<dir> in MEGA (e.g. /Root/modpack)
@@ -33,71 +73,53 @@ load_env() {
 
   # Rclone mutex script (must exist and be executable)
   : "${RCLONE_MUTEX_SH:=./utils/rclone-mutex.sh}"
-  PRELOAD_ROOT="${PRELOAD_ROOT:-./data}"       # local source to "preload"
+  PRELOAD_ROOT="${PRELOAD_ROOT:-./overrides}"       # local source to "preload"
   PRELOAD_EXCLUDES="${PRELOAD_EXCLUDES:-}"     # e.g.: 'tmp cache *.bak .DS_Store'
-}
-
-# ========= Volume =========
-# Creates the Docker volume if it doesn't exist
-ensure_volume() {
-  if ! docker volume inspect "${VOLUME_NAME}" &>/dev/null; then
-    log "Volume '${VOLUME_NAME}' non trovato. Lo creo..."
-    docker volume create "${VOLUME_NAME}" >/dev/null
-  else
-    log "Volume '${VOLUME_NAME}' già esistente."
-  fi
 }
 
 # ========= Bind mounts permissions =========
 ensure_permissions() {
-  log "Checking/fixing permissions on world/ and mods/"
-  for d in world mods; do
-    mkdir -p "./$d"
+  log "Checking/fixing permissions on ./data"
+  mkdir -p ./data
 
-    chown -R "${TARGET_UID}:${TARGET_GID}" "./$d" 2>/dev/null || {
-      warn "chown $d to ${TARGET_UID}:${TARGET_GID} without sudo failed, retrying with sudo..."
-      sudo chown -R "${TARGET_UID}:${TARGET_GID}" "./$d" 2>/dev/null || \
-        warn "chown $d failed even with sudo. Fix permissions manually if needed."
-    }
+  # Fix permissions for the whole data directory
+  # Optimize: Only chown if owner/group is different
+  find "./data" \( ! -user "${TARGET_UID}" -o ! -group "${TARGET_GID}" \) -exec chown "${TARGET_UID}:${TARGET_GID}" {} + 2>/dev/null || {
+      warn "Conditional chown on ./data failed, retrying with sudo..."
+      sudo find "./data" \( ! -user "${TARGET_UID}" -o ! -group "${TARGET_GID}" \) -exec chown "${TARGET_UID}:${TARGET_GID}" {} + 2>/dev/null || \
+        warn "chown ./data failed even with sudo."
+  }
 
-    find "./$d" -type d -exec chmod 775 {} \; 2>/dev/null || sudo find "./$d" -type d -exec chmod 775 {} \;
-    find "./$d" -type f -exec chmod 664 {} \; 2>/dev/null || sudo find "./$d" -type f -exec chmod 664 {} \;
-  done
+  # Optimize: Only chmod if permissions are different
+  find "./data" -type d ! -perm 775 -exec chmod 775 {} + 2>/dev/null || sudo find "./data" -type d ! -perm 775 -exec chmod 775 {} +
 
   # stale world lock
-  rm -f ./world/session.lock 2>/dev/null || sudo rm -f ./world/session.lock 2>/dev/null || true
+  rm -f ./data/world/session.lock 2>/dev/null || sudo rm -f ./data/world/session.lock 2>/dev/null || true
 
   # check writability
-  if ! test -w ./world ; then
-    err "./world is not writable. Check owner/permissions (root:root?)."
+  if ! test -w ./data ; then
+    err "./data is not writable. Check owner/permissions."
   fi
 }
 
-# ========= Sync host -> volume =========
-# Syncs a local directory into the Docker volume
-sync_into_volume() {
+# ========= Sync host -> data =========
+# Syncs a local directory into the data directory (simple copy now)
+sync_into_data() {
   local src_dir="$1"      # es: config
   local dest_sub="$2"     # es: config
-  local img
-  # use an existing image (restic-rclone); fallback to alpine only if locally present
-  img="${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}"
+  
   if [[ -d "./${src_dir}" ]]; then
-    echo "[INFO] Sync ${src_dir}/ -> volume:/data/${dest_sub}"
-    docker run --rm --pull=never -u 0 \
-      -e DST="/data/${dest_sub}" -e UID="${TARGET_UID}" -e GID="${TARGET_GID}" \
-      -v "${VOLUME_NAME}":/data \
-      -v "$(pwd)/${src_dir}":/mnt/src:ro \
-      "${img}" sh -c '
-        mkdir -p "$DST" && \
-        cp -r /mnt/src/. "$DST"/ 2>/dev/null || true && \
-        chown -R "$UID:$GID" "$DST"
-      ' || echo "[WARN] Sync ${src_dir} -> ${dest_sub} fallita"
+    echo "[INFO] Sync ${src_dir}/ -> ./data/${dest_sub}"
+    mkdir -p "./data/${dest_sub}"
+    cp -r "./${src_dir}/." "./data/${dest_sub}/" 2>/dev/null || true
+    # permissions fixed by ensure_permissions later or we fix here
+    chown -R "${TARGET_UID}:${TARGET_GID}" "./data/${dest_sub}"
   else
     echo "[INFO] ${src_dir}/ non presente, salto sync."
   fi
 }
 
-preload_into_volume() {
+preload_into_data() {
   local root="$1"
   local excludes_str="$2"
   echo "[INFO] Pre-carica da $root (Optimized: single container)"
@@ -105,11 +127,12 @@ preload_into_volume() {
 
   # Run a single alpine container to handle all copies
   # We pass the excludes string as env var
+  # We mount local ./data to /data in container
   docker run --rm -u 0 \
     -e DST_ROOT="/data" -e UID="${TARGET_UID}" -e GID="${TARGET_GID}" \
     -e EXCLUDES="$excludes_str" \
-    -v "${VOLUME_NAME}":/data \
-    -v "$root":/mnt/src:ro \
+    -v "$(pwd)/data":/data \
+    -v "$(pwd)/$root":/mnt/src:ro \
     alpine:3.20 sh -c '
       set -u
       cd /mnt/src || exit 1
@@ -172,6 +195,15 @@ prompt_backup() {
 do_offline_backup() {
   log "Eseguo backup offline..."
   bash ./utils/restic-tools.sh backup
+
+  log "Performing Cloud Data Sync (Rclone ./data -> Mega)..."
+  bash ./utils/cloud-sync.sh sync || warn "Cloud sync failed!"
+}
+
+# Performs only world backup (no server data sync)
+do_world_backup_only() {
+  log "Eseguo backup offline (SOLO WORLD)..."
+  bash ./utils/restic-tools.sh backup
 }
 
 # ========= Cloud Mutex (rclone → mega:/<dir>/mutex.txt) =========
@@ -190,17 +222,7 @@ derive_mutex_remote_dir() {
   echo "${remote}:/${sub}"
 }
 
-# ========= Cloud Mutex (ensure only, NO set 1/keepalive) =========
-derive_mutex_remote_dir() {
-  if [[ -n "${MUTEX_REMOTE_DIR:-}" ]]; then
-    echo "${MUTEX_REMOTE_DIR}"
-    return
-  fi
-  local repo="${RESTIC_REPOSITORY#rclone:}"   # mega:/something
-  local remote="${repo%%:*}"
-  local sub="${CLOUD_MUTEX_DIR#/Root}"; sub="${sub#/}"
-  echo "${remote}:/${sub}"
-}
+
 
 # Ensures the mutex exists on the cloud
 cloud_mutex_prepare() {
@@ -212,7 +234,11 @@ cloud_mutex_prepare() {
   export RCLONE_CONF_HOST
   export MUTEX_FILE
   log "Cloud mutex ensure su ${MUTEX_REMOTE_DIR}/${MUTEX_FILE} ..."
-  "${RCLONE_MUTEX_SH}" ensure
+  if [[ "${DETACH:-false}" == "true" ]]; then
+      "${RCLONE_MUTEX_SH}" ensure >> "$LOG_FILE" 2>&1
+  else
+      "${RCLONE_MUTEX_SH}" ensure
+  fi
 }
 
 
@@ -229,86 +255,285 @@ cloud_mutex_release() {
 
 # ========= Auto-OP Users =========
 # Automatically grants OP status to users specified in the .env file
+# ========= Auto-OP Users =========
+# Automatically grants OP status to users specified in the .env file
+# Monitors server logs for "joined the game" events.
 auto_op_users() {
-  echo "DEBUG: Starting auto_op_users (waiting 120s for container creation...)"
-  sleep 120s
-
-  # Generate mods list
-  log "Generating mods list to utils/mods_list.txt..."
-  ls mods/ > ./utils/mods_list.txt 2>&1 || warn "Failed to list mods/"
-
-  IFS=',' read -ra ADKINS <<< "${OPS:-}"
-  echo "DEBUG: OPS='${OPS}', ADKINS='${ADKINS[@]}', count=${#ADKINS[@]}"
-  for user in "${ADKINS[@]}"; do
-    user=$(echo "$user" | xargs) # trim spaces
-    [[ -z "$user" ]] && continue
-    
-    log "Auto-OP: Trying to assign operator to $user..."
-    while true; do
-      # Capture output and exit code
-      if out=$(docker exec "${MC_CONTAINER_NAME}" rcon-cli op "$user" 2>&1); then
-          # Exit code 0 -> RCON connected and command sent
-          # Verify server response
-          if [[ "$out" == *"Made"* || "$out" == *"Nothing changed"* ]]; then
-            log "Auto-OP: Success! Server response: $out"
-            break
-          else
-            # Strange case: exit 0 but unexpected output? Log and exit anyway (or retry?)
-            # If server is online but responds something else, better log and exit to avoid infinite loop on logical errors.
-            log "Auto-OP: Command sent but unexpected response: '$out'. Assuming success."
-            break
-          fi
-      else
-        # Exit code != 0 -> RCON failed (e.g. connection refused)
-        log "Auto-OP: Failed op on $user. Output: '$out'. Retrying in 10s..."
-        sleep 10
+  # Disable exit-on-error for this background function to prevent silent crashes
+  set +e
+  log "Auto-OP: Starting event-driven monitor (PID $$)..."
+  
+  # Wait for RCON readiness
+  local retries=0
+  log "Auto-OP: Entering RCON wait loop..."
+  
+  while ! docker exec "${MC_CONTAINER_NAME}" rcon-cli list >/dev/null 2>&1; do
+      sleep 2
+      ((retries++))
+      # Log every 10 seconds (every 5 retries)
+      if ((retries % 5 == 0)); then
+          log "Auto-OP: Waiting for server RCON... ($((retries*2))s elapsed)"
       fi
-    done
+      if ((retries > 900)); then
+          warn "Auto-OP: RCON wait timed out after 30 minutes. Proceeding to monitor logs anyway..."
+          break
+      fi
   done
+  log "Auto-OP: RCON is ready. Monitoring logs for joins..."
+
+  IFS=',' read -ra ADKINS <<< "${OPERATORS:-}"
+  log "Auto-OP: Monitoring joins for users: ${OPERATORS}"
+
+  # Tail logs (last 100 lines to catch joins during startup) and process
+  # Use stdbuf if available to prevent buffering, otherwise rely on docker's stream
+  cmd="docker logs -f --tail 100 ${MC_CONTAINER_NAME}"
+  
+  $cmd 2>&1 | while read -r line; do
+     # Check for join message
+     if [[ "$line" == *" joined the game"* ]]; then
+         # Debug log mainly to confirm loop is running (comment out if too noisy, but good for now)
+         # log "DEBUG: Log line match: $line"
+         
+         # Extract username using sed
+         player_name=$(echo "$line" | sed -n 's/.*: \(.*\) joined the game/\1/p' | tr -d '\r')
+         
+         if [[ -n "$player_name" ]]; then
+             player_name=$(echo "$player_name" | xargs)
+             
+             # Check if this player is in our OPS list
+             for op_user in "${ADKINS[@]}"; do
+                 op_user=$(echo "$op_user" | xargs)
+                 if [[ "${op_user,,}" == "${player_name,,}" ]]; then
+                      log "Auto-OP: Detected join: $player_name. Granting OP..."
+                      
+                      if out=$(docker exec "${MC_CONTAINER_NAME}" rcon-cli op "$player_name" 2>&1); then
+                          log "Auto-OP: RCON result: $out"
+                      else
+                          warn "Auto-OP: Failed to execute op command for $player_name. Output: $out"
+                      fi
+                 fi
+             done
+         fi
+     fi
+  done
+  log "Auto-OP: Monitor loop exited surprisingly."
+}
+
+# ========= Auto-Confirm FML =========
+# Monitora i log e invia /fml confirm se richiesto
+auto_fml_confirm() {
+  log "DEBUG: Avvio monitoraggio auto-confirm (waiting for container)..."
+  local container_name="${MC_CONTAINER_NAME}"
+  
+  # 1. Attendi che il container sia avviato (max 60s)
+  local retries=0
+  until docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; do
+    sleep 2
+    ((retries++))
+    if [ $retries -gt 30 ]; then return; fi
+  done
+
+  # 2. Monitora i log per 2 minuti
+  for i in {1..24}; do
+    # Cerca la stringa specifica nei log recenti
+    if docker logs "${container_name}" --tail 100 2>&1 | grep -q "Run the command /fml confirm"; then
+       log "[!]  RILEVATA RICHIESTA FML! Invio '/fml confirm' automatico..."
+       
+       # INVIA IL COMANDO TRAMITE PIPE SU ATTACH
+       # Questo invia il testo allo stdin del container senza "entrarci"
+       echo "/fml confirm" | docker attach "${container_name}"
+       
+       log "[Comando inviato.]"
+       return 0
+    fi
+    sleep 5
+  done
+  log "[DEBUG] Nessuna richiesta FML rilevata dopo 2 minuti."
 }
 
 # ========= Avvio docker-compose =========
 # Starts the Docker Compose services
 compose_up() {
   local mode="${1:-auto}"  # auto | restoreon | restoreoff
+  local scale_args=""
+  
+  if [[ "${BACKUP:-true}" == "false" ]]; then
+     log "BACKUP=false -> Disabling backups container."
+     scale_args="--scale backups=0"
+  fi
+
   log "Starting Minecraft..."
   case "$mode" in
     restoreoff)
       log "Starting without restore from cloud storage..."
       # Use --exit-code-from mc so that if mc stops (AutoStop), backups container is also stopped.
-      docker compose --env-file env/.env up --build --exit-code-from mc
+      # shellcheck disable=SC2086
+      docker compose --env-file env/.env up --build --exit-code-from mc $scale_args
       ;;
     restoreon|auto|*)
-      log "Mode ${mode} -> using restore profile."
-      # 1. Execute Restore (blocks until finish)
-      # We target ONLY restore-backup service.
-      docker compose -f docker-compose.yml -f ./images/minecraft-server/docker-compose.restore-overrides.yml \
-        --profile restore --env-file env/.env up --build restore-backup
+      if [[ "${BACKUP:-true}" == "false" ]]; then
+          if [[ "$mode" == "restoreon" ]]; then
+               log "BACKUP=false but restoreon requested -> Forcing restore attempt."
+               # Ensure MUTEX_REMOTE_DIR is set (it might not be if cloud_mutex_prepare was skipped)
+               if [[ -z "${MUTEX_REMOTE_DIR:-}" ]]; then
+                   export MUTEX_REMOTE_DIR="$(derive_mutex_remote_dir)"
+               fi
+          else
+               log "BACKUP=false -> FORCE restoreoff (default behavior when backup is disabled)."
+               log "Skipping restore step because BACKUP=false."
+               # Force mode to restoreoff to skip the restore block
+               mode="restoreoff"
+          fi
+      fi
+
+      if [[ "$mode" != "restoreoff" ]]; then
+          log "Mode ${mode} -> using restore profile."
+          
+          # --- SMART RESTORE CHECK ---
+          # Run a temp container to check timestamps (since we can't do it on host easily if restic is missing)
+          # Only if we have a local world to compare
+          if [[ -f "./world/level.dat" ]]; then
+             log "Checking for Smart Restore (Local vs Cloud timestamps)..."
+             # We use the same image as restore-backup service
+             IMG="${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}"
+             
+             # Get Cloud Timestamp (JSON parsing via grep/sed since jq might be missing)
+             # We mount rclone config. We don't need to mount world, just read metadata.
+             # We assume default values from .env are exported.
+             
+             # Capture output. We use --json to get precise time.
+             # We need to pass env vars.
+             # We must override entrypoint because the image has a custom one.
+             json_out=$(docker run --rm --entrypoint "" --env-file env/.env \
+                -v "$(pwd)/env/rclone.conf:${RCLONE_CONFIG}:ro" \
+                "$IMG" restic -r "$RESTIC_REPOSITORY" snapshots --host "$RESTIC_HOSTNAME" --latest 1 --json 2>/dev/null || true)
+             
+             # Parse time: "time":"2026-02-10T16:28:01.123456789+00:00"
+             # grep -o matches only the part.
+             cloud_time_str=$(echo "$json_out" | grep -o '"time":"[^"]*"' | cut -d'"' -f4 | head -n1 || true)
+             
+             if [[ -n "$cloud_time_str" ]]; then
+                 # Convert to epoch. 'date' in alpine/busybox (in container) or host?
+                 # Host 'date' is usually GNU date on Linux, which handles ISO8601.
+                 cloud_ts=$(date -d "$cloud_time_str" +%s 2>/dev/null || echo 0)
+                 
+                 # Local timestamp
+                 local_ts=$(stat -c %Y ./world/level.dat 2>/dev/null || echo 0)
+                 
+                 log "Smart Restore: Local=$(date -d @$local_ts), Cloud=$(date -d @$cloud_ts)"
+                 
+                 if [[ "$local_ts" -gt "$cloud_ts" ]]; then
+                     if [[ "$mode" == "restoreon" ]]; then
+                         log ">>> Local world is NEWER than cloud, but 'restoreon' was requested. FORCING RESTORE."
+                     else
+                         log ">>> Local world is NEWER than cloud. SKIPPING RESTORE (Smart Restore)."
+                         RESTORE_MODE="restoreoff"
+                         # We must break/skip the restore block below
+                         mode="restoreoff" 
+                     fi
+                 else
+                     log "Cloud is newer or same. Proceeding with restore."
+                 fi
+             else
+                 warn "Could not fetch/parse cloud snapshot time. Proceeding with standard restore."
+             fi
+          fi
+          # ---------------------------
+          
+          if [[ "$mode" != "restoreoff" ]]; then
+              # [NEW] Restore data/ from cloud (excluding world)
+              log "Pre-restore: Syncing data from cloud (run-server/cloud-sync)..."
+              bash ./utils/cloud-sync.sh restore
+
+              # 1. Execute Restore (blocks until finish)
+              # We target ONLY restore-backup service.
+              docker compose -f docker-compose.yml -f ./images/minecraft-server/docker-compose.restore-overrides.yml \
+                --profile restore --env-file env/.env up --build restore-backup
+
+              log "Post-restore: Fixing permissions..."
+              ensure_permissions
+              
+              log "Post-restore: Enforcing clean OP list (removing restored ops.json)..."
+              log "Post-restore: Enforcing clean OP list (removing restored ops.json)..."
+              robust_rm ./data/ops.json
+              robust_rm ./data/usercache.json
+          fi
+      fi
 
       # 2. Main Start
       # We do NOT include the restore-overrides (dependencies) nor the restore profile.
       # This avoids "container stopped" abort triggers from the completed restore service.
-      log "Restore completed. Starting Server + Backups..."
-      docker compose -f docker-compose.yml --env-file env/.env up --build --exit-code-from mc
+      log "Restore completed (or skipped). Starting Server..."
+      # shellcheck disable=SC2086
+      if [[ "${DETACH:-false}" == "true" ]]; then
+          log "Server run in Detatch mode!"
+          docker compose -f docker-compose.yml --env-file env/.env up -d --build $scale_args > ./logs/compose-up.log 2>&1
+      else
+          docker compose -f docker-compose.yml --env-file env/.env up --build --exit-code-from mc $scale_args
+      fi
       ;;
   esac
+}
+
+# --- Dynamic Dockerfile Selection ---
+# Version comparison logic
+version_ge() {
+  local version_actual="$1"
+  local version_required="$2"
+  local lowest
+  lowest="$(printf '%s\n%s' "$version_actual" "$version_required" | sort -V | head -n1)"
+  [[ "$lowest" == "$version_required" ]]
 }
 
 # ========= Main =========
 # Main entry point
 main() {
+  check_docker
   load_env
-  
-  # --- Dynamic Dockerfile Selection ---
-  # Version comparison logic
-  version_ge() {
-    local version_actual="$1"
-    local version_required="$2"
-    local lowest
-    lowest="$(printf '%s\n%s' "$version_actual" "$version_required" | sort -V | head -n1)"
-    [[ "$lowest" == "$version_required" ]]
-  }
 
+  # Parse arguments FIRST to set flags like DETACH
+  BACKUP="${BACKUP:-true}"
+  RESTORE_MODE="auto"
+  DETACH="false"
+  
+  for arg in "$@"; do
+    case "$arg" in
+      -d|--detach)
+        DETACH="true"
+        # BACKUP remains true by default unless explicitly disabled, so backups container runs
+        ;;
+      --backupoff)
+        BACKUP=false
+        # We can't log yet if we haven't loaded env/log function? No, log is defined above functions.
+        # But we haven't loaded .env yet?
+        # Actually log definition doesn't depend on env.
+        ;;
+      --restoreoff)
+        RESTORE_MODE="restoreoff"
+        ;;
+      --restoreon)
+        RESTORE_MODE="restoreon"
+        ;;
+      --loadcurrbackup)
+        # This is handled in the backup block below
+        ;;
+      --loadcurrworld)
+        # Handled below
+        ;;
+      *)
+        # Assume valid for other uses or standard main arg logic
+        ;;
+    esac
+  done
+  export BACKUP
+
+  if [[ "$BACKUP" == "false" ]]; then
+      log "Mode: backupoff -> Backup DISABILITATI (cloud & locale)."
+  fi
+  if [[ "$RESTORE_MODE" == "restoreoff" ]]; then
+      log "Mode: restore off -> Restore from cloud storage DISABLED."
+  fi
+  
   if [[ -n "${VERSION:-}" ]]; then
       # 1.20.5 - 1.21+ (Attuale) -> Java 21
       if version_ge "$VERSION" "1.20.5"; then
@@ -335,46 +560,140 @@ main() {
   echo ">>> Removing all Zone.Identifier files..."
   bash ./utils/delete-all-zone-identifier.sh
 
-  ensure_volume
   log "Preflight permissions..."
   ensure_permissions
-  preload_into_volume "$PRELOAD_ROOT" "$PRELOAD_EXCLUDES"
+  
+  if [[ "${DETACH:-false}" == "true" ]]; then
+      preload_into_data "$PRELOAD_ROOT" "$PRELOAD_EXCLUDES" >> "$LOG_FILE" 2>&1
+  else
+      preload_into_data "$PRELOAD_ROOT" "$PRELOAD_EXCLUDES"
+  fi
   # Clean up ephemeral alpine image immediately as requested
-  docker rmi alpine:3.20 2>/dev/null || true
+  # docker rmi alpine:3.20 2>/dev/null || true
+
+  # Force clean ops.json to ensure fresh UUID generation via RCON
+  log "Enforcing clean OP list: removing ./data/ops.json..."
+  log "Enforcing clean OP list: removing ./data/ops.json..."
+  robust_rm ./data/ops.json
+  robust_rm ./data/usercache.json
 
   # Mutex before any operation (avoids multi-host race)
-  cloud_mutex_prepare
+  if [[ "$BACKUP" == "true" ]]; then
+      cloud_mutex_prepare
+  else
+      log "BACKUP=false -> Skip Cloud Mutex Prepare."
+  fi
 
   # Offline backup BEFORE start
   # Updated rules:
+  # - BACKUP=false: SKIP
   # - No args: NO prompt -> skip backup and start immediately
   # - Arg 'loadcurrbackup': forced backup without prompt
-  # - Any other arg: prompt with default 'y'
-  if [[ $# -eq 0 ]]; then
+  # - Any other arg (except switches): prompt with default 'y'
+  if [[ "$BACKUP" == "false" ]]; then
+      log "BACKUP=false -> Skipping offline backup."
+  elif [[ $# -eq 0 ]]; then
     log "No args -> skipping backup without prompt."
-  elif [[ "${1:-}" == "loadcurrbackup" ]]; then
-    log "Arg 'loadcurrbackup' -> performing backup without prompt."
-    do_offline_backup
-  else
-    if prompt_backup "y"; then
+  elif [[ "$*" == *"loadcurrbackup"* ]]; then # Check if loadcurrbackup is present in args
+      log "Arg 'loadcurrbackup' -> performing FULL backup without prompt."
       do_offline_backup
-    else
-      log "Starting without backup."
-    fi
+  elif [[ "$*" == *"loadcurrworld"* ]]; then # Check if loadcurrworld is present in args
+      log "Arg 'loadcurrworld' -> performing WORLD backup ONLY without prompt."
+      do_world_backup_only
+  elif [[ "$DETACH" == "true" ]]; then
+      log "Detached mode -> skipping manual backup prompt."
+  else 
+      # Logic from before was: argument present -> prompt backup.
+      # If argument is 'restoreoff', it triggered prompt.
+      # Let's maintain that behavior unless backupoff.
+      if prompt_backup "n"; then
+        do_offline_backup
+      else
+        log "Starting without backup."
+      fi
   fi
+  
+  # Avvia il monitoraggio FML in background
+  auto_fml_confirm > ./logs/fml-confirm.log 2>&1 &
 
   # Avvio con/senza restore
   # Run auto-op in background redirecting log
-  auto_op_users > ./utils/auto-op.log 2>&1 &
-  compose_up "${1:-auto}"
+  # Avvio con/senza restore
+  # Run auto-op in background redirecting log
+  auto_op_users > ./logs/auto-op.log 2>&1 &
   
-  # Cleanup on exit
-  log "Server stopped."
-  # We do NOT run 'docker compose down' here anymore, so containers remain (Exited) for inspection.
-  # Images are preserved for faster startup.
-  # Alpine image was already removed after preload.
+  # --- TRAP for Shutdown Backup ---
+  # If the script is interrupted (Ctrl+C), we want to:
+  # 1. Stop the docker-compose (gracefully)
+  # 2. Perform offline backup (if BACKUP=true)
+  # 3. Cleanup
   
-  log "Cleanup complete."
+  cleanup() {
+    log "Trapped signal or normal exit. Shutting down..."
+    # Stop containers (if running attached, compose_up might have already exited, but safe to run)
+    docker compose stop
+    
+    # Offline backup on shutdown?
+    if [[ "$BACKUP" == "true" ]]; then
+      log "Performing Backup on Shutdown (Offline)..."
+      do_offline_backup || warn "Backup on shutdown failed!"
+    fi
+
+    # Kill background jobs (auto_fml_confirm, auto_op_users)
+    # We use 'jobs -p' to find them. 
+    # Suppress error if no jobs running.
+    # We must do this to allow 'wait' to return if it was waiting on them.
+    local pids=$(jobs -p)
+    if [[ -n "$pids" ]]; then
+      log "Killing background jobs: $pids"
+      kill $pids 2>/dev/null || true
+      wait $pids 2>/dev/null || true
+    fi
+
+    cloud_mutex_release
+    log "Cleanup complete. Bye."
+    # Explicit exit to ensure we don't continue script execution if called from trap
+    exit 0
+  }
+  
+  # Trap SIGINT (Ctrl+C) and SIGTERM. 
+  # We do NOT trap EXIT here because it would trigger twice (once on signal, once on exit).
+  # Or we can trap EXIT and check if we already cleaned up?
+  # Standard pattern: trap cleanup EXIT (covers all). 
+  # But 'docker compose' also traps signals.
+  # Let's use EXIT and ensure idempotency if needed, or just EXIT.
+  # If we trap SIGINT, we must exit manually.
+  trap cleanup EXIT
+
+  # Run compose attached
+  # If user presses Ctrl+C here, trap triggers.
+  # If compose exits normally (e.g. server stop command), we proceed to next lines?
+  # Actually, if we use 'set -e', any error triggers EXIT trap.
+  
+  # We use a subshell or allow failure to handling trap properly? 
+  # Actually 'docker compose up' will take over signal handling if attached.
+  # But if we Ctrl+C, bash receives it too.
+  
+  # Let's simple run it.
+  compose_up "$RESTORE_MODE" || true
+  
+  if [[ "$DETACH" == "true" ]]; then
+      # Clear trap to prevent shutdown
+      trap - EXIT
+      # Explicitly echo to stdout even in detached mode as user requested this specific message
+      echo "[INFO] Detached start complete. Server is running in background."
+      exit 0
+  fi
+
+  
+  # Explicitly remove trap to avoid double execution if we reached here normally?
+  # No, 'EXIT' trap runs on normal exit too. So we just let it run.
+  # But we might want to distinguish if we already did it?
+  # The trap function acts as the "Shutdown & Backup" phase.
+  
+  # We wait for background jobs?
+  wait %% 2>/dev/null || true
+
 }
 
 main "$@"

@@ -1,0 +1,29 @@
+# === Secrets (NEVER COMMIT) ===
+env/.env
+env/*.env
+env/rclone.conf
+env/rclone.conf.bak*
+
+# === Heavy Data / Save files ===
+world/
+backups/
+fullbackup/
+
+# === Mods (Unless this is a specific modpack repo) ===
+# mods/*.jar
+# mods/memory_repo/
+data/
+
+# === Logs & Caches ===
+logs/*
+!logs/.gitkeep
+crash-reports/
+debug/
+.cache/
+
+# === OS & IDE ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.Identifier

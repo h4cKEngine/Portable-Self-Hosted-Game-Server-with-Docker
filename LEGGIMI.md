@@ -49,6 +49,7 @@ Collegare l'account (o altro cloud supportato da [RCLONE](https://rclone.org/ove
 ./run-server.sh
 ```
 > **Nota**: Al primo avvio, il server eseguirà il **RESTORE** (in automatico) dell'ultimo backup prima di avviarsi.
+> **Nota**: `run-server.sh` esegue anche un **Pre-Restore Sync** della cartella `./data` dal cloud (escluso `world/`) per garantire che i file di configurazione siano aggiornati.
 
 ---
 
@@ -93,7 +94,10 @@ Il progetto usa la cartella **`./data`** locale per iniettare file personalizzat
 | Azione | Comando |
 | :--- | :--- |
 | **Avvia il server** | `./run-server.sh` |
-| Nel terminale con i log di esecuzione, la combinazione di tasti 'Ctrl+C' | Interrompe il server e esegue il **Backup con Restic su Cloud Storage** (in automatico) |
+| Nel terminale con i log di esecuzione, la combinazione di tasti 'Ctrl+C' | Interrompe il server e esegue il **Backup con Restic su Cloud Storage** (in automatico, non in detached) |
+| **Avvio Detached** | `./run-server.sh -d` (Esegue in background, log su `logs/compose-up.log`) |
+
+> **Nota**: L'interruzione del container in modalità detached, caricherà comunque il backup su cloud storage.
 
 ## Comandi Utili
 | Azione | Comando |
@@ -106,7 +110,11 @@ Il progetto usa la cartella **`./data`** locale per iniettare file personalizzat
 | **Diagnostica** | `./utils/rclone-mutex.sh diag` |
 | **Start senza Restore dalla Repo**| `./run-server.sh restoreoff` |
 | **Start con Restore dalla Repo** | `./run-server.sh restoreon` (comportamento di default) |
-| **Caricamento del 'world/' corrente locale alla Repo** | `./run-server.sh loadcurrbackup` |
+| **Caricamento del 'world/' corrente locale alla Repo** | `./run-server.sh loadcurrworld` (Senza sync dati server) |
+| **Caricamento del 'world/' + 'data/' locale alla Repo** | `./run-server.sh loadcurrbackup` |
+| **Start senza Backup** | `./run-server.sh backupoff` (Disabilita backup automatici durante lo stop, può essere usato in combinazione con restoreoff) |
+| **Disabilita Mod** | `./utils/disablemods.sh on` (Disabilita le mod problematiche definite nello script) |
+| **Abilita Mod** | `./utils/disablemods.sh off` (Riabilita le mod problematiche) |
 
 
 > **Nota** l'IP_SERVER inserito nel file env/.env può utilizzare anche IP di servizi VPN come [ZeroTier](https://www.zerotier.com/), [Radmin VPN](https://www.radmin-vpn.com/) o [LogMeIn Hamachi](https://www.vpn.net/) per semplificare la configurazione e migliorare la sicurezza, attraverso l'uso di whitelist degli ip dei membri.
@@ -126,8 +134,7 @@ Di seguito sono elencate le migliori alternative DDNS gratuite, valutate in base
 | **DuckDNS** | [duckdns.org](https://www.duckdns.org) | **Molto Alta** | **Variabile** | **8/10** | (Baseline) Semplice, ma soffre di occasionali downtime. |
 | **FreeDNS** | [afraid.org](https://freedns.afraid.org) | **Media** | **Buono** | **7.5/10** | Rischio blacklist su alcuni domini condivisi. |
 | **No-IP** | [noip.com](https://noip.com) | **Media** | **Eccellente** | **6/10** | **Richiede conferma manuale ogni 30gg**. |
-
-
+| **Dynu** | [dynu.com](https://www.dynu.com/) | **Alta** | **Eccellente** | **8/10** | Il piano gratuito limita a un solo dominio. |
 
 ---
 
@@ -138,4 +145,4 @@ Di seguito sono elencate le migliori alternative DDNS gratuite, valutate in base
   - Verifica con `./utils/rclone-mutex.sh get` oppure con `./utils/rclone-mutex.sh status`.
   - Se nessun altro ha il server avviato, sblocca con `./utils/rclone-mutex.sh set 0`.
 
-- **Dettagli Tecnici**: Vedi [utils/STRUTTURA.md](utils/STRUTTURA.md) per info su come funziona il sistema sotto la scocca.
+- **Dettagli Tecnici**: Vedi [images/STRUTTURA.md](images/STRUTTURA.md) per info su come funziona il sistema sotto la scocca.

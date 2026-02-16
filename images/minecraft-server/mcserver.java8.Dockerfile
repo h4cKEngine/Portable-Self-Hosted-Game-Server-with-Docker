@@ -2,7 +2,7 @@ FROM docker.io/tofran/restic-rclone:0.17.0_1.68.2 AS restic_src
 
 FROM itzg/minecraft-server:java8-alpine
 
-# Install dependencies (curl, bind-tools for nslookup, rclone, bash)
+# Install dependencies (curl, bind-tools for nslookup, rclone, bash for oshi)
 RUN apk add --no-cache curl bind-tools rclone bash
 
 # Official rclone (needed for mutex/backup in MC container)

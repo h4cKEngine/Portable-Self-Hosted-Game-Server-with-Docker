@@ -49,6 +49,7 @@ Link the account (or other cloud supported by [RCLONE](https://rclone.org/overvi
 ./run-server.sh
 ```
 > **Note**: On first launch, the server will perform a **RESTORE** (automatically) of the latest backup before starting.
+> **Note**: `run-server.sh` also performs a **Pre-Restore Sync** of the `./data` folder from the cloud (excluding `world/`) to ensure configuration files are up to date.
 
 ---
 
@@ -93,7 +94,10 @@ The project uses the local **`./data`** folder to inject custom files into the s
 | Action | Command |
 | :--- | :--- |
 | **Start the server** | `./run-server.sh` |
-| In the terminal with execution logs, the key combination 'Ctrl+C' | Stops the server and runs **Backup with Restic to Cloud Storage** (automatically) |
+| In the terminal with execution logs, the key combination 'Ctrl+C' | Stops the server and runs **Backup with Restic to Cloud Storage** (automatically, unless in detached mode) |
+| **Start Detached** | `./run-server.sh -d` (Runs in background, logs to `logs/compose-up.log`) |
+
+> **Note**: Stopping the container in detached mode will still upload the backup to cloud storage.
 
 ## Useful Commands
 | Action | Command |
@@ -106,7 +110,11 @@ The project uses the local **`./data`** folder to inject custom files into the s
 | **Diagnostics** | `./utils/rclone-mutex.sh diag` |
 | **Start without Restore from Repo**| `./run-server.sh restoreoff` |
 | **Start with Restore from Repo** | `./run-server.sh restoreon` (default behavior) |
-| **Upload local current 'world/' to Repo** | `./run-server.sh loadcurrbackup` |
+| **Upload local current 'world/' to Repo** | `./run-server.sh loadcurrworld` (No server data sync) |
+| **Upload local current 'world/' + 'data/' to Repo** | `./run-server.sh loadcurrbackup` |
+| **Start without Backup** | `./run-server.sh backupoff` (Disable automatic backups on stop, can be used with restoreoff) |
+| **Disable Mods** | `./utils/disablemods.sh on` (Disables problematic mods defined in the script) |
+| **Enable Mods** | `./utils/disablemods.sh off` (Re-enables problematic mods) |
 
 
 > **Note** the IP_SERVER in the env/.env file can also use IP addresses from VPN services like [ZeroTier](https://www.zerotier.com/), [Radmin VPN](https://www.radmin-vpn.com/) or [LogMeIn Hamachi](https://www.vpn.net/) to simplify configuration and improve security, through the use of member IP whitelists.
@@ -126,8 +134,7 @@ Below are the best free DDNS alternatives, evaluated based on record update spee
 | **DuckDNS** | [duckdns.org](https://www.duckdns.org) | **Very High** | **Variable** | **8/10** | (Baseline) Simple, but suffers erratic downtime. |
 | **FreeDNS** | [afraid.org](https://freedns.afraid.org) | **Medium** | **Good** | **7.5/10** | Risk of blacklist on some shared domains. |
 | **No-IP** | [noip.com](https://noip.com) | **Medium** | **Excellent** | **6/10** | **Requires manual confirmation every 30 days**. |
-
-
+| **Dynu** | [dynu.com](https://www.dynu.com/) | **High** | **Excellent** | **8/10** | Free plan limited to 1 zone. |
 
 ---
 
@@ -138,4 +145,4 @@ Below are the best free DDNS alternatives, evaluated based on record update spee
   - Verify with `./utils/rclone-mutex.sh get` or `./utils/rclone-mutex.sh status`.
   - If no one else has the server running, unlock with `./utils/rclone-mutex.sh set 0`.
 
-- **Technical Details**: See [utils/STRUCTURE.md](utils/STRUCTURE.md) for info on how the system works under the hood.
+- **Technical Details**: See [images/STRUCTURE.md](images/STRUCTURE.md) for info on how the system works under the hood.

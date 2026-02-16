@@ -12,6 +12,7 @@ The `run-server.sh` script dynamically decides which files to pass to Docker:
 1.  **Standard Startup (with Restore)**
     Command: `docker compose -f docker-compose.yml -f docker-compose.restore-overrides.yml up`
     
+    *   **Pre-Restore Sync**: Before starting Docker, `run-server.sh` executes `utils/cloud-sync.sh restore`. This downloads any missing or updated files (excluding `world/`) from the Cloud Storage `server-data` folder to the local `./data` directory.
     *   Docker loads the base configuration (`docker-compose.yml`).
     *   Then overwrites/adds configurations from the second file (`override`).
     *   **Result**: The `mc` service receives the `depends_on: restore-backup` instruction. Therefore it **waits** for the restore to finish successfully before starting.
@@ -25,6 +26,13 @@ The `run-server.sh` script dynamically decides which files to pass to Docker:
 
 ### Why was it done this way?
 By leaving only `depends_on` in the main file, one would have to wait for the backup check at every single startup (even for simple test restarts). By separating the logic into an extra file, restore was made **optional** but active by default for safety.
+
+### Detached Mode (`-d`)
+When running with `./run-server.sh -d`:
+- The script executes `docker compose up -d`.
+- Output is redirected to `logs/compose-up.log`.
+- Next, the script exits directly (monitor daemons `auto-op` and `auto-fml` do **not** run).
+- The Backup/Restore lifecycle remains managed by the containers themselves (restore-backup on start, restic on stop via `java-start.sh` trap).
 
 ---
 
@@ -71,4 +79,5 @@ You can use `utils/restic-tools.sh` to manually interact with the repo:
 - **/images**: Custom Dockerfiles.
   - `minecraft-server`: Custom base itzg image with our startup scripts.
   - `restic-rclone`: Helper image for backups.
-- **/utils**: Service scripts (mutex, installation, restic management).
+- **/utils**: Service scripts (mutex, installation, restic management, mod disabling).
+  - `disablemods.sh`: Utility to temporarily disable specific mods.

@@ -41,6 +41,10 @@ RESTIC_PASSWORD="${RESTIC_PASSWORD:-}"
 RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-}"
 RESTIC_IMAGE="${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}"
 
+# Default UID/GID
+: "${TARGET_UID:=$(id -u)}"
+: "${TARGET_GID:=$(id -g)}"
+
 # rclone.conf path (host -> container)
 RCLONE_CONF_HOST="${RCLONE_CONF_HOST:-./env/rclone.conf}"
 # correct fallback in container
@@ -50,7 +54,6 @@ RCLONE_CONF_CONT="${RCLONE_CONFIG:-/root/.config/rclone/rclone.conf}"
 WORLD_HOST_DIR="${WORLD_HOST_DIR:-$PROJECT_ROOT/world}"
 
 # MC data volume name and MC container name (for offline check)
-VOLUME_NAME="${VOLUME_NAME:-server}"
 MC_CONTAINER_NAME="${MC_CONTAINER_NAME:-modpack}"
 
 # CSV Tags for backups
@@ -72,18 +75,16 @@ docker_restic() {
   [[ -n "$DOCKER_NETWORK" ]] && net_args=( --network "$DOCKER_NETWORK" )
 
   # If ./world folder exists on host, bind-mount it too
-  local world_mount=()
-  if [[ -d "$WORLD_HOST_DIR" ]]; then
-    world_mount=( -v "$WORLD_HOST_DIR:/data/world" )
-  fi
-
+  # (Migrated: we now mount the whole ./data to /data, so world is included)
+  
   docker run --rm "${net_args[@]}" \
+    -u "${TARGET_UID}:${TARGET_GID}" \
     -e RESTIC_HOSTNAME="$RESTIC_HOSTNAME" \
     -e RESTIC_PASSWORD="$RESTIC_PASSWORD" \
     -e RESTIC_REPOSITORY="$RESTIC_REPOSITORY" \
     -e RCLONE_CONFIG="$RCLONE_CONF_CONT" \
-    -v "$VOLUME_NAME":/data \
-    "${world_mount[@]}" \
+    -e XDG_CACHE_HOME="/data/.cache" \
+    -v "$PROJECT_ROOT/data":/data \
     -v "$RCLONE_CONF_HOST":"$RCLONE_CONF_CONT":ro \
     "$RESTIC_IMAGE" -r "$RESTIC_REPOSITORY" "$@"
 }
@@ -185,7 +186,7 @@ Variables (env/.env):
   RESTIC_REPOSITORY (REQUIRED, e.g.: rclone:mega:/modpack)
   RCLONE_CONF_HOST  (default: ./env/rclone.conf)
   RESTIC_IMAGE      (default: docker.io/tofran/restic-rclone:0.17.0_1.68.2)
-  VOLUME_NAME       (default: server)
+
   MC_CONTAINER_NAME (default: modpack)
   RESTIC_TAG       (CSV, default: mc_backups)
   DOCKER_NETWORK    (optional)

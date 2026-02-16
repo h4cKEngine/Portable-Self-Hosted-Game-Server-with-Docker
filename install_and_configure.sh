@@ -175,6 +175,19 @@ clean_identifiers() {
   fi
 }
 
+# Initializes data directory structure
+init_data_dirs() {
+  echo ">>> (0.5/5) Inizializzazione struttura directory 'data/'..."
+  local dirs="data/mods data/config data/libraries data/logs data/world"
+  
+  for d in $dirs; do
+    if [[ ! -d "$d" ]]; then
+      echo "    + Creo directory: $d"
+      mkdir -p "$d"
+    fi
+  done
+}
+
 # Checks and installs dependencies
 check_deps() {
   echo ">>> (1/5) Controllo Dipendenze..."
@@ -220,7 +233,7 @@ config_server() {
        "Versione non valida."
         
     ask_choice "\n3. Tipo di Server" \
-        INPUT_TYPE "${TYPE:-FORGE}" "VANILLA FORGE FABRIC"
+        INPUT_TYPE "${TYPE:-FORGE}" "VANILLA FORGE FABRIC NEOFORGE"
     
     ask_pattern "\n4. IP Pubblico/VPN del server (es. '1.2.3.4')" \
         INPUT_IP "${IP_SERVER:-127.0.0.1}" \
@@ -229,18 +242,44 @@ config_server() {
 
     # Advanced Server Params (Mem, Forge, Seeds, RCON, MOTD, OPS)
     INPUT_FORGE="${FORGE_VERSION:-}"
+    INPUT_NEOFORGE="${NEOFORGE_VERSION:-}"
+    INPUT_FABRIC_LAUNCHER="${FABRIC_LAUNCHER_VERSION:-}"
+    INPUT_FABRIC_LOADER="${FABRIC_LOADER_VERSION:-}"
     INPUT_MEM_INIT="${INIT_MEMORY:-2G}"
     INPUT_MEM_MAX="${MEMORY:-6G}"
     INPUT_SEED="${SEED:-}"
     INPUT_RCON="${RCON_PASSWORD:-minecraft}"
     INPUT_MOTD="${MOTD:-}"
-    INPUT_OPS="${OPS:-}"
+    INPUT_OPS="${OPERATORS:-}"
+
+    # Ask for specific versions based on TYPE
+    case "$INPUT_TYPE" in
+      FORGE)
+          ask_pattern "\nVersione di Forge (vuoto=auto)" \
+            INPUT_FORGE "${FORGE_VERSION:-}" \
+            "^[a-zA-Z0-9.-]*$" "Versione non valida."
+          ;;
+      NEOFORGE)
+          ask_pattern "\nVersione di NeoForge (vuoto=auto, default=auto)" \
+            INPUT_NEOFORGE "${NEOFORGE_VERSION:-}" \
+            "^[a-zA-Z0-9.-]*$" "Versione non valida."
+          ;;
+      FABRIC)
+          ask_pattern "\nFabric Launcher Version (vuoto=auto)" \
+            INPUT_FABRIC_LAUNCHER "${FABRIC_LAUNCHER_VERSION:-}" \
+            "^[a-zA-Z0-9.-]*$" "Versione non valida."
+          ask_pattern "Fabric Loader Version (vuoto=auto)" \
+             INPUT_FABRIC_LOADER "${FABRIC_LOADER_VERSION:-}" \
+             "^[a-zA-Z0-9.-]*$" "Versione non valida."
+          ;;
+      VANILLA)
+          info "Vanilla selezonato. Uso Versione Minecraft standard ($INPUT_VERSION)."
+          ;;
+    esac
 
     if [ "$SHOW_ADVANCED" = true ]; then
       info "\n--- Impostazioni Avanzate Server ---\n"
-      ask_pattern "Versione di Forge (vuoto=auto)" \
-          INPUT_FORGE "${FORGE_VERSION:-}" \
-          "^[a-zA-Z0-9.-]*$" "Versione non valida."
+      # (Forge/NeoForge/Fabric params already asked above based on TYPE)
       
       ask_pattern "\nRAM Iniziale (es. 2G, 512M)" \
           INPUT_MEM_INIT "${INIT_MEMORY:-2G}" \
@@ -256,7 +295,7 @@ config_server() {
       
       ask "\nRCON Password"                      INPUT_RCON "${RCON_PASSWORD:-minecraft}"
       ask "\nMOTD (lascia vuoto per auto)"       INPUT_MOTD "${MOTD:-}"
-      ask "\nOPS (Admin - separa con virgola)"   INPUT_OPS "${OPS:-}"
+      ask "\nOPS (Admin - separa con virgola)"   INPUT_OPS "${OPERATORS:-}"
     fi
   else
     # Keep old values if skipped
@@ -266,12 +305,15 @@ config_server() {
     INPUT_IP="${IP_SERVER:-127.0.0.1}"
     
     INPUT_FORGE="${FORGE_VERSION:-}"
+    INPUT_NEOFORGE="${NEOFORGE_VERSION:-}"
+    INPUT_FABRIC_LAUNCHER="${FABRIC_LAUNCHER_VERSION:-}"
+    INPUT_FABRIC_LOADER="${FABRIC_LOADER_VERSION:-}"
     INPUT_MEM_INIT="${INIT_MEMORY:-2G}"
     INPUT_MEM_MAX="${MEMORY:-6G}"
     INPUT_SEED="${SEED:-}"
     INPUT_RCON="${RCON_PASSWORD:-minecraft}"
     INPUT_MOTD="${MOTD:-}"
-    INPUT_OPS="${OPS:-}"
+    INPUT_OPS="${OPERATORS:-}"
     
     info "Blocco Server saltato. Mantengo valori attuali."
   fi
@@ -285,8 +327,8 @@ config_rclone() {
 
   # Try to detect default
   DEFAULT_RCLONE="mega"
-  if [ -f "env/rclone.conf" ]; then
-    DETECTED_REMOTE=$(grep -oP '^\[\K[^\]]+' env/rclone.conf | head -n1 || true)
+  if [ -f "$RCLONE_CONFIG" ]; then
+    DETECTED_REMOTE=$(grep -oP '^\[\K[^\]]+' "$RCLONE_CONFIG" | head -n1 || true)
     [ -n "$DETECTED_REMOTE" ] && DEFAULT_RCLONE="$DETECTED_REMOTE"
   fi
   
@@ -296,24 +338,39 @@ config_rclone() {
        : 
     else
         # Basic mode: User said YES to block.
-        # Maybe show existing remotes
-        if [ -f "env/rclone.conf" ]; then
-            echo "    Remotes trovati in rclone.conf:"
-            grep -oP '^\[\K[^\]]+' env/rclone.conf | sed 's/^/      - /' || echo "      (nessuno)"
+        # Check if config exists
+        if [ ! -f "$RCLONE_CONFIG" ]; then
+            warn "File di configurazione Rclone non trovato in $RCLONE_CONFIG"
+            warn "È consigliato usare il Rclone Manager per configurare un remote."
+        else
+            info "File di configurazione trovato: $RCLONE_CONFIG\n"
+            info "Remotes disponibili:\n"
+            # Extract and list remotes nicely
+            if grep -qP '^\[[^\]]+\]$' "$RCLONE_CONFIG"; then
+                grep -oP '^\[\K[^\]]+' "$RCLONE_CONFIG" | while read -r remote; do
+                    echo "      - $remote"
+                done
+            else
+                warn "      (nessuno trovato nel file)"
+            fi
         fi
         
-        read -p "Vuoi aprire il Rclone Manager (per creare/editare remotes)? [Y/n] " DO_MGR
+        info "\nSe non hai ancora configurato un remote o vuoi modificarli:"
+        read -p "Vuoi aprire il Rclone Manager ora? [Y/n] " DO_MGR
         if [[ "${DO_MGR:-Y}" =~ ^[Yy]$ ]]; then
             ./utils/rclone-manager.sh
             # Re-detect default after manager
-             if [ -f "env/rclone.conf" ]; then
-                DETECTED_REMOTE=$(grep -oP '^\[\K[^\]]+' env/rclone.conf | head -n1 || true)
+             if [ -f "$RCLONE_CONFIG" ]; then
+                DETECTED_REMOTE=$(grep -oP '^\[\K[^\]]+' "$RCLONE_CONFIG" | head -n1 || true)
                 [ -n "$DETECTED_REMOTE" ] && DEFAULT_RCLONE="$DETECTED_REMOTE"
              fi
         fi
     fi
 
-    ask "Servizio Rclone (es. 'mega')" INPUT_RCLONE_SERVICE "$DEFAULT_RCLONE"
+    echo ""
+    info "Inserisci il nome del remote da utilizzare per i backup/sync."
+    info "(Deve corrispondere esattamente al nome parentesi quadre in rclone.conf)"
+    ask "Nome Remote Rclone (es. 'mega', 'drive'...)" INPUT_RCLONE_SERVICE "$DEFAULT_RCLONE"
   else
     # Logic to extrapolate service name if skipped
     if [[ "${RESTIC_REPOSITORY:-}" =~ rclone:([^:]+):/ ]]; then
@@ -335,17 +392,32 @@ config_ddns() {
   INPUT_DDNS_TOKEN="${DDNS_TOKEN:-}"
   
   if should_configure_block "DDNS"; then
+      info "Provider supportati (dettagli nel README):\n"
+      echo "    - Desec.io   (Score: 9.5/10) - Sicuro, API focus, no GUI semplice."
+      echo "    - Dynu       (Score: 9/10)   - Bilanciato, nessuna scadenza."
+      echo "    - YDNS       (Score: 8.5/10) - EU Hosting, pulito."
+      echo "    - DuckDNS    (Score: 8/10)   - Semplice, ma downtime variabili."
+      echo "    - FreeDNS    (Score: 7.5/10) - Rischio blacklist su domini condivisi."
+      echo "    - No-IP      (Score: 6/10)   - Richiede conferma manuale ogni 30gg."
+      echo ""
+      info "Lascia vuoto il provider per DISABILITARE il DDNS.\n"
+      
       # Ask specific details
-      ask "DDNS Provider (es. duckdns, noip... oppure vuoto per disabilitare)" INPUT_DDNS_PROVIDER "${DDNS_PROVIDER:-duckdns}"
+      ask "DDNS Provider" INPUT_DDNS_PROVIDER "${DDNS_PROVIDER:-duckdns}"
       
       # Normalize Provider: lower case and strip extensions (duckdns.org -> duckdns)
       INPUT_DDNS_PROVIDER=$(echo "$INPUT_DDNS_PROVIDER" | tr '[:upper:]' '[:lower:]')
       INPUT_DDNS_PROVIDER="${INPUT_DDNS_PROVIDER%%.*}"
 
       if [ -n "$INPUT_DDNS_PROVIDER" ]; then
-          ask_pattern "DDNS Domain" INPUT_DDNS_DOMAIN "${DDNS_DOMAIN:-exampleddns}" \
+          ask_pattern "DDNS Domain (es. mydomain)" INPUT_DDNS_DOMAIN "${DDNS_DOMAIN:-exampleddns}" \
                "^[a-zA-Z0-9.-]+$" "Dominio non valido."
-          ask "DDNS Token"  INPUT_DDNS_TOKEN "${DDNS_TOKEN:-CHANGE_ME}"
+          
+          echo ""
+          info "Note sul Token:\n"
+          info " - DuckDNS: solo il token\n"
+          info " - Desec/YDNS/No-IP/FreeDNS: Spesso richiedono 'username:password' o token specifico.\n"
+          ask "DDNS Token (o Password/Key)"  INPUT_DDNS_TOKEN "${DDNS_TOKEN:-CHANGE_ME}"
       else
           info "DDNS disabilitato (provider vuoto)."
           INPUT_DDNS_DOMAIN=""
@@ -385,7 +457,6 @@ config_restic() {
 # Computes derived variables based on user input
 compute_derived() {
   FINAL_CONTAINER_NAME="$INPUT_NAME"
-  FINAL_VOLUME_NAME="${INPUT_NAME}-data"
   FINAL_RESTIC_TAG="${INPUT_NAME}_backups"
   # Note: RESTIC_REPOSITORY must have rclone: prefix to be compatible with our containerized scripts
   FINAL_RESTIC_REPO="rclone:${INPUT_RCLONE_SERVICE}:/${INPUT_NAME}"
@@ -430,17 +501,21 @@ DDNS_PROVIDER=${INPUT_DDNS_PROVIDER}
 
 # === RCON ===
 RCON_PASSWORD=${INPUT_RCON}
+BACKUP=true
 
 # === Server Properties ===
 VERSION=${INPUT_VERSION}
 TYPE=${INPUT_TYPE}
 FORGE_VERSION=${INPUT_FORGE}
+NEOFORGE_VERSION=${INPUT_NEOFORGE}
+FABRIC_LAUNCHER_VERSION=${INPUT_FABRIC_LAUNCHER}
+FABRIC_LOADER_VERSION=${INPUT_FABRIC_LOADER}
 INIT_MEMORY=${INPUT_MEM_INIT}
 MEMORY=${INPUT_MEM_MAX}
 MAX_PLAYERS=${MAX_PLAYERS:-8}
 MOTD="${FINAL_MOTD}"
 SEED=${INPUT_SEED}
-OPS=${INPUT_OPS}
+OPERATORS=${INPUT_OPS}
 EULA=TRUE
 ONLINE_MODE=FALSE
 
@@ -462,14 +537,14 @@ RESTIC_IMAGE=${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}
 PAUSE_WHEN_EMPTY_SECONDS=300
 
 # === Rclone ===
-RCLONE_CONFIG=/root/.config/rclone/rclone.conf
+RCLONE_CONFIG=${RCLONE_CONFIG:-/root/.config/rclone/rclone.conf}
 RCLONE_CONF_HOST=./env/rclone.conf
 
 # === Mutex (Locking) ===
 MUTEX_REMOTE_DIR=${FINAL_MUTEX_DIR}
 
 # === Docker Compose Names ===
-VOLUME_NAME=${FINAL_VOLUME_NAME}
+
 MC_CONTAINER_NAME=${FINAL_CONTAINER_NAME}
 EOF
   msg "File salvato!"
@@ -507,6 +582,7 @@ EOF
 main() {
   parse_args "$@"
   clean_identifiers
+  init_data_dirs
   check_deps
   
   load_defaults
@@ -524,6 +600,13 @@ main() {
   compute_derived
   confirm_and_write
   
+  sudo apt autoremove -y
+  sudo apt clean
+
+  # Fix permissions on ./data so run-server.sh can work without sudo
+  msg "\n(Fix Permessi) Imposto proprietà di ./data a $USER..."
+  sudo chown -R "$USER:$USER" ./data
+
   msg "\nSetup Completato!"
 }
 

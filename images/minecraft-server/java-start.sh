@@ -320,13 +320,28 @@ main() {
 
 
   log "java-start wrapper ACTIVE; mutex path: ${MUTEX_PATH}"
+  
+  if [[ "${BACKUP:-true}" == "true" ]]; then
+    setup_trap
+    update_ddns   # async by default; sets DUCKDNS_ASYNC_PID
 
-  setup_trap
-  update_ddns   # async by default; sets DUCKDNS_ASYNC_PID
-
-  # Wait for restore to set mutex to 1 and start keepalive
-  mutex_wait_for_1
-  mutex_keepalive_start   # starts a background job
+    # Wait for restore to set mutex to 1 and start keepalive
+    mutex_wait_for_1
+    mutex_keepalive_start   # starts a background job
+  else
+    log "BACKUP=false -> Skip Cloud Mutex, Keepalive, and Backup-on-exit trap."
+    # We still might want to trap TERM to kill the child properly, even if we don't backup
+    trap 'on_term' TERM INT
+    # But skip on_exit (which does backup)
+    # update_ddns? User request said "nessun download/caricamento". 
+    # DDNS updates IP, distinct from backup/restore. But usually "backupoff" implies "local mode"?
+    # Request says "interrompere tutti i backup... download da cloud... caricamento verso cloud".
+    # Doesn't explicitly say DDNS. I will leave DDNS as is or maybe it's safer to run it?
+    # Let's keep DDNS running as it helps connectivity, unless user wanted total isolation.
+    # User said: "restoreoff backupoff" -> "nessun download ... né caricamento ... sia da container mc che backups".
+    # I'll stick to disabling backup/restore-related cloud, but DDNS is connectivity.
+    update_ddns
+  fi
 
   # Start /start as CHILD (no exec) and save PID IMMEDIATELY
   /start "$@" &

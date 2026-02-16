@@ -41,8 +41,12 @@ $SUDO apt-get install -y unzip curl ca-certificates
 echo "[INFO] Removing rclone from apt (if present)..."
 $SUDO apt-get remove -y rclone || true
 
-echo "[INFO] Installing official rclone from rclone.org..."
-curl -fsSL https://rclone.org/install.sh | $SUDO bash
+if curl -fsSL https://rclone.org/install.sh | $SUDO bash; then
+  echo "[INFO] Official rclone installed successfully."
+else
+  echo "[WARN] Official install failed. Falling back to apt..."
+  $SUDO apt-get install -y rclone
+fi
 
 echo "[INFO] Verifying that 'mega' backend is available..."
 if ! rclone help backends | grep -qi '^\s*mega\b'; then
