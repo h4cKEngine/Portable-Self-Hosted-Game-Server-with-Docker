@@ -35,6 +35,8 @@ services:
       UID: ${TARGET_UID}
       GID: ${TARGET_GID}
       # === Server config ===
+      VIEW_DISTANCE: 10
+      SIMULATION_DISTANCE: 5
       IP_SERVER: ${IP_SERVER}
       VERSION: ${VERSION}
       TYPE: ${TYPE}
