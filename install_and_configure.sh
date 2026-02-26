@@ -606,6 +606,8 @@ main() {
   # Fix permissions on ./data so run-server.sh can work without sudo
   msg "\n(Fix Permessi) Imposto proprietà di ./data a $USER..."
   sudo chown -R "$USER:$USER" ./data
+  sudo chmod 755 ./run-server.sh
+  sudo chmod 755 -R *
 
   msg "\nSetup Completato!"
 }
