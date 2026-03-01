@@ -17,7 +17,7 @@ USE_CONTAINER_MODE=0
 # ==============================================================================
 msg()  { printf "[INFO] %s\n" "$*"; }
 warn() { printf "[WARN] %s\n" "$*" >&2; }
-err()  { printf "[ERRORE] %s\n" "$*" >&2; exit 1; }
+err()  { printf "[ERROR] %s\n" "$*" >&2; exit 1; }
 
 # Loads image from .env or uses default
 load_restic_image() {

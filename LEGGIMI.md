@@ -33,7 +33,7 @@ Avviare il configuratore automatico.
 ```
 
 ```bash
-# Oppure con il flag --full per opzioni avanzate (RAM, Forge Version / Fabric Version, DuckDNS, ecc.)
+# Oppure con il flag --full per opzioni avanzate (RAM, Versioni Forge/Fabric, View Distance, DuckDNS, ecc.)
 ./install_and_configure.sh --full
 ```
 
@@ -84,6 +84,7 @@ Il progetto usa la cartella **`./data`** locale per iniettare file personalizzat
   - Configurazioni mod (`./data/config/my-mod.cfg`)
   - Script (`./data/scripts/tweaks.zs`)
   - `server.properties` personalizzato.
+- **Lista Mod Automatica**: Ad ogni avvio del server, viene generato o aggiornato un file `mods_list.txt` nella directory principale contenente l'elenco delle mod attualmente installate (preservando la data di modifica se non ci sono variazioni).
 
 > **Importante**: Mantenere la stessa struttura delle cartelle del server (es. `config`, `mods`, ecc.).
 
@@ -104,6 +105,7 @@ Il progetto usa la cartella **`./data`** locale per iniettare file personalizzat
 | :--- | :--- |
 | **Lista Snapshot** | `bash utils/restic-tools.sh exec snapshots` |
 | **Backup Manuale** | `bash utils/restic-tools.sh backup` (richiede server fermo) |
+| **Restic Unlock** | `bash utils/restic-tools.sh unlock` |
 | **Restore da Snapshot** | `bash utils/restic-tools.sh restore <snapshot-id>` |
 | **Sblocco Mutex** | `./utils/rclone-mutex.sh set 0` (In caso di crash del server) |
 | **Status Mutex** | `./utils/rclone-mutex.sh status` |
@@ -111,7 +113,7 @@ Il progetto usa la cartella **`./data`** locale per iniettare file personalizzat
 | **Start senza Restore dalla Repo**| `./run-server.sh restoreoff` |
 | **Start con Restore dalla Repo** | `./run-server.sh restoreon` (comportamento di default) |
 | **Caricamento del 'world/' corrente locale alla Repo** | `./run-server.sh loadcurrworld` (Senza sync dati server) |
-| **Caricamento del 'world/' + 'data/' locale alla Repo** | `./run-server.sh loadcurrbackup` |
+| **Caricamento del 'world/' + 'data/' locale alla Repo** | `./run-server.sh loadcurrserver` |
 | **Start senza Backup** | `./run-server.sh backupoff` (Disabilita backup automatici durante lo stop, può essere usato in combinazione con restoreoff) |
 | **Disabilita Mod** | `./utils/disablemods.sh on` (Disabilita le mod problematiche definite nello script) |
 | **Abilita Mod** | `./utils/disablemods.sh off` (Riabilita le mod problematiche) |

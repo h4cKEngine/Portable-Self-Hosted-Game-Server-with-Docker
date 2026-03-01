@@ -2,20 +2,20 @@
 set -eu
 
 # ========== ENV base (Restic) ==========
-: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY non impostato (es: rclone:mega:/modpack)}"
-: "${RESTIC_PASSWORD:?RESTIC_PASSWORD non impostato}"
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set (e.g. rclone:mega:/modpack)}"
+: "${RESTIC_PASSWORD:?RESTIC_PASSWORD not set}"
 : "${RESTIC_HOSTNAME:=Mondo}"
 : "${RESTIC_SNAPSHOT:=latest}"
 
 # ========== ENV rclone/mutex ==========
-: "${RCLONE_CONFIG:=/root/.config/rclone/rclone.conf}"  # montato dal compose
+: "${RCLONE_CONFIG:=/root/.config/rclone/rclone.conf}"  # mounted from compose
 : "${MUTEX_FILE:=mutex.txt}"
-: "${CLOUD_MUTEX_DIR:=/Root/modpack}"                   # usato se non fornisci MUTEX_REMOTE_DIR
-: "${MUTEX_REMOTE_DIR:=}"                               # es. mega:/tekkmodpackit (prioritario se settato)
-: "${CLOUD_MUTEX_EXPECT:=any}"                          # any|0|1 (vedi sopra)
-: "${CLOUD_MUTEX_WAIT_SECS:=10}"                        # pausa tra i poll
+: "${CLOUD_MUTEX_DIR:=/Root/modpack}"                   # used if MUTEX_REMOTE_DIR not provided
+: "${MUTEX_REMOTE_DIR:=}"                               # e.g. mega:/tekkmodpackit (priority if set)
+: "${CLOUD_MUTEX_EXPECT:=any}"                          # any|0|1 (see above)
+: "${CLOUD_MUTEX_WAIT_SECS:=10}"                        # pause between polls
 
-echo "[INFO] Entrypoint restore avviato"
+echo "[INFO] Restore entrypoint started"
 
 # --------- Utils rclone ---------
 rc() {
@@ -27,7 +27,7 @@ derive_remote_dir() {
     printf '%s' "$MUTEX_REMOTE_DIR"
     return
   fi
-  # Deriva remote (es. "mega") da RESTIC_REPOSITORY=rclone:<remote>:/repo
+  # Derive remote (e.g. "mega") from RESTIC_REPOSITORY=rclone:<remote>:/repo
   repo="${RESTIC_REPOSITORY#rclone:}"   # mega:/qualcosa
   remote="${repo%%:*}"                  # mega
   sub="${CLOUD_MUTEX_DIR#/Root}"        # /modpack -> modpack
@@ -39,7 +39,7 @@ REMOTE_DIR="$(derive_remote_dir)"
 REMOTE_FILE="${REMOTE_DIR%/}/${MUTEX_FILE}"
 
 ensure_mutex_file() {
-  # crea cartella e mutex=0 se mancanti (upload temp + rename atomico)
+  # create folder and mutex=0 if missing (temp upload + atomic rename)
   rc mkdir "$REMOTE_DIR" >/dev/null 2>&1 || true
   if ! rc ls "$REMOTE_FILE" >/dev/null 2>&1; then
     tmp_local="$(mktemp)"; printf '0\n' > "$tmp_local"
@@ -58,26 +58,26 @@ read_mutex() {
   [ "$val" = "1" ] && echo 1 || echo 0
 }
 
-# Scrittura atomica: upload temporaneo + rename (evita problemi di size uguale)
+# Atomic write: temporary upload + rename (avoids equal size issues)
 write_mutex_value() {
-  v="$1"  # "0" oppure "1"
+  v="$1"  # "0" o "1"
   tmp_local="$(mktemp)"; printf '%s\n' "$v" > "$tmp_local"
 
-  # Overwrite robusto su MEGA:
+  # Robust overwrite on MEGA:
   rc deletefile "$REMOTE_FILE" >/dev/null 2>&1 || true
   rc copyto --ignore-times "$tmp_local" "$REMOTE_FILE" >/dev/null
 
   rm -f "$tmp_local"
 
-  # Verifica effettiva
+  # Actual verification
   back="$(rc cat "$REMOTE_FILE" 2>/dev/null | dd bs=1 count=1 2>/dev/null | tr -dc '01' || true)"
   if [ "$back" != "$v" ]; then
-    echo "[ERROR] Scrittura mutex fallita: scritto '$v', letto '$back' su $REMOTE_FILE"
+    echo "[ERROR] Mutex write failed: wrote '$v', read '$back' on $REMOTE_FILE"
     return 1
   fi
 }
 
-# CAS 0->1: prova ad acquisire; se già 1, attende/retry
+# CAS 0->1: try to acquire; if already 1, wait/retry
 cas_acquire_mutex() {
   ensure_mutex_file
   tries="${CLOUD_MUTEX_TRIES:-30}"
@@ -87,18 +87,18 @@ cas_acquire_mutex() {
     cur="$(read_mutex)"
     if [ "$cur" = "0" ]; then
       if write_mutex_value "1"; then
-        echo "[INFO] Mutex acquisito (0→1)."
+        echo "[INFO] Mutex acquired (0→1)."
         return 0
       else
-        echo "[WARN] Tentativo di acquisizione fallito; ritento tra ${wait_s}s (tentativo $i/$tries)..."
+        echo "[WARN] Acquisition attempt failed; retrying in ${wait_s}s (attempt $i/$tries)..."
       fi
     else
-      echo "[INFO] Mutex=$cur; attendo ${wait_s}s (tentativo $i/$tries) che diventi 0 per acquisire..."
+      echo "[INFO] Mutex=$cur; waiting ${wait_s}s (attempt $i/$tries) to become 0 to acquire..."
     fi
     sleep "$wait_s"
     i=$((i+1))
   done
-  echo "[ERROR] Impossibile acquisire mutex (ancora !=1 dopo $tries tentativi)."
+  echo "[ERROR] Impossible to acquire mutex (still !=1 after $tries attempts)."
   exit 3
 }
 
@@ -109,13 +109,13 @@ wait_for_mutex() {
       ensure_mutex_file
       cur="$(read_mutex)"
       while [ "$cur" != "$CLOUD_MUTEX_EXPECT" ]; do
-        echo "[INFO] Mutex=$cur; attendo ${CLOUD_MUTEX_WAIT_SECS}s finché diventa ${CLOUD_MUTEX_EXPECT} (${REMOTE_FILE})"
+        echo "[INFO] Mutex=$cur; waiting ${CLOUD_MUTEX_WAIT_SECS}s until it becomes ${CLOUD_MUTEX_EXPECT} (${REMOTE_FILE})"
         sleep "$CLOUD_MUTEX_WAIT_SECS"
         cur="$(read_mutex)"
       done
       ;;
     *)
-      echo "[WARN] CLOUD_MUTEX_EXPECT invalido: $CLOUD_MUTEX_EXPECT (uso 'any')"
+      echo "[WARN] Invalid CLOUD_MUTEX_EXPECT: $CLOUD_MUTEX_EXPECT (using 'any')"
       ;;
   esac
 }
@@ -126,10 +126,10 @@ restic_lock_count() {
 }
 
 wait_resty_locks_clear() {
-  echo "[INFO] Controllo lock Restic sul repo..."
+  echo "[INFO] Checking Restic locks on the repo..."
   locks="$(restic_lock_count || echo 0)"
   while [ "${locks:-0}" -gt 0 ]; do
-    echo "[INFO] Attendo 10s: lock Restic attivi = ${locks}"
+    echo "[INFO] Waiting 10s: active Restic locks = ${locks}"
     sleep 10
     locks="$(restic_lock_count || echo 0)"
   done
@@ -137,13 +137,13 @@ wait_resty_locks_clear() {
 
 # --------- Restore ---------
 do_restore() {
-  echo "[INFO] Ripristino snapshot '${RESTIC_SNAPSHOT}' dal repo ($RESTIC_REPOSITORY, host=$RESTIC_HOSTNAME)"
+  echo "[INFO] Restoring snapshot '${RESTIC_SNAPSHOT}' from repo ($RESTIC_REPOSITORY, host=$RESTIC_HOSTNAME)"
   
   if restic -r "$RESTIC_REPOSITORY" restore "$RESTIC_SNAPSHOT" \
     --target / \
     --host "$RESTIC_HOSTNAME" \
     --no-lock; then
-      echo "[OK] Restore completato."
+      echo "[OK] Restore completed."
   else
       RET=$?
       echo "[WARN] Restore command exited with code $RET. Checking if this is a fresh install (no snapshots)..."
@@ -160,7 +160,7 @@ do_restore() {
           echo "[ERROR] Snapshots found, but restore failed. Inspect logs above."
           exit $RET
       else
-           echo "[INFO] Nessuno snapshot trovato per host '$RESTIC_HOSTNAME' (o filtro non matchato). Assumo installazione pulita/fresh start."
+           echo "[INFO] No snapshot found for host '$RESTIC_HOSTNAME' (or filter unmatched). Assuming clean installation/fresh start."
            return 0
       fi
   fi
@@ -168,14 +168,14 @@ do_restore() {
 
 # --------- Main ---------
 main() {
-  echo "[INFO] Mutex remoto: ${REMOTE_FILE}"
-  # Ora non “wait_for_mutex 0”, ma prova ad acquisire noi:
+  echo "[INFO] Remote mutex: ${REMOTE_FILE}"
+  # Now not "wait_for_mutex 0", but trying to acquire ourselves:
   cas_acquire_mutex
 
   wait_resty_locks_clear
   do_restore
 
-  # Non rilascia il mutex: il server MC terrà il lock durante il run e lo rilascerà allo stop
+  # Do not release the mutex: the MC server will keep the lock during the run and release it at stop
 }
 
 

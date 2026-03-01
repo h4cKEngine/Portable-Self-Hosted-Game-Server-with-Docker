@@ -39,15 +39,30 @@ robust_rm() {
   fi
 }
 
+# Source .env file
+if [ -f "env/.env" ]; then
+    # Using 'set -a' so that sourced variables are exported to the environment
+    set -a
+    source "env/.env"
+    set +a
+else
+    err ".env file not found in env/.env! Run ./install_and_configure.sh first."
+fi
+
+# Source mod-specific functions
+if [ -f "./utils/mods_options.sh" ]; then
+    source "./utils/mods_options.sh"
+fi
+
 # ========= Docker Check =========
 # Checks if Docker is running
 check_docker() {
   if ! command -v docker >/dev/null 2>&1; then
-    err "Docker non è installato. Per favore installalo e riprova."
+    err "Docker is not installed. Please install Docker and try again."
   fi
 
   if ! docker info >/dev/null 2>&1; then
-    err "Docker non è avviato o non è accessibile. Assicurati che Docker Desktop sia in esecuzione."
+    err "Docker is not running. Please start Docker Desktop and try again."
   fi
 }
 
@@ -115,15 +130,15 @@ sync_into_data() {
     # permissions fixed by ensure_permissions later or we fix here
     chown -R "${TARGET_UID}:${TARGET_GID}" "./data/${dest_sub}"
   else
-    echo "[INFO] ${src_dir}/ non presente, salto sync."
+    echo "[INFO] ${src_dir}/ not found, skipping sync."
   fi
 }
 
 preload_into_data() {
   local root="$1"
   local excludes_str="$2"
-  echo "[INFO] Pre-carica da $root (Optimized: single container)"
-  [[ -d "$root" ]] || { echo "[INFO] $root non esiste, salto."; return; }
+  echo "[INFO] Preloading from $root (Optimized: single container)"
+  [[ -d "$root" ]] || { echo "[INFO] $root does not exist, skipping."; return; }
 
   # Run a single alpine container to handle all copies
   # We pass the excludes string as env var
@@ -166,14 +181,14 @@ preload_into_data() {
         # Fix permissions
         chown -R "$UID:$GID" "$DST_ROOT/$item"
       done
-    ' || echo "[WARN] Preload fallito"
+    ' || echo "[WARN] Preload failed"
 }
 
 # ========= Prompt backup offline =========
 # Asks the user if they want to perform an offline backup
 prompt_backup() {
-  # Uso: prompt_backup <default:y|n>
-  local def="${1:-n}" # default implicito: NO
+  # Usage: prompt_backup <default:y|n>
+  local def="${1:-n}" # implicit default: NO
   local prompt="Do you want to backup the current Minecraft world? "
   if [[ "$def" == [Yy] ]]; then
     prompt+="(Y/n): "
@@ -184,16 +199,21 @@ prompt_backup() {
     read -p "$prompt" user_input
     user_input=${user_input:-$def}
     case "$user_input" in
-      y|Y) log "Backup richiesto."; return 0 ;;
-      n|N) log "Backup saltato.";   return 1 ;;
-      *)   warn "Inserisci 'y' oppure 'n'." ;;
+      y|Y) log "Backup requested."; return 0 ;;
+      n|N) log "Backup skipped.";   return 1 ;;
+      *)   warn "Please enter 'y' or 'n'." ;;
     esac
   done
 }
 
 # Performs the offline backup using restic-tools.sh
 do_offline_backup() {
-  log "Eseguo backup offline..."
+  log "Performing offline backup..."
+  
+  if type optimize_mod_data >/dev/null 2>&1; then
+      optimize_mod_data
+  fi
+
   bash ./utils/restic-tools.sh backup
 
   log "Performing Cloud Data Sync (Rclone ./data -> Mega)..."
@@ -202,7 +222,12 @@ do_offline_backup() {
 
 # Performs only world backup (no server data sync)
 do_world_backup_only() {
-  log "Eseguo backup offline (SOLO WORLD)..."
+  log "Performing offline backup (WORLD ONLY)..."
+  
+  if type optimize_mod_data >/dev/null 2>&1; then
+      optimize_mod_data
+  fi
+
   bash ./utils/restic-tools.sh backup
 }
 
@@ -227,13 +252,13 @@ derive_mutex_remote_dir() {
 # Ensures the mutex exists on the cloud
 cloud_mutex_prepare() {
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
-    warn "Mutex script non trovato o non eseguibile: ${RCLONE_MUTEX_SH}. Procedo senza ensure."
+    warn "Mutex script not found or not executable: ${RCLONE_MUTEX_SH}. Proceeding without ensure."
     return 0
   fi
   export MUTEX_REMOTE_DIR="$(derive_mutex_remote_dir)"
   export RCLONE_CONF_HOST
   export MUTEX_FILE
-  log "Cloud mutex ensure su ${MUTEX_REMOTE_DIR}/${MUTEX_FILE} ..."
+  log "Cloud mutex ensure on ${MUTEX_REMOTE_DIR}/${MUTEX_FILE} ..."
   if [[ "${DETACH:-false}" == "true" ]]; then
       "${RCLONE_MUTEX_SH}" ensure >> "$LOG_FILE" 2>&1
   else
@@ -244,88 +269,26 @@ cloud_mutex_prepare() {
 
 # Releases the cloud mutex
 cloud_mutex_release() {
-  if [[ -n "${MUTEX_KEEPALIVE_PID:-}" ]]; then
-    kill "${MUTEX_KEEPALIVE_PID}" 2>/dev/null || true
+  if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
+    return 0
   fi
-  if [[ -x "${RCLONE_MUTEX_SH}" ]]; then
-    log "Rilascio cloud mutex (1→0)..."
-    "${RCLONE_MUTEX_SH}" set 0 >/dev/null || true
+  export MUTEX_REMOTE_DIR="$(derive_mutex_remote_dir)"
+  export RCLONE_CONF_HOST
+  export MUTEX_FILE
+  log "Cloud mutex release on ${MUTEX_REMOTE_DIR}/${MUTEX_FILE} ..."
+  if [[ "${DETACH:-false}" == "true" ]]; then
+      "${RCLONE_MUTEX_SH}" release >> "$LOG_FILE" 2>&1
+  else
+      "${RCLONE_MUTEX_SH}" release
   fi
-}
-
-# ========= Auto-OP Users =========
-# Automatically grants OP status to users specified in the .env file
-# ========= Auto-OP Users =========
-# Automatically grants OP status to users specified in the .env file
-# Monitors server logs for "joined the game" events.
-auto_op_users() {
-  # Disable exit-on-error for this background function to prevent silent crashes
-  set +e
-  log "Auto-OP: Starting event-driven monitor (PID $$)..."
-  
-  # Wait for RCON readiness
-  local retries=0
-  log "Auto-OP: Entering RCON wait loop..."
-  
-  while ! docker exec "${MC_CONTAINER_NAME}" rcon-cli list >/dev/null 2>&1; do
-      sleep 2
-      ((retries++))
-      # Log every 10 seconds (every 5 retries)
-      if ((retries % 5 == 0)); then
-          log "Auto-OP: Waiting for server RCON... ($((retries*2))s elapsed)"
-      fi
-      if ((retries > 900)); then
-          warn "Auto-OP: RCON wait timed out after 30 minutes. Proceeding to monitor logs anyway..."
-          break
-      fi
-  done
-  log "Auto-OP: RCON is ready. Monitoring logs for joins..."
-
-  IFS=',' read -ra ADKINS <<< "${OPERATORS:-}"
-  log "Auto-OP: Monitoring joins for users: ${OPERATORS}"
-
-  # Tail logs (last 100 lines to catch joins during startup) and process
-  # Use stdbuf if available to prevent buffering, otherwise rely on docker's stream
-  cmd="docker logs -f --tail 100 ${MC_CONTAINER_NAME}"
-  
-  $cmd 2>&1 | while read -r line; do
-     # Check for join message
-     if [[ "$line" == *" joined the game"* ]]; then
-         # Debug log mainly to confirm loop is running (comment out if too noisy, but good for now)
-         # log "DEBUG: Log line match: $line"
-         
-         # Extract username using sed
-         player_name=$(echo "$line" | sed -n 's/.*: \(.*\) joined the game/\1/p' | tr -d '\r')
-         
-         if [[ -n "$player_name" ]]; then
-             player_name=$(echo "$player_name" | xargs)
-             
-             # Check if this player is in our OPS list
-             for op_user in "${ADKINS[@]}"; do
-                 op_user=$(echo "$op_user" | xargs)
-                 if [[ "${op_user,,}" == "${player_name,,}" ]]; then
-                      log "Auto-OP: Detected join: $player_name. Granting OP..."
-                      
-                      if out=$(docker exec "${MC_CONTAINER_NAME}" rcon-cli op "$player_name" 2>&1); then
-                          log "Auto-OP: RCON result: $out"
-                      else
-                          warn "Auto-OP: Failed to execute op command for $player_name. Output: $out"
-                      fi
-                 fi
-             done
-         fi
-     fi
-  done
-  log "Auto-OP: Monitor loop exited surprisingly."
 }
 
 # ========= Auto-Confirm FML =========
-# Monitora i log e invia /fml confirm se richiesto
 auto_fml_confirm() {
-  log "DEBUG: Avvio monitoraggio auto-confirm (waiting for container)..."
+  log "DEBUG: Starting auto-confirm monitor (waiting for container)..."
   local container_name="${MC_CONTAINER_NAME}"
   
-  # 1. Attendi che il container sia avviato (max 60s)
+  # 1. Wait for container to start (max 60s)
   local retries=0
   until docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; do
     sleep 2
@@ -333,25 +296,26 @@ auto_fml_confirm() {
     if [ $retries -gt 30 ]; then return; fi
   done
 
-  # 2. Monitora i log per 2 minuti
+  # 2. Monitor logs for 2 minutes
   for i in {1..24}; do
-    # Cerca la stringa specifica nei log recenti
+    # Search for specific string in recent logs
     if docker logs "${container_name}" --tail 100 2>&1 | grep -q "Run the command /fml confirm"; then
-       log "[!]  RILEVATA RICHIESTA FML! Invio '/fml confirm' automatico..."
+       log "[!] FML REQUEST DETECTED! Sending '/fml confirm' automatically..."
        
-       # INVIA IL COMANDO TRAMITE PIPE SU ATTACH
-       # Questo invia il testo allo stdin del container senza "entrarci"
+       # SEND COMMAND VIA PIPE TO ATTACH
+       # This sends text to container stdin without "entering" it
        echo "/fml confirm" | docker attach "${container_name}"
        
-       log "[Comando inviato.]"
+       log "[Command sent.]"
        return 0
     fi
     sleep 5
   done
-  log "[DEBUG] Nessuna richiesta FML rilevata dopo 2 minuti."
+  log "[DEBUG] No FML request detected after 2 minutes."
 }
 
-# ========= Avvio docker-compose =========
+
+# ========= Start docker-compose =========
 # Starts the Docker Compose services
 compose_up() {
   local mode="${1:-auto}"  # auto | restoreon | restoreoff
@@ -366,6 +330,7 @@ compose_up() {
   case "$mode" in
     restoreoff)
       log "Starting without restore from cloud storage..."
+      update_mods_list
       # Use --exit-code-from mc so that if mc stops (AutoStop), backups container is also stopped.
       # shellcheck disable=SC2086
       docker compose --env-file env/.env up --build --exit-code-from mc $scale_args
@@ -464,6 +429,7 @@ compose_up() {
       # We do NOT include the restore-overrides (dependencies) nor the restore profile.
       # This avoids "container stopped" abort triggers from the completed restore service.
       log "Restore completed (or skipped). Starting Server..."
+      update_mods_list
       # shellcheck disable=SC2086
       if [[ "${DETACH:-false}" == "true" ]]; then
           log "Server run in Detatch mode!"
@@ -514,7 +480,7 @@ main() {
       --restoreon)
         RESTORE_MODE="restoreon"
         ;;
-      --loadcurrbackup)
+      --loadcurrbackup | --loadcurrserver)
         # This is handled in the backup block below
         ;;
       --loadcurrworld)
@@ -528,7 +494,7 @@ main() {
   export BACKUP
 
   if [[ "$BACKUP" == "false" ]]; then
-      log "Mode: backupoff -> Backup DISABILITATI (cloud & locale)."
+      log "Mode: backupoff -> Backups DISABLED (cloud & local)."
   fi
   if [[ "$RESTORE_MODE" == "restoreoff" ]]; then
       log "Mode: restore off -> Restore from cloud storage DISABLED."
@@ -594,9 +560,9 @@ main() {
       log "BACKUP=false -> Skipping offline backup."
   elif [[ $# -eq 0 ]]; then
     log "No args -> skipping backup without prompt."
-  elif [[ "$*" == *"loadcurrbackup"* ]]; then # Check if loadcurrbackup is present in args
-      log "Arg 'loadcurrbackup' -> performing FULL backup without prompt."
-      do_offline_backup
+  elif [[ "$*" == *"loadcurrbackup"* || "$*" == *"loadcurrserver"* ]]; then 
+    log "Arg 'loadcurrbackup' or 'loadcurrserver' -> performing FULL backup without prompt."
+    do_offline_backup
   elif [[ "$*" == *"loadcurrworld"* ]]; then # Check if loadcurrworld is present in args
       log "Arg 'loadcurrworld' -> performing WORLD backup ONLY without prompt."
       do_world_backup_only
@@ -613,14 +579,15 @@ main() {
       fi
   fi
   
-  # Avvia il monitoraggio FML in background
+  # Start FML monitor in background
   auto_fml_confirm > ./logs/fml-confirm.log 2>&1 &
 
-  # Avvio con/senza restore
+  # Start with/without restore
   # Run auto-op in background redirecting log
-  # Avvio con/senza restore
+  # Start with/without restore
   # Run auto-op in background redirecting log
   auto_op_users > ./logs/auto-op.log 2>&1 &
+  auto_clean_souls > ./logs/auto-clean-souls.log 2>&1 &
   
   # --- TRAP for Shutdown Backup ---
   # If the script is interrupted (Ctrl+C), we want to:
@@ -639,7 +606,7 @@ main() {
       do_offline_backup || warn "Backup on shutdown failed!"
     fi
 
-    # Kill background jobs (auto_fml_confirm, auto_op_users)
+    # Kill background jobs (auto_fml_confirm, auto_op_users, auto_clean_souls)
     # We use 'jobs -p' to find them. 
     # Suppress error if no jobs running.
     # We must do this to allow 'wait' to return if it was waiting on them.
@@ -690,9 +657,7 @@ main() {
   # No, 'EXIT' trap runs on normal exit too. So we just let it run.
   # But we might want to distinguish if we already did it?
   # The trap function acts as the "Shutdown & Backup" phase.
-  
-  # We wait for background jobs?
-  wait %% 2>/dev/null || true
+
 
 }
 

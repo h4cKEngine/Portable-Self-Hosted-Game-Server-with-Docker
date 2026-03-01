@@ -13,6 +13,7 @@ Lo script `run-server.sh` decide dinamicamente quali file passare a Docker:
     Comando: `docker compose -f docker-compose.yml -f docker-compose.restore-overrides.yml up`
     
     *   **Pre-Restore Sync**: Prima di lanciare Docker, `run-server.sh` esegue `utils/cloud-sync.sh restore`. Questo scarica eventuali file mancanti o aggiornati (escludendo `world/`) dalla cartella `server-data` del Cloud Storage alla directory locale `./data`.
+    *   **Aggiornamento Lista Mod**: Lo script controlla `./data/mods` e genera/aggiorna il file `mods_list.txt` nella root, mantenendo intatta la data di ultima modifica se non ci sono variazioni.
     *   Docker carica la configurazione base (`docker-compose.yml`).
     *   Poi sovrascrive/aggiunge le configurazioni del secondo file (`override`).
     *   **Risultato**: Il servizio `mc` riceve l'istruzione `depends_on: restore-backup`. Quindi **aspetta** che il restore finisca con successo prima di avviarsi.

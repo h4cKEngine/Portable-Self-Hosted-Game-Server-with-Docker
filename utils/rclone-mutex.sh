@@ -69,7 +69,6 @@ init_paths() {
 # CORE OPERATIONS
 # ==============================================================================
 
-# Assicura che la directory remota e il file mutex esistano (default 0)
 # Ensure remote directory and mutex file exist (default 0)
 ensure_initialized() {
   rc mkdir "$REMOTE_DIR" >/dev/null 2>&1 || true
@@ -82,7 +81,6 @@ ensure_initialized() {
   fi
 }
 
-# Legge lo stato attuale (0 o 1)
 # Reads current state (0 or 1)
 read_flag() {
   local out val
@@ -97,7 +95,6 @@ read_flag() {
   if [ "$val" = "1" ]; then echo 1; else echo 0; fi
 }
 
-# Scrittura robusta: Cancella + Upload (per evitare problemi di sovrascrittura su alcuni cloud)
 # Robust write: Delete + Upload (to avoid overwrite issues on some clouds)
 write_flag() {
   local val="$1"
@@ -119,7 +116,6 @@ write_flag() {
   [ "$check" = "$val" ] || err "Write verification failed: wrote $val, read $check"
 }
 
-# Compare-And-Swap: Imposta 'new_val' SOLO SE il valore attuale è 'expected_val'
 # Compare-And-Swap: Set 'new_val' ONLY IF current value is 'expected_val'
 cas_update() {
   local expected="$1"

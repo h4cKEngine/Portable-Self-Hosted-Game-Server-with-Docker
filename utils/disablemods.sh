@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# --- CONFIGURAZIONE ---
-# Percorso della cartella mods (da lanciare ./utils/disablemods.sh on/off)
+# --- CONFIGURATION ---
+# Path to the mods directory (run as ./utils/disablemods.sh on/off)
 MODS_DIR="../data/mods"
 
-# LISTA DELLE MOD DA GESTIRE
-# Aggiungi qui i nomi esatti dei file .jar che danno problemi
+# LIST OF MODS TO MANAGE
+# Add here the exact names of the problematic .jar files
 TARGET_MODS=(
     "Cobblemon-neoforge-1.7.3+1.21.1.jar"
     "Cobbreeding-neoforge-2.2.0.jar"
@@ -21,50 +21,50 @@ TARGET_MODS=(
 
 ACTION=$1
 
-# Controllo che la cartella esista
+# Check if directory exists
 if [ ! -d "$MODS_DIR" ]; then
-    echo "Errore: La cartella $MODS_DIR non esiste!"
+    echo "Error: Directory $MODS_DIR does not exist!"
     exit 1
 fi
 
 case "$ACTION" in
     on|enable)
-        echo "  DISABILITAZIONE MOD..."
+        echo "  DISABLING MODS..."
         for mod in "${TARGET_MODS[@]}"; do
-            # Se esiste il .jar, lo rinomino in .disabled
+            # If the .jar exists, rename it to .disabled
             if [ -f "$MODS_DIR/$mod" ]; then
                 mv "$MODS_DIR/$mod" "$MODS_DIR/$mod.disabled"
-                echo " Disabilitata: $mod"
+                echo " Disabled: $mod"
             elif [ -f "$MODS_DIR/$mod.disabled" ]; then
-                echo "  Già disabilitata: $mod"
+                echo "  Already disabled: $mod"
             else
-                echo " File non trovato: $mod"
+                echo " File not found: $mod"
             fi
         done
         ;;
         
     off|disable)
-        echo "  ABILITAZIONE MOD..."
+        echo "  ENABLING MODS..."
         for mod in "${TARGET_MODS[@]}"; do
-            # Se esiste il .disabled, lo rinomino in .jar
+            # If the .disabled exists, rename it to .jar
             if [ -f "$MODS_DIR/$mod.disabled" ]; then
                 mv "$MODS_DIR/$mod.disabled" "$MODS_DIR/$mod"
-                echo "Abilitata: $mod"
+                echo "Enabled: $mod"
             elif [ -f "$MODS_DIR/$mod" ]; then
-                echo " Già attiva: $mod"
+                echo " Already active: $mod"
             else
-                echo " File disabilitato non trovato: $mod.disabled"
+                echo " Disabled file not found: $mod.disabled"
             fi
         done
         ;;
         
     *)
-        echo "Utilizzo dello script:"
-        echo "  ./disablemods.sh on    -> Disabilita le mod problematiche (rinomina in .disabled)"
-        echo "  ./disablemods.sh off   -> Riabilita le mod (rinomina in .jar)"
+        echo "Script usage:"
+        echo "  ./disablemods.sh on    -> Disable problematic mods (rename to .disabled)"
+        echo "  ./disablemods.sh off   -> Re-enable mods (rename to .jar)"
         exit 1
         ;;
 esac
 
 echo "---------------------------------"
-echo "Operazione completata."
+echo "Operation completed."

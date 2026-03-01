@@ -12,6 +12,7 @@ fullbackup/
 # === Mods (Unless this is a specific modpack repo) ===
 # mods/*.jar
 # mods/memory_repo/
+logs/mods_list.txt
 data/
 
 # === Logs & Caches ===

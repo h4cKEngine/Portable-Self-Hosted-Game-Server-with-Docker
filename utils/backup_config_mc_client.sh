@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# --- CONFIGURAZIONE PERCORSI ---
+# --- PATH CONFIGURATION ---
 SOURCE="$HOME/.minecraft"
 LOG_FILE="$SOURCE/logs/latest.log"
 DEST_BASE="$HOME/Desktop/MC_Light_Backup"
@@ -10,24 +10,24 @@ BACKUP_PATH="$DEST_BASE/Backup_$TIMESTAMP"
 echo "======================================================"
 echo "           MC LIGHT BACKUP - AUTO-DETECTION"
 echo "======================================================"
-echo "[!] AVVISO: Affinche il backup sia completo e le"
-echo "    versioni vengano rilevate, Minecraft deve essere"
-echo "    stato avviato correttamente almeno una volta"
-echo "    con le mod caricate."
+echo "[!] WARNING: For the backup to be complete and"
+echo "    versions to be detected, Minecraft must have been"
+echo "    started successfully at least once"
+echo "    with mods loaded."
 echo "======================================================"
 echo ""
 
-# --- CONTROLLO LOG ---
+# --- LOG CHECK ---
 if [[ ! -f "$LOG_FILE" ]]; then
-    echo "[ERRORE] File di log non trovato in: $LOG_FILE"
-    echo "Avvia il gioco per generarlo."
+    echo "[ERROR] Log file not found at: $LOG_FILE"
+    echo "Start the game to generate it."
     exit 1
 fi
 
 # --- AUTO-DISCOVERY ---
-echo "[+] Rilevamento versioni dal file di log..."
+echo "[+] Detecting versions from log file..."
 
-# Estrazione sicura delle versioni
+# Safe extraction of versions
 MC_VER=$(grep -oP "(?<=--fml.mcVersion, )[^, ]+" "$LOG_FILE" | head -n 1)
 NEO_VER=$(grep -oP "(?<=--fml.neoForgeVersion, )[^, ]+" "$LOG_FILE" | head -n 1)
 FORGE_VER_RAW=$(grep -oP "(?<=--fml.forgeVersion, )[^, ]+" "$LOG_FILE" | head -n 1)
@@ -44,31 +44,31 @@ fi
 
 MODLIST_FILE="mods_list_MC${MC_VER}_${FORGE_VER}.txt"
 
-echo "[+] Rilevato: MC $MC_VER | $FORGE_VER"
+echo "[+] Detected: MC $MC_VER | $FORGE_VER"
 
-# --- ESECUZIONE BACKUP ---
+# --- BACKUP EXECUTION ---
 mkdir -p "$BACKUP_PATH"
 
-echo "[+] Generazione $MODLIST_FILE..."
+echo "[+] Generating $MODLIST_FILE..."
 {
-    echo "# Elenco Mod installate al $(date)"
+    echo "# List of Mods installed on $(date)"
     echo "# Minecraft Version: $MC_VER"
     echo "# Loader Version: $FORGE_VER"
     echo "# ------------------------------------------"
     ls -1 "$SOURCE/mods/"*.jar 2>/dev/null | xargs -n 1 basename
 } > "$BACKUP_PATH/$MODLIST_FILE"
 
-echo "[+] Sincronizzazione cartella Config..."
+echo "[+] Synchronizing Config folder..."
 if command -v rsync >/dev/null 2>&1; then
     rsync -rtv --quiet "$SOURCE/config/" "$BACKUP_PATH/config/"
 else
     cp -r "$SOURCE/config/" "$BACKUP_PATH/config/"
 fi
 
-echo "[+] Copia file extra..."
+echo "[+] Copying extra files..."
 [[ -f "$SOURCE/options.txt" ]] && cp "$SOURCE/options.txt" "$BACKUP_PATH/"
 [[ -f "$SOURCE/servers.dat" ]] && cp "$SOURCE/servers.dat" "$BACKUP_PATH/"
 
 echo "------------------------------------------------------"
-echo "[OK] Backup completato in: $BACKUP_PATH"
+echo "[OK] Backup completed in: $BACKUP_PATH"
 echo "------------------------------------------------------"

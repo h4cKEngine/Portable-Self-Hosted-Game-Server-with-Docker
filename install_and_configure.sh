@@ -53,7 +53,7 @@ ask_choice() {
   while true; do
     # Print prompt with allowed values
     info "${prompt}\n"
-    info "(Scelte consentite: ${allowed_values})\n"
+    info "(Allowed choices: ${allowed_values})\n"
     
     # Read with default
     local input
@@ -75,7 +75,7 @@ ask_choice() {
       printf -v "$var_name" "%s" "$input"
       break
     else
-      warn "Input non valido: '$input'. Riprova."
+      warn "Invalid input: '$input'. Try again."
     fi
   done
 }
@@ -86,7 +86,7 @@ ask_pattern() {
   local var_name="$2"
   local default_val="$3"
   local pattern="$4"
-  local error_msg="${5:-Input non valido per il pattern richiesto}"
+  local error_msg="${5:-Invalid input for the requested pattern}"
 
   while true; do
     # Print prompt
@@ -114,7 +114,7 @@ ask_pattern() {
         else
              # If pattern doesn't allow empty, and default exists, user probably cleared it.
              # Warn and retry.
-             warn "Il valore non può essere vuoto."
+             warn "Value cannot be empty."
              continue
         fi
     fi
@@ -124,7 +124,7 @@ ask_pattern() {
       break
     else
       warn "$error_msg"
-      warn "Pattern richiesto: $pattern"
+      warn "Required pattern: $pattern"
     fi
   done
 }
@@ -157,7 +157,7 @@ should_configure_block() {
   fi
   
   echo ""
-  read -p "Vuoi configurare/modificare la sezione [${block_name}]? [Y/n] " ANSWER
+  read -p "Do you want to configure/modify the [${block_name}] section? [Y/n] " ANSWER
   if [[ "${ANSWER:-Y}" =~ ^[Yy]$ ]]; then
     return 0
   else
@@ -167,22 +167,22 @@ should_configure_block() {
 
 # Removes Zone.Identifier files (WSL artifact)
 clean_identifiers() {
-  echo ">>> (0/5) Rimozione di tutti i file Zone.Identifier..."
+  echo ">>> (0/5) Removing all Zone.Identifier files..."
   if [[ -f ./utils/delete-all-zone-identifier.sh ]]; then
     bash ./utils/delete-all-zone-identifier.sh
   else
-    warn "Script Zone.Identifier non trovato, salto."
+    warn "Zone.Identifier script not found, skipping."
   fi
 }
 
 # Initializes data directory structure
 init_data_dirs() {
-  echo ">>> (0.5/5) Inizializzazione struttura directory 'data/'..."
+  echo ">>> (0.5/5) Initializing 'data/' directory structure..."
   local dirs="data/mods data/config data/libraries data/logs data/world"
   
   for d in $dirs; do
     if [[ ! -d "$d" ]]; then
-      echo "    + Creo directory: $d"
+      echo "    + Creating directory: $d"
       mkdir -p "$d"
     fi
   done
@@ -190,16 +190,16 @@ init_data_dirs() {
 
 # Checks and installs dependencies
 check_deps() {
-  echo ">>> (1/5) Controllo Dipendenze..."
+  echo ">>> (1/5) Checking Dependencies..."
   if [ "$DO_REINSTALL" = true ]; then
-     echo "    (Modalità Reinstall: ON - Disinstallazione precedente...)"
+     echo "    (Reinstall Mode: ON - Previous uninstallation...)"
      bash ./utils/requirements.sh uninstall || true
      echo ""
   fi
 
   bash ./utils/requirements.sh || {
-    warn "Errore durante l'installazione dei requisiti."
-    read -p "Vuoi continuare comunque? [y/N] " CONT
+    warn "Error during requirements installation."
+    read -p "Do you want to continue anyway? [y/N] " CONT
     if [[ ! "${CONT:-N}" =~ ^[Yy]$ ]]; then exit 1; fi
   }
 }
@@ -207,10 +207,10 @@ check_deps() {
 # Loads default values from .env or template
 load_defaults() {
   if [ -f "$ENV_FILE" ]; then
-    msg "File .env trovato. Carico i valori esistenti..."
+    msg ".env file found. Loading existing values..."
     set -a; source "$ENV_FILE" 2>/dev/null || true; set +a
   elif [ -f "$TEMPLATE_FILE" ]; then
-    msg "File .env non trovato. Uso $TEMPLATE_FILE come base..."
+    msg ".env file not found. Using $TEMPLATE_FILE as base..."
     set -a; source "$TEMPLATE_FILE" 2>/dev/null || true; set +a
   fi
 }
@@ -218,27 +218,27 @@ load_defaults() {
 # Configures server settings (Version, Type, IP, etc.)
 config_server() {
   echo ""
-  echo ">>> (2/5) Configurazione Server (Minecraft/IP)"
+  echo ">>> (2/5) Server Configuration (Minecraft/IP)"
   
   if should_configure_block "Server & IP"; then
-    ask_pattern "1. Nome del Modpack (es. 'tekkit', 'vanilla')" \
+    ask_pattern "1. Modpack Name (e.g. 'tekkit', 'vanilla')" \
        INPUT_NAME "${MC_CONTAINER_NAME:-minecraft}" \
        "^[a-zA-Z0-9_-]+$" \
-       "Usa solo lettere, numeri, trattini (-) o underscore (_)."
+       "Use only letters, numbers, hyphens (-) or underscores (_)."
     INPUT_NAME="$(slugify "$INPUT_NAME")"
   
-    ask_pattern "\n2. Versione di Minecraft (es. '1.12.2', '1.20.1')" \
+    ask_pattern "\n2. Minecraft Version (e.g. '1.12.2', '1.20.1')" \
        INPUT_VERSION "${VERSION:-1.12.2}" \
        "^[a-zA-Z0-9.-]+$" \
-       "Versione non valida."
+       "Invalid version."
         
-    ask_choice "\n3. Tipo di Server" \
+    ask_choice "\n3. Server Type" \
         INPUT_TYPE "${TYPE:-FORGE}" "VANILLA FORGE FABRIC NEOFORGE"
     
-    ask_pattern "\n4. IP Pubblico/VPN del server (es. '1.2.3.4')" \
+    ask_pattern "\n4. Server Public IP/VPN (e.g. '1.2.3.4')" \
         INPUT_IP "${IP_SERVER:-127.0.0.1}" \
         "^[a-zA-Z0-9.-]+$" \
-        "Indirizzo IP o Hostname non valido."
+        "Invalid IP address or Hostname."
 
     # Advanced Server Params (Mem, Forge, Seeds, RCON, MOTD, OPS)
     INPUT_FORGE="${FORGE_VERSION:-}"
@@ -251,51 +251,55 @@ config_server() {
     INPUT_RCON="${RCON_PASSWORD:-minecraft}"
     INPUT_MOTD="${MOTD:-}"
     INPUT_OPS="${OPERATORS:-}"
+    INPUT_VIEW_DISTANCE="${VIEW_DISTANCE:-15}"
+    INPUT_SIMULATION_DISTANCE="${SIMULATION_DISTANCE:-5}"
 
     # Ask for specific versions based on TYPE
     case "$INPUT_TYPE" in
       FORGE)
-          ask_pattern "\nVersione di Forge (vuoto=auto)" \
+          ask_pattern "\nForge Version (empty=auto)" \
             INPUT_FORGE "${FORGE_VERSION:-}" \
-            "^[a-zA-Z0-9.-]*$" "Versione non valida."
+            "^[a-zA-Z0-9.-]*$" "Invalid version."
           ;;
       NEOFORGE)
-          ask_pattern "\nVersione di NeoForge (vuoto=auto, default=auto)" \
+          ask_pattern "\nNeoForge Version (empty=auto, default=auto)" \
             INPUT_NEOFORGE "${NEOFORGE_VERSION:-}" \
-            "^[a-zA-Z0-9.-]*$" "Versione non valida."
+            "^[a-zA-Z0-9.-]*$" "Invalid version."
           ;;
       FABRIC)
-          ask_pattern "\nFabric Launcher Version (vuoto=auto)" \
+          ask_pattern "\nFabric Launcher Version (empty=auto)" \
             INPUT_FABRIC_LAUNCHER "${FABRIC_LAUNCHER_VERSION:-}" \
-            "^[a-zA-Z0-9.-]*$" "Versione non valida."
-          ask_pattern "Fabric Loader Version (vuoto=auto)" \
+            "^[a-zA-Z0-9.-]*$" "Invalid version."
+          ask_pattern "Fabric Loader Version (empty=auto)" \
              INPUT_FABRIC_LOADER "${FABRIC_LOADER_VERSION:-}" \
-             "^[a-zA-Z0-9.-]*$" "Versione non valida."
+             "^[a-zA-Z0-9.-]*$" "Invalid version."
           ;;
       VANILLA)
-          info "Vanilla selezonato. Uso Versione Minecraft standard ($INPUT_VERSION)."
+          info "Vanilla selected. Using standard Minecraft Version ($INPUT_VERSION)."
           ;;
     esac
 
     if [ "$SHOW_ADVANCED" = true ]; then
-      info "\n--- Impostazioni Avanzate Server ---\n"
+      info "\n--- Advanced Server Settings ---\n"
       # (Forge/NeoForge/Fabric params already asked above based on TYPE)
       
-      ask_pattern "\nRAM Iniziale (es. 2G, 512M)" \
+      ask_pattern "\nInitial RAM (e.g. 2G, 512M)" \
           INPUT_MEM_INIT "${INIT_MEMORY:-2G}" \
-          "^[0-9]+[MmGg]$" "Formato RAM non valido. Usa M (Megabyte) o G (Gigabyte)."
+          "^[0-9]+[MmGg]$" "Invalid RAM format. Use M (Megabyte) or G (Gigabyte)."
       
-      ask_pattern "\nRAM Massima (es. 6G)" \
+      ask_pattern "\nMaximum RAM (e.g. 6G)" \
           INPUT_MEM_MAX "${MEMORY:-6G}" \
-          "^[0-9]+[MmGg]$" "Formato RAM non valido."
+          "^[0-9]+[MmGg]$" "Invalid RAM format."
       
       ask_pattern "\nWorld Seed" \
           INPUT_SEED "${SEED:-}" \
-          "^[a-zA-Z0-9_-]*$" "Seed non valido."
+          "^[a-zA-Z0-9_-]*$" "Invalid seed."
       
       ask "\nRCON Password"                      INPUT_RCON "${RCON_PASSWORD:-minecraft}"
-      ask "\nMOTD (lascia vuoto per auto)"       INPUT_MOTD "${MOTD:-}"
-      ask "\nOPS (Admin - separa con virgola)"   INPUT_OPS "${OPERATORS:-}"
+      ask "\nMOTD (leave empty for auto)"       INPUT_MOTD "${MOTD:-}"
+      ask "\nOPS (Admin - comma separated)"   INPUT_OPS "${OPERATORS:-}"
+      ask_pattern "\nView Distance"              INPUT_VIEW_DISTANCE "${VIEW_DISTANCE:-15}" "^[0-9]+$" "Enter an integer."
+      ask_pattern "\nSimulation Distance"        INPUT_SIMULATION_DISTANCE "${SIMULATION_DISTANCE:-5}" "^[0-9]+$" "Enter an integer."
     fi
   else
     # Keep old values if skipped
@@ -314,15 +318,17 @@ config_server() {
     INPUT_RCON="${RCON_PASSWORD:-minecraft}"
     INPUT_MOTD="${MOTD:-}"
     INPUT_OPS="${OPERATORS:-}"
+    INPUT_VIEW_DISTANCE="${VIEW_DISTANCE:-15}"
+    INPUT_SIMULATION_DISTANCE="${SIMULATION_DISTANCE:-5}"
     
-    info "Blocco Server saltato. Mantengo valori attuali."
+    info "Server block skipped. Keeping current values."
   fi
 }
 
 # Configures Rclone service
 config_rclone() {
   echo ""
-  echo ">>> (Configurazione Cloud completata nei passaggi precedenti)"
+  echo ">>> (Cloud Configuration completed in previous steps)"
   echo "(Rclone)"
 
   # Try to detect default
@@ -340,23 +346,23 @@ config_rclone() {
         # Basic mode: User said YES to block.
         # Check if config exists
         if [ ! -f "$RCLONE_CONFIG" ]; then
-            warn "File di configurazione Rclone non trovato in $RCLONE_CONFIG"
-            warn "È consigliato usare il Rclone Manager per configurare un remote."
+            warn "Rclone configuration file not found at $RCLONE_CONFIG"
+            warn "It is recommended to use the Rclone Manager to configure a remote."
         else
-            info "File di configurazione trovato: $RCLONE_CONFIG\n"
-            info "Remotes disponibili:\n"
+            info "Configuration file found: $RCLONE_CONFIG\n"
+            info "Available remotes:\n"
             # Extract and list remotes nicely
             if grep -qP '^\[[^\]]+\]$' "$RCLONE_CONFIG"; then
                 grep -oP '^\[\K[^\]]+' "$RCLONE_CONFIG" | while read -r remote; do
                     echo "      - $remote"
                 done
             else
-                warn "      (nessuno trovato nel file)"
+                warn "      (none found in the file)"
             fi
         fi
         
-        info "\nSe non hai ancora configurato un remote o vuoi modificarli:"
-        read -p "Vuoi aprire il Rclone Manager ora? [Y/n] " DO_MGR
+        info "\nIf you haven't configured a remote yet or want to modify them:"
+        read -p "Do you want to open the Rclone Manager now? [Y/n] " DO_MGR
         if [[ "${DO_MGR:-Y}" =~ ^[Yy]$ ]]; then
             ./utils/rclone-manager.sh
             # Re-detect default after manager
@@ -368,8 +374,8 @@ config_rclone() {
     fi
 
     echo ""
-    info "Inserisci il nome del remote da utilizzare per i backup/sync."
-    info "(Deve corrispondere esattamente al nome parentesi quadre in rclone.conf)"
+    info "Enter the remote name to use for backup/sync."
+    info "(Must exactly match the name in brackets in rclone.conf)"
     ask "Nome Remote Rclone (es. 'mega', 'drive'...)" INPUT_RCLONE_SERVICE "$DEFAULT_RCLONE"
   else
     # Logic to extrapolate service name if skipped
@@ -378,29 +384,29 @@ config_rclone() {
     else
         INPUT_RCLONE_SERVICE="mega"
     fi
-     info "Blocco Rclone saltato. Uso servizio: $INPUT_RCLONE_SERVICE"
+     info "Rclone block skipped. Using service: $INPUT_RCLONE_SERVICE"
   fi
 }
 
 # Configures Dynamic DNS
 config_ddns() {
   echo ""
-  echo ">>> (4/5) Configurazione DDNS"
+  echo ">>> (4/5) DDNS Configuration"
   
   INPUT_DDNS_PROVIDER="${DDNS_PROVIDER:-}"
   INPUT_DDNS_DOMAIN="${DDNS_DOMAIN:-}"
   INPUT_DDNS_TOKEN="${DDNS_TOKEN:-}"
   
   if should_configure_block "DDNS"; then
-      info "Provider supportati (dettagli nel README):\n"
-      echo "    - Desec.io   (Score: 9.5/10) - Sicuro, API focus, no GUI semplice."
-      echo "    - Dynu       (Score: 9/10)   - Bilanciato, nessuna scadenza."
-      echo "    - YDNS       (Score: 8.5/10) - EU Hosting, pulito."
-      echo "    - DuckDNS    (Score: 8/10)   - Semplice, ma downtime variabili."
-      echo "    - FreeDNS    (Score: 7.5/10) - Rischio blacklist su domini condivisi."
-      echo "    - No-IP      (Score: 6/10)   - Richiede conferma manuale ogni 30gg."
+      info "Supported providers (details in README):\n"
+      echo "    - Desec.io   (Score: 9.5/10) - Secure, API focus, no simple GUI."
+      echo "    - Dynu       (Score: 9/10)   - Balanced, no expiration."
+      echo "    - YDNS       (Score: 8.5/10) - EU Hosting, clean."
+      echo "    - DuckDNS    (Score: 8/10)   - Simple, but variable downtime."
+      echo "    - FreeDNS    (Score: 7.5/10) - Blacklist risk on shared domains."
+      echo "    - No-IP      (Score: 6/10)   - Requires manual confirmation every 30 days."
       echo ""
-      info "Lascia vuoto il provider per DISABILITARE il DDNS.\n"
+      info "Leave the provider empty to DISABLE DDNS.\n"
       
       # Ask specific details
       ask "DDNS Provider" INPUT_DDNS_PROVIDER "${DDNS_PROVIDER:-duckdns}"
@@ -411,46 +417,46 @@ config_ddns() {
 
       if [ -n "$INPUT_DDNS_PROVIDER" ]; then
           ask_pattern "DDNS Domain (es. mydomain)" INPUT_DDNS_DOMAIN "${DDNS_DOMAIN:-exampleddns}" \
-               "^[a-zA-Z0-9.-]+$" "Dominio non valido."
+               "^[a-zA-Z0-9.-]+$" "Invalid domain."
           
           echo ""
-          info "Note sul Token:\n"
-          info " - DuckDNS: solo il token\n"
-          info " - Desec/YDNS/No-IP/FreeDNS: Spesso richiedono 'username:password' o token specifico.\n"
+          info "Notes on Token:\n"
+          info " - DuckDNS: only the token\n"
+          info " - Desec/YDNS/No-IP/FreeDNS: Often require 'username:password' or specific token.\n"
           ask "DDNS Token (o Password/Key)"  INPUT_DDNS_TOKEN "${DDNS_TOKEN:-CHANGE_ME}"
       else
-          info "DDNS disabilitato (provider vuoto)."
+          info "DDNS disabled (empty provider)."
           INPUT_DDNS_DOMAIN=""
           INPUT_DDNS_TOKEN=""
       fi
   else
-      info "Blocco DDNS saltato."
+      info "DDNS block skipped."
   fi
 }
 
 # Configures Restic Backup settings
 config_restic() {
   echo ""
-  echo ">>> (5/5) Configurazione Backup (Restic)"
+  echo ">>> (5/5) Backup Configuration (Restic)"
   
   INPUT_RESTIC_HOSTNAME="${RESTIC_HOSTNAME:-Mondo}"
   INPUT_RESTIC_PASSWORD="${RESTIC_PASSWORD:-minecraft}"
   INPUT_RESTIC_KEEP_LAST="${RESTIC_KEEP_LAST:-10}"
   
   if should_configure_block "Backup/Restic"; then
-      ask_pattern "Restic Hostname (Nome univoco per questo backup)" \
+      ask_pattern "Restic Hostname (Unique name for this backup)" \
           INPUT_RESTIC_HOSTNAME "${RESTIC_HOSTNAME:-Mondo}" \
-          "^[a-zA-Z0-9_-]+$" "Hostname non valido."
+          "^[a-zA-Z0-9_-]+$" "Invalid hostname."
       
-      ask "Restic Password (Encryption key per il repo)"     INPUT_RESTIC_PASSWORD "${RESTIC_PASSWORD:-minecraft}"
+      ask "Restic Password (Encryption key for the repo)"     INPUT_RESTIC_PASSWORD "${RESTIC_PASSWORD:-minecraft}"
       
-      ask_pattern "Restic Keep Last (Numero di snapshot da mantenere)" \
+      ask_pattern "Restic Keep Last (Number of snapshots to keep)" \
           INPUT_RESTIC_KEEP_LAST "${RESTIC_KEEP_LAST:-10}" \
-          "^[0-9]+$" "Inserisci un numero intero positivo."
+          "^[0-9]+$" "Enter a positive integer."
   else
       # Defaults if skipped
       INPUT_RESTIC_KEEP_LAST="${RESTIC_KEEP_LAST:-10}"
-      info "Blocco Backup saltato."
+      info "Backup block skipped."
   fi
 }
 
@@ -473,19 +479,19 @@ compute_derived() {
 
 # Confirms settings and writes to .env file
 confirm_and_write() {
-  msg "\nRiepilogo Configurazione:"
+  msg "\nConfiguration Summary:"
   echo "------------------------------------------------"
   echo "Modpack Name:      $FINAL_CONTAINER_NAME"
   echo "Minecraft Version: $INPUT_VERSION"
   echo "Server Type:       $INPUT_TYPE"
   echo "IP Server:         $INPUT_IP"
   echo "Rclone Service:    $INPUT_RCLONE_SERVICE"
-  [ "$SHOW_ADVANCED" = true ] && echo "(+ Parametri avanzati)" || echo "(Parametri avanzati nascosti)"
+  [ "$SHOW_ADVANCED" = true ] && echo "(+ Advanced parameters)" || echo "(Advanced parameters hidden)"
   echo "------------------------------------------------"
 
-  read -p "Salvare in $ENV_FILE? [Y/n] " REPLY
+  read -p "Save to $ENV_FILE? [Y/n] " REPLY
   if [[ ! "${REPLY:-Y}" =~ ^[Yy]$ ]]; then
-    echo "Annullato."
+    echo "Cancelled."
     exit 0
   fi
 
@@ -516,6 +522,8 @@ MAX_PLAYERS=${MAX_PLAYERS:-8}
 MOTD="${FINAL_MOTD}"
 SEED=${INPUT_SEED}
 OPERATORS=${INPUT_OPS}
+VIEW_DISTANCE=${INPUT_VIEW_DISTANCE}
+SIMULATION_DISTANCE=${INPUT_SIMULATION_DISTANCE}
 EULA=TRUE
 ONLINE_MODE=FALSE
 
@@ -547,29 +555,29 @@ MUTEX_REMOTE_DIR=${FINAL_MUTEX_DIR}
 
 MC_CONTAINER_NAME=${FINAL_CONTAINER_NAME}
 EOF
-  msg "File salvato!"
+  msg "File saved!"
 
   # Prompt for Restic Initialization
   if [ "$INTERACTIVE" = true ]; then
       echo ""
-      read -p "Vuoi inizializzare il repository Restic ora? (Fallo se è la prima volta) [Y/n] " DO_INIT
+      read -p "Do you want to initialize the Restic repository now? (Do this if it's the first time) [Y/n] " DO_INIT
       if [[ "${DO_INIT:-Y}" =~ ^[Yy]$ ]]; then
           if [ -f "./utils/restic-tools.sh" ]; then
              # Use || true to prevent script exit if repo already exists
-             bash ./utils/restic-tools.sh init || warn "Inizializzazione fallita (forse la repo esiste già?)"
+             bash ./utils/restic-tools.sh init || warn "Initialization failed (maybe the repo already exists?)"
           else
-             warn "Script ./utils/restic-tools.sh non trovato. Impossibile inizializzare."
+             warn "Script ./utils/restic-tools.sh not found. Cannot initialize."
           fi
       fi
 
       echo ""
-      read -p "Vuoi verificare lo stato del repository (snapshots)? [Y/n] " DO_CHECK
+      read -p "Do you want to verify the repository status (snapshots)? [Y/n] " DO_CHECK
       if [[ "${DO_CHECK:-Y}" =~ ^[Yy]$ ]]; then
           if [ -f "./utils/restic-tools.sh" ]; then
-             msg "Verifica stato repository..."
-             bash ./utils/restic-tools.sh doctor || warn "Verifica fallita o nessun snapshot trovato."
+             msg "Verifying repository status..."
+             bash ./utils/restic-tools.sh doctor || warn "Verification failed or no snapshot found."
           else
-             warn "Script non trovato."
+             warn "Script not found."
           fi
       fi
   fi
@@ -589,7 +597,7 @@ main() {
   
   echo "=========================================================="
   echo "    DISTRIBUTED MINECRAFT SERVER - SETUP WIZARD"
-  [ "$INTERACTIVE" = false ] && echo "    (Modalità No-Asking: ON - skip conferme block)" || echo "    (Modalità Interattiva: Default - conferme attive)"
+  [ "$INTERACTIVE" = false ] && echo "    (No-Asking Mode: ON - skip confirm block)" || echo "    (Interactive Mode: Default - confirms active)"
   echo "=========================================================="
   
   config_server
@@ -604,12 +612,14 @@ main() {
   sudo apt clean
 
   # Fix permissions on ./data so run-server.sh can work without sudo
-  msg "\n(Fix Permessi) Imposto proprietà di ./data a $USER..."
+  msg "\n(Fix Permissions) Setting ownership of ./data and ./run-server.sh to $USER..."
   sudo chown -R "$USER:$USER" ./data
+  sudo chmod 755 -R ./data
   sudo chmod 755 ./run-server.sh
-  sudo chmod 755 -R *
+  sudo chown -R "$USER:$USER" ./data
+  sudo chmod 755 -R ./world
 
-  msg "\nSetup Completato!"
+  msg "\nSetup Completed!"
 }
 
 main "$@"

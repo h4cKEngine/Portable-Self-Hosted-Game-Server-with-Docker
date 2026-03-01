@@ -33,7 +33,7 @@ Start the automatic configurator.
 ```
 
 ```bash
-# Or with the --full flag for advanced options (RAM, Forge Version / Fabric Version, DuckDNS, etc.)
+# Or with the --full flag for advanced options (RAM, Forge/Fabric Versions, View Distance, DuckDNS, etc.)
 ./install_and_configure.sh --full
 ```
 
@@ -84,6 +84,7 @@ The project uses the local **`./data`** folder to inject custom files into the s
   - Mod configurations (`./data/config/my-mod.cfg`)
   - Scripts (`./data/scripts/tweaks.zs`)
   - Custom `server.properties`
+- **Automatic Mod List**: Every time the server starts, a `mods_list.txt` file is updated in the project root with the list of currently installed mods (timestamps are preserved if no changes occurred).
 
 > **Important**: Maintain the same folder structure as the server (e.g. `config`, `mods`, etc.).
 
@@ -104,14 +105,15 @@ The project uses the local **`./data`** folder to inject custom files into the s
 | :--- | :--- |
 | **Snapshot List** | `bash utils/restic-tools.sh exec snapshots` |
 | **Manual Backup** | `bash utils/restic-tools.sh backup` (requires stopped server) |
+| **Restic Unlock** | `bash utils/restic-tools.sh unlock` |
 | **Restore from Snapshot** | `bash utils/restic-tools.sh restore <snapshot-id>` |
-| **Unlock Mutex** | `./utils/rclone-mutex.sh set 0` (In case of server crash) |
+| **Unlock Mutex Cloud Storage** | `./utils/rclone-mutex.sh set 0` (In case of server crash) |
 | **Mutex Status** | `./utils/rclone-mutex.sh status` |
 | **Diagnostics** | `./utils/rclone-mutex.sh diag` |
 | **Start without Restore from Repo**| `./run-server.sh restoreoff` |
 | **Start with Restore from Repo** | `./run-server.sh restoreon` (default behavior) |
 | **Upload local current 'world/' to Repo** | `./run-server.sh loadcurrworld` (No server data sync) |
-| **Upload local current 'world/' + 'data/' to Repo** | `./run-server.sh loadcurrbackup` |
+| **Upload local current 'world/' + 'data/' to Repo** | `./run-server.sh loadcurrserver` |
 | **Start without Backup** | `./run-server.sh backupoff` (Disable automatic backups on stop, can be used with restoreoff) |
 | **Disable Mods** | `./utils/disablemods.sh on` (Disables problematic mods defined in the script) |
 | **Enable Mods** | `./utils/disablemods.sh off` (Re-enables problematic mods) |
