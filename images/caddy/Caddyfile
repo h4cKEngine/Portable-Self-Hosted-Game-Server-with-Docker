@@ -1,0 +1,27 @@
+{
+    # Let Caddy provision certificates without an email address to avoid ACME registration failures
+}
+
+http:// {
+    redir https://{$DDNS_DOMAIN}.{$DDNS_PROVIDER}{uri}
+}
+
+{$DDNS_DOMAIN}.{$DDNS_PROVIDER} {
+    tls {
+        dns {$DDNS_PROVIDER_NAME} {$DUCKDNS_TOKEN}
+    }
+
+    # Proxy status requests to the local Python status API service
+    route /api/status* {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    # Serve server info as a JSON endpoint for the web page
+    route /server-info.json {
+        header Content-Type application/json
+        respond `{"ip":"{$IP_SERVER}","domain":"{$DDNS_DOMAIN}.{$DDNS_PROVIDER}","name":"{$MC_CONTAINER_NAME}"}` 200
+    }
+
+    root * /usr/share/caddy
+    file_server
+}

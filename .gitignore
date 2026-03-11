@@ -15,6 +15,11 @@ fullbackup/
 logs/mods_list.txt
 data/
 
+# === Web ===
+images/caddy/caddy_config/caddy/
+images/caddy/caddy_config/
+images/caddy/caddy_data/
+
 # === Logs & Caches ===
 logs/*
 !logs/.gitkeep

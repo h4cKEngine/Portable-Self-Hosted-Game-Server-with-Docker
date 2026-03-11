@@ -113,3 +113,29 @@ services:
       - ./data:/data:ro
       - ./env/rclone.conf:${RCLONE_CONFIG}:ro
       - ./backups:/backups
+
+  web:
+    build:
+      context: ./images/caddy
+      dockerfile: Dockerfile
+      args:
+        CADDY_DNS_PROVIDER: ${DDNS_PROVIDER_NAME:-duckdns}
+    container_name: ${MC_CONTAINER_NAME}-web
+    environment:
+      DUCKDNS_TOKEN: ${DDNS_TOKEN}
+      DDNS_DOMAIN: ${DDNS_DOMAIN}
+      DDNS_PROVIDER: ${DDNS_PROVIDER}
+      DDNS_PROVIDER_NAME: ${DDNS_PROVIDER_NAME:-duckdns}
+      IP_SERVER: ${IP_SERVER}
+      MC_CONTAINER_NAME: ${MC_CONTAINER_NAME}
+      MC_HOST: "mc"
+      MC_PORT: "25565"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./images/caddy/web:/usr/share/caddy:ro
+      - ./images/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./images/caddy/caddy_data:/data
+      - ./images/caddy/caddy_config:/config
+    restart: unless-stopped

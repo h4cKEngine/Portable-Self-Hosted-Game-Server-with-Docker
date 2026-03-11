@@ -411,18 +411,32 @@ config_ddns() {
       # Ask specific details
       ask "DDNS Provider" INPUT_DDNS_PROVIDER "${DDNS_PROVIDER:-duckdns}"
       
-      # Normalize Provider: lower case and strip extensions (duckdns.org -> duckdns)
+      # Normalize Provider: lower case only (keep full domain, e.g. duckdns.org)
       INPUT_DDNS_PROVIDER=$(echo "$INPUT_DDNS_PROVIDER" | tr '[:upper:]' '[:lower:]')
-      INPUT_DDNS_PROVIDER="${INPUT_DDNS_PROVIDER%%.*}"
+      # Derive short name for Caddy DNS plugin (must match github.com/caddy-dns/<name>)
+      # Based on providers listed in README. Fallback: strip everything after first dot.
+      case "${INPUT_DDNS_PROVIDER%%.*}" in
+        duckdns)  INPUT_DDNS_PROVIDER_NAME="duckdns" ;;
+        desec)    INPUT_DDNS_PROVIDER_NAME="desec" ;;
+        dynu)     INPUT_DDNS_PROVIDER_NAME="dynu" ;;
+        ydns)     INPUT_DDNS_PROVIDER_NAME="ydns" ;;
+        afraid)   INPUT_DDNS_PROVIDER_NAME="freedns" ;; # FreeDNS uses 'afraid.org' but plugin is 'freedns'
+        noip)     INPUT_DDNS_PROVIDER_NAME="noip" ;;
+        *)        INPUT_DDNS_PROVIDER_NAME="${INPUT_DDNS_PROVIDER%%.*}" ;; # generic fallback
+      esac
 
       if [ -n "$INPUT_DDNS_PROVIDER" ]; then
-          ask_pattern "DDNS Domain (es. mydomain)" INPUT_DDNS_DOMAIN "${DDNS_DOMAIN:-exampleddns}" \
+          ask_pattern "DDNS Domain (es. mydomain.duckdns.org)" INPUT_DDNS_DOMAIN "${DDNS_DOMAIN:-example.duckdns.org}" \
                "^[a-zA-Z0-9.-]+$" "Invalid domain."
           
           echo ""
-          info "Notes on Token:\n"
-          info " - DuckDNS: only the token\n"
-          info " - Desec/YDNS/No-IP/FreeDNS: Often require 'username:password' or specific token.\n"
+          info "Notes and Examples for Token/Domain (based on README):\n"
+          info " - DuckDNS: Domain is usually 'name.duckdns.org'. Token is just the DuckDNS Token (e.g. 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d).\n"
+          info " - Desec.io: Domain is your desec domain. Token is your API token.\n"
+          info " - Dynu: Domain is your dynu domain. Token is your API Password/Hash.\n"
+          info " - YDNS: Domain is your ydns domain. Token is 'username:password' (Basic Auth) or API token.\n"
+          info " - FreeDNS (afraid.org): Domain is your chosen public domain. Token is your Direct URL hash/string.\n"
+          info " - No-IP: Domain is your no-ip domain. Token is 'username:password' or specific auth string.\n\n"
           ask "DDNS Token (o Password/Key)"  INPUT_DDNS_TOKEN "${DDNS_TOKEN:-CHANGE_ME}"
       else
           info "DDNS disabled (empty provider)."
@@ -504,6 +518,9 @@ IP_SERVER=${INPUT_IP}
 DDNS_DOMAIN=${INPUT_DDNS_DOMAIN}
 DDNS_TOKEN=${INPUT_DDNS_TOKEN}
 DDNS_PROVIDER=${INPUT_DDNS_PROVIDER}
+# DDNS_PROVIDER_NAME: short provider name (without TLD), used e.g. by Caddy DNS plugin
+# (e.g. DDNS_PROVIDER=duckdns.org -> DDNS_PROVIDER_NAME=duckdns)
+DDNS_PROVIDER_NAME=${INPUT_DDNS_PROVIDER_NAME}
 
 # === RCON ===
 RCON_PASSWORD=${INPUT_RCON}

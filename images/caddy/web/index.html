@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Status</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <main class="container">
+        <header>
+            <div class="logo">⛏️</div>
+            <h1 id="server-name">Minecraft Server</h1>
+            <p class="subtitle">Server Status Dashboard</p>
+            <p class="visitor-greeting" id="visitor-greeting" style="display:none"></p>
+        </header>
+
+        <section class="status-card" id="status-card">
+            <div class="status-badge" id="status-badge">
+                <span class="pulse-dot" id="pulse-dot"></span>
+                <span id="status-text">Checking...</span>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">🌐 Address</div>
+                    <div class="info-value" id="server-address">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📡 IP</div>
+                    <div class="info-value" id="server-ip">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">👥 Players</div>
+                    <div class="info-value" id="player-count">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🗺️ Version</div>
+                    <div class="info-value" id="server-version">—</div>
+                </div>
+            </div>
+
+            <div class="motd-box" id="motd-box" style="display:none">
+                <span id="motd-text"></span>
+            </div>
+
+            <div class="connect-section">
+                <p class="connect-label">Connect with:</p>
+                <div class="connect-address" id="connect-address">—</div>
+                <button class="copy-btn" id="copy-btn" onclick="copyAddress()">📋 Copy</button>
+            </div>
+        </section>
+
+        <section class="members-card">
+            <h2 class="members-title">🌐 ZeroTier Members</h2>
+            <ul class="members-list" id="members-list">
+                <li class="member-placeholder">Loading...</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Last updated: <span id="last-updated">—</span></p>
+            <button class="refresh-btn" onclick="refresh()">↻ Refresh</button>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
