@@ -138,28 +138,28 @@ optimize_mod_data() {
 # ==============================================================================
 # The 'dungeons' mod might spawn too many soul entities, causing lag.
 # This function sends a kill command via RCON every 5 minutes.
-auto_clean_souls() {
-    # Disable exit-on-error for this background function to prevent crashes
-    set +e
+# auto_clean_souls() {
+#     # Disable exit-on-error for this background function to prevent crashes
+#     set +e
     
-    echo "Auto-Clean Souls: Waiting for RCON..."
-    local retries=0
-    while ! docker exec "${MC_CONTAINER_NAME}" rcon-cli list >/dev/null 2>&1; do
-        sleep 5
-        ((retries++))
-        if ((retries > 180)); then
-            echo "Auto-Clean Souls: RCON wait timed out. Proceeding anyway..."
-            break
-        fi
-    done
+#     echo "Auto-Clean Souls: Waiting for RCON..."
+#     local retries=0
+#     while ! docker exec "${MC_CONTAINER_NAME}" rcon-cli list >/dev/null 2>&1; do
+#         sleep 5
+#         ((retries++))
+#         if ((retries > 180)); then
+#             echo "Auto-Clean Souls: RCON wait timed out. Proceeding anyway..."
+#             break
+#         fi
+#     done
 
-    while true; do
-        timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-        echo "[$timestamp] Starting Dungeons mod entity cleanup..."
-        # Use docker exec with the correct container name variable
-        # Note: if "duneons" was a typo in the mod, you might want to change it to "dungeons"
-        docker exec "${MC_CONTAINER_NAME}" rcon-cli "kill @e[type=duneons:soul]"
-        echo "[$timestamp] Command sent. Waiting 5 minutes."
-        sleep 300
-    done
-}
+#     while true; do
+#         timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#         echo "[$timestamp] Starting Dungeons mod entity cleanup..."
+#         # Use docker exec with the correct container name variable
+#         # Note: if "duneons" was a typo in the mod, you might want to change it to "dungeons"
+#         docker exec "${MC_CONTAINER_NAME}" rcon-cli "kill @e[type=duneons:soul]"
+#         echo "[$timestamp] Command sent. Waiting 5 minutes."
+#         sleep 300
+#     done
+# }
