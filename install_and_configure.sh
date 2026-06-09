@@ -633,8 +633,13 @@ main() {
   sudo chown -R "$USER:$USER" ./data
   sudo chmod 755 -R ./data
   sudo chmod 755 ./run-server.sh
-  sudo chown -R "$USER:$USER" ./data
-  sudo chmod 755 -R ./world
+  
+  # Controlla se la cartella world esiste prima di lanciare chmod
+  if [ -d "./world" ]; then
+      sudo chmod 755 -R ./world
+  else
+      info "  -> (Skip) La cartella './world' non esiste ancora. Verrà creata al primo avvio.\n"
+  fi
 
   msg "\nSetup Completed!"
 }
