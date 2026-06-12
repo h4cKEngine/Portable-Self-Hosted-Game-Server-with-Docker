@@ -14,13 +14,14 @@ auto_op_users() {
   # Disable exit-on-error for this background function to prevent silent crashes
   set +e
   log "Auto-OP: Starting event-driven monitor (PID $$)..."
+  sleep 30
   
   # Wait for RCON readiness
   local retries=0
   log "Auto-OP: Entering RCON wait loop..."
   
   while ! docker exec "${MC_CONTAINER_NAME}" rcon-cli list >/dev/null 2>&1; do
-      sleep 2
+      sleep 4
       ((retries++))
       # Log every 10 seconds (every 5 retries)
       if ((retries % 5 == 0)); then

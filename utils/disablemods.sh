@@ -7,15 +7,8 @@ MODS_DIR="../data/mods"
 # LIST OF MODS TO MANAGE
 # Add here the exact names of the problematic .jar files
 TARGET_MODS=(
-    "Cobblemon-neoforge-1.7.3+1.21.1.jar"
-    "Cobbreeding-neoforge-2.2.0.jar"
-    "cobblemonarmory-1.4.4-neoforge-1.21.1.jar"
-    "cobblemonoutbreaks-neoforge-1.0.1-1.21.1.jar"
-    "spawnnotification-neoforge-1.7.3-2.3.0.jar"
-    "shinyfossils-0.9.2.jar"
-    "fightorflight-neoforge-0.10.6.jar"
-    "timcore-neoforge-1.7.3-1.31.0.jar"
-    "mega_showdown-neoforge-1.6.9+1.7.3+1.21.1.jar"
+    ""
+    ""
 )
 # ----------------------
 
