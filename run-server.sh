@@ -95,7 +95,7 @@ load_env() {
 # ========= Bind mounts permissions =========
 ensure_permissions() {
   log "Checking/fixing permissions on ./data"
-  mkdir -p ./data
+  mkdir -p ./data/world ./data/mods ./data/config ./backups
 
   # Fix permissions for the whole data directory
   # Optimize: Only chown if owner/group is different

@@ -15,6 +15,7 @@ fullbackup/
 # mods/memory_repo/
 logs/mods_list.txt
 data/
+server_modpacks/
 
 # === Web ===
 images/caddy/caddy_config/caddy/

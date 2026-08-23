@@ -37,9 +37,21 @@ const DDNS_HINTS = {
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     fetchConfig();
+    loadInstalledModpacks();
 });
 
 function initEventListeners() {
+    // CurseForge Enter key
+    const cfInput = document.getElementById('input-cf-url');
+    if (cfInput) {
+        cfInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                inspectCurseForgeModpack();
+            }
+        });
+    }
+
     // Name slugification & live previews
     const nameInput = document.getElementById('input-name');
     nameInput.addEventListener('input', () => {
@@ -939,3 +951,389 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 3500);
 }
+
+
+// ─── CurseForge Modpack Management ──────────────────────────────────────────
+
+let currentInspectedModpack = null;
+let activeTaskInterval = null;
+
+async function inspectCurseForgeModpack() {
+    const input = document.getElementById('input-cf-url');
+    const target = input ? input.value.trim() : '';
+    if (!target) {
+        showToast('Inserisci un URL o ID di un modpack CurseForge', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btn-cf-inspect');
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Ricerca...';
+
+    const previewContainer = document.getElementById('cf-preview-container');
+
+    try {
+        const res = await fetch('/api/curseforge/info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url_or_id: target })
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.detail || 'Impossibile recuperare le informazioni del modpack');
+        }
+
+        currentInspectedModpack = data.modpack;
+        renderModpackPreview(currentInspectedModpack);
+        showToast(`Modpack trovato: ${currentInspectedModpack.name}`, 'success');
+    } catch (err) {
+        showToast(`Errore: ${err.message}`, 'error');
+        if (previewContainer) previewContainer.style.display = 'none';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+    }
+}
+
+function renderModpackPreview(modpack) {
+    const container = document.getElementById('cf-preview-container');
+    if (!container || !modpack) return;
+
+    const logo = document.getElementById('cf-preview-logo');
+    if (modpack.icon_url) {
+        logo.src = modpack.icon_url;
+        logo.style.display = 'block';
+    } else {
+        logo.src = '';
+        logo.style.display = 'none';
+    }
+
+    document.getElementById('cf-preview-title').textContent = modpack.name || 'Modpack Sconosciuto';
+    document.getElementById('cf-preview-summary').textContent = modpack.summary || 'Nessuna descrizione disponibile.';
+
+    const loaderBadge = document.getElementById('cf-preview-loader');
+    const loaderType = (modpack.server_type || 'FORGE').toUpperCase();
+    loaderBadge.textContent = loaderType;
+    loaderBadge.className = `badge badge-loader badge-${loaderType.toLowerCase()}`;
+
+    document.getElementById('cf-preview-version').textContent = `MC ${modpack.mc_version || '1.20.1'}`;
+    document.getElementById('cf-preview-filename').textContent = modpack.latest_file_name || '-';
+
+    const downloads = modpack.download_count ? Number(modpack.download_count).toLocaleString() : '-';
+    document.getElementById('cf-preview-downloads').textContent = downloads;
+
+    const dateStr = modpack.file_date ? new Date(modpack.file_date).toLocaleDateString() : '-';
+    document.getElementById('cf-preview-date').textContent = dateStr;
+
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function applyPreviewToForm() {
+    if (!currentInspectedModpack) {
+        showToast('Nessun modpack ispezionato da applicare.', 'warning');
+        return;
+    }
+    applyModpackToConfig(currentInspectedModpack);
+}
+
+function applyModpackToConfig(modpack) {
+    if (!modpack) return;
+
+    const cleanSlug = (modpack.slug || modpack.name || 'modpack').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+
+    const nameInput = document.getElementById('input-name');
+    if (nameInput) nameInput.value = cleanSlug;
+
+    const verInput = document.getElementById('input-version');
+    if (verInput) verInput.value = modpack.mc_version || '1.20.1';
+
+    const sType = (modpack.server_type || 'FORGE').toUpperCase();
+    selectServerType(sType);
+
+    if (sType === 'FORGE' && modpack.loader_version) {
+        const fInput = document.getElementById('input-forge-version');
+        if (fInput) fInput.value = modpack.loader_version;
+    } else if (sType === 'NEOFORGE' && modpack.loader_version) {
+        const neoInput = document.getElementById('input-neoforge-version');
+        if (neoInput) neoInput.value = modpack.loader_version;
+    } else if (sType === 'FABRIC' && modpack.loader_version) {
+        const fabInput = document.getElementById('input-fabric-loader-version');
+        if (fabInput) fabInput.value = modpack.loader_version;
+    }
+
+    const motdInput = document.getElementById('input-motd');
+    if (motdInput) {
+        motdInput.value = `§6${modpack.name || cleanSlug} §7| §b${sType} ${modpack.mc_version || ''}`;
+        renderMotdPreview(motdInput.value);
+    }
+
+    updateDerivedPreviews();
+    showToast(`Configurazione aggiornata per ${modpack.name || cleanSlug}!`, 'success');
+}
+
+async function startModpackDownload() {
+    const input = document.getElementById('input-cf-url');
+    const target = input ? input.value.trim() : '';
+    if (!target) {
+        showToast('Inserisci un URL o ID di un modpack CurseForge', 'warning');
+        return;
+    }
+
+    const btnInstall = document.getElementById('btn-cf-install');
+    btnInstall.disabled = true;
+    btnInstall.textContent = '⏳ Avvio download...';
+
+    const progressContainer = document.getElementById('cf-progress-container');
+    if (progressContainer) progressContainer.style.display = 'block';
+
+    clearConsoleLog();
+    appendConsoleLog('[INFO] Invio richiesta di installazione all\'API...');
+
+    try {
+        const res = await fetch('/api/curseforge/install', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url_or_id: target })
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.detail || 'Impossibile avviare il task di installazione');
+        }
+
+        const taskId = data.task_id;
+        appendConsoleLog(`[OK] Task registrato (ID: ${taskId}). Monitoraggio progresso...`);
+        showToast('Download del modpack avviato in background!', 'info');
+
+        pollCurseForgeTask(taskId);
+    } catch (err) {
+        appendConsoleLog(`[ERRORE] ${err.message}`);
+        showToast(`Errore: ${err.message}`, 'error');
+        btnInstall.disabled = false;
+        btnInstall.textContent = '⬇️ Scarica & Installa in server_modpacks/';
+    }
+}
+
+function pollCurseForgeTask(taskId) {
+    if (activeTaskInterval) clearInterval(activeTaskInterval);
+
+    const btnInstall = document.getElementById('btn-cf-install');
+    const progressBar = document.getElementById('cf-progress-bar');
+    const progressStep = document.getElementById('cf-progress-step');
+    const progressPct = document.getElementById('cf-progress-pct');
+
+    let lastLogIndex = 0;
+
+    activeTaskInterval = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/curseforge/tasks/${taskId}`);
+            if (!res.ok) throw new Error('Task lookup failed');
+            const data = await res.json();
+            const task = data.task;
+
+            if (!task) return;
+
+            // Update Progress
+            const pct = task.progress || 0;
+            if (progressBar) progressBar.style.width = `${pct}%`;
+            if (progressPct) progressPct.textContent = `${pct}%`;
+            if (progressStep) progressStep.textContent = task.current_step || 'Elaborazione in corso...';
+
+            // Append new logs safely
+            const logs = task.logs || [];
+            if (logs.length > lastLogIndex) {
+                for (let i = lastLogIndex; i < logs.length; i++) {
+                    const l = logs[i];
+                    appendConsoleLog(`[${l.time}] ${l.text}`);
+                }
+                lastLogIndex = logs.length;
+            }
+
+            if (task.status === 'completed') {
+                clearInterval(activeTaskInterval);
+                activeTaskInterval = null;
+                btnInstall.disabled = false;
+                btnInstall.textContent = '✅ Installazione Completata';
+                showToast('Modpack installato con successo in server_modpacks/!', 'success');
+                loadInstalledModpacks();
+                if (task.result) {
+                    applyModpackToConfig(task.result);
+                }
+            } else if (task.status === 'failed') {
+                clearInterval(activeTaskInterval);
+                activeTaskInterval = null;
+                btnInstall.disabled = false;
+                btnInstall.textContent = '❌ Riprova Installazione';
+                showToast(`Installazione fallita: ${task.error || 'Errore sconosciuto'}`, 'error');
+            }
+        } catch (err) {
+            console.error('Polling error:', err);
+        }
+    }, 1500);
+}
+
+function appendConsoleLog(text) {
+    const consoleEl = document.getElementById('cf-console-log');
+    if (!consoleEl) return;
+    if (consoleEl.textContent === 'In attesa dell\'avvio...') {
+        consoleEl.textContent = '';
+    }
+    consoleEl.textContent += text + '\n';
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function clearConsoleLog() {
+    const consoleEl = document.getElementById('cf-console-log');
+    if (consoleEl) consoleEl.textContent = '';
+}
+
+async function loadInstalledModpacks() {
+    const listContainer = document.getElementById('cf-installed-list');
+    if (!listContainer) return;
+
+    try {
+        const res = await fetch('/api/curseforge/installed');
+        if (!res.ok) throw new Error('Impossibile caricare i modpack installati');
+        const data = await res.json();
+        const modpacks = data.modpacks || [];
+
+        listContainer.replaceChildren();
+
+        if (modpacks.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'cf-empty-notice';
+            empty.textContent = 'Nessun modpack attualmente presente in server_modpacks/. Inserisci un link sopra per scaricarne uno!';
+            listContainer.appendChild(empty);
+            return;
+        }
+
+        modpacks.forEach(mp => {
+            const item = document.createElement('div');
+            item.className = 'cf-installed-item';
+
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'cf-item-icon';
+            iconDiv.textContent = '📦';
+
+            const details = document.createElement('div');
+            details.className = 'cf-item-details';
+
+            const titleRow = document.createElement('div');
+            titleRow.className = 'cf-item-title-row';
+
+            const title = document.createElement('strong');
+            title.className = 'cf-item-name';
+            title.textContent = mp.name || mp.slug;
+
+            const loaderBadge = document.createElement('span');
+            const loaderType = (mp.server_type || 'FORGE').toUpperCase();
+            loaderBadge.className = `badge badge-sm badge-loader badge-${loaderType.toLowerCase()}`;
+            loaderBadge.textContent = loaderType;
+
+            const verBadge = document.createElement('span');
+            verBadge.className = 'badge badge-sm badge-version';
+            verBadge.textContent = `MC ${mp.mc_version || '1.20.1'}`;
+
+            titleRow.appendChild(title);
+            titleRow.appendChild(loaderBadge);
+            titleRow.appendChild(verBadge);
+
+            const metaRow = document.createElement('div');
+            metaRow.className = 'cf-item-meta';
+            metaRow.textContent = `📁 server_modpacks/${mp.slug} • ${mp.mods_count} mod • ${mp.size_mb} MB`;
+
+            details.appendChild(titleRow);
+            details.appendChild(metaRow);
+
+            const actions = document.createElement('div');
+            actions.className = 'cf-item-actions';
+
+            const activateBtn = document.createElement('button');
+            activateBtn.type = 'button';
+            activateBtn.className = 'btn btn-sm btn-primary';
+            activateBtn.textContent = '🚀 Attiva nel Server (Copia in data/)';
+            activateBtn.title = 'Copia mod, config e impostazioni direttamente in ./data e aggiorna env/.env';
+            activateBtn.onclick = () => activateModpack(mp.slug);
+
+            const applyBtn = document.createElement('button');
+            applyBtn.type = 'button';
+            applyBtn.className = 'btn btn-sm btn-secondary';
+            applyBtn.textContent = '⚙️ Compila Form';
+            applyBtn.title = 'Compila solo i campi del form di configurazione';
+            applyBtn.onclick = () => applyModpackToConfig(mp);
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'btn btn-sm btn-danger';
+            delBtn.textContent = '🗑️';
+            delBtn.title = 'Elimina cartella modpack';
+            delBtn.onclick = () => deleteInstalledModpack(mp.slug);
+
+            actions.appendChild(activateBtn);
+            actions.appendChild(applyBtn);
+            actions.appendChild(delBtn);
+
+            item.appendChild(iconDiv);
+            item.appendChild(details);
+            item.appendChild(actions);
+
+            listContainer.appendChild(item);
+        });
+    } catch (err) {
+        listContainer.replaceChildren();
+        const errDiv = document.createElement('div');
+        errDiv.className = 'cf-empty-notice error';
+        errDiv.textContent = `Errore nel caricamento: ${err.message}`;
+        listContainer.appendChild(errDiv);
+    }
+}
+
+async function activateModpack(slug) {
+    if (!confirm(`Vuoi attivare il modpack '${slug}' nel server?\n\nATTENZIONE: L'intera cartella ./data verrà svuotata e sostituita con i file del nuovo modpack (mods, config, overrides, ecc.) per evitare qualsiasi conflitto tra versioni diverse di Minecraft e loader.`)) {
+        return;
+    }
+
+    showToast(`Attivazione e pulizia data/ in corso per '${slug}'...`, 'info');
+
+    try {
+        const res = await fetch('/api/curseforge/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug, clean_all_data: true })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.detail || 'Attivazione non riuscita');
+        }
+
+        showToast(data.message || 'Modpack attivato con successo in ./data!', 'success');
+        fetchConfig();
+    } catch (err) {
+        showToast(`Errore: ${err.message}`, 'error');
+    }
+}
+
+async function deleteInstalledModpack(slug) {
+    if (!confirm(`Sei sicuro di voler eliminare definitivamente la cartella 'server_modpacks/${slug}'?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/curseforge/installed/${encodeURIComponent(slug)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.detail || 'Eliminazione non riuscita');
+        }
+        showToast(`Modpack '${slug}' eliminato con successo.`, 'success');
+        loadInstalledModpacks();
+    } catch (err) {
+        showToast(`Errore: ${err.message}`, 'error');
+    }
+}
+
+

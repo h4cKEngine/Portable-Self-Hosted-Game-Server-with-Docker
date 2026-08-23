@@ -990,4 +990,446 @@
         flex: 1 1 40%;
         justify-content: center;
     }
+
+    .cf-input-wrapper {
+        flex-direction: column;
+    }
+
+    .cf-preview-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .cf-preview-header {
+        justify-content: center;
+    }
+
+    .cf-preview-meta {
+        justify-content: center;
+    }
+
+    .cf-actions-row {
+        flex-direction: column;
+    }
+
+    .cf-installed-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ── CurseForge Modpack Downloader & Manager ────────────────────── */
+.cf-modpack-section {
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 20px rgba(245, 158, 11, 0.08);
+}
+
+.cf-search-box {
+    margin-bottom: 20px;
+}
+
+.cf-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 6px 10px;
+    transition: all 0.2s ease;
+}
+
+.cf-input-wrapper:focus-within {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.cf-search-icon {
+    font-size: 1.2rem;
+    padding-left: 4px;
+}
+
+.cf-search-input {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 8px 6px !important;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.btn-cf-search {
+    white-space: nowrap;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ── Modpack Preview Card ───────────────────────────────────────── */
+.cf-preview-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 22px;
+    animation: fadeInSlide 0.3s ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cf-preview-card {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.cf-preview-img {
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #0f172a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.cf-preview-info {
+    flex: 1;
+}
+
+.cf-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.cf-preview-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.cf-preview-summary {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.45;
+    margin: 0 0 10px 0;
+}
+
+.cf-preview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.cf-preview-meta strong {
+    color: #e2e8f0;
+}
+
+.cf-actions-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-install-modpack {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    font-weight: 700;
+}
+
+.btn-install-modpack:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+}
+
+/* ── Badges ─────────────────────────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.badge-sm {
+    padding: 2px 7px;
+    font-size: 0.7rem;
+}
+
+.badge-loader {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-forge {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.badge-neoforge {
+    background: rgba(234, 179, 8, 0.2);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.badge-fabric {
+    background: rgba(6, 182, 212, 0.2);
+    color: #22d3ee;
+    border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+.badge-version {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+}
+
+/* ── Progress & Console Log ─────────────────────────────────────── */
+.cf-progress-container {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 22px;
+    animation: fadeInSlide 0.3s ease-out;
+}
+
+.cf-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.cf-progress-pct {
+    font-family: 'JetBrains Mono', monospace;
+    color: #38bdf8;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #4ade80, #f59e0b);
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.cf-console-wrapper {
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.cf-console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.btn-console-clear {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.72rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.btn-console-clear:hover {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cf-console-log {
+    margin: 0;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #4ade80;
+    background: transparent;
+    max-height: 220px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* ── Installed Modpacks List ────────────────────────────────────── */
+.cf-installed-container {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cf-installed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.cf-installed-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+.cf-installed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cf-installed-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+}
+
+.cf-installed-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.cf-item-icon {
+    font-size: 1.5rem;
+}
+
+.cf-item-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.cf-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.cf-item-name {
+    font-size: 0.95rem;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.cf-item-meta {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.cf-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: #ef4444;
+    color: #fff;
+}
+
+.btn-accent {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-accent:hover {
+    background: linear-gradient(135deg, #a78bfa, #818cf8);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+}
+
+.cf-empty-notice {
+    padding: 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.88rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.cf-empty-notice.error {
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.05);
 }

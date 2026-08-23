@@ -134,4 +134,7 @@ services:
       - ./images/caddy/caddy_config:/config
       - ./images/caddy/main.py:/app/main.py
       - ./env:/app/env
+      - ./server_modpacks:/app/server_modpacks
+      - ./data:/app/data
+      - ./utils:/app/utils:ro
     restart: unless-stopped

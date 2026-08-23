@@ -1,7 +1,11 @@
+import json
 import os
 import re
 import shutil
 import subprocess
+import sys
+import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -35,6 +39,46 @@ ENV_FILE_PATH = ENV_DIR_PATH / ".env"
 ENV_EXAMPLE_PATH = ENV_DIR_PATH / ".env-example"
 RCLONE_CONF_PATH = ENV_DIR_PATH / "rclone.conf"
 RCLONE_CONF_EXAMPLE_PATH = ENV_DIR_PATH / "rclone.conf.example"
+
+# Determine server_modpacks directory (default /app/server_modpacks inside container, ./server_modpacks locally)
+MODPACKS_DIR_PATH = Path(os.getenv("MODPACKS_DIR", "/app/server_modpacks")).resolve()
+if not MODPACKS_DIR_PATH.exists():
+    local_modpacks_dir = Path("./server_modpacks").resolve()
+    if local_modpacks_dir.exists():
+        MODPACKS_DIR_PATH = local_modpacks_dir
+    else:
+        try:
+            MODPACKS_DIR_PATH.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+
+# Determine data directory for Minecraft server
+DATA_DIR_PATH = Path(os.getenv("DATA_DIR", "/app/data")).resolve()
+if not DATA_DIR_PATH.exists():
+    local_data_dir = Path("./data").resolve()
+    if local_data_dir.exists():
+        DATA_DIR_PATH = local_data_dir
+    else:
+        try:
+            DATA_DIR_PATH.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+
+# Add utils to sys.path to allow importing curseforge_modpack_installer
+for possible_utils in [Path("/app/utils"), Path("./utils").resolve(), Path(__file__).parent.parent.parent / "utils"]:
+    if possible_utils.exists() and str(possible_utils) not in sys.path:
+        sys.path.insert(0, str(possible_utils))
+
+try:
+    import curseforge_modpack_installer as cf_installer
+except ImportError:
+    try:
+        from utils import curseforge_modpack_installer as cf_installer
+    except ImportError:
+        cf_installer = None
+
+# Task store for ongoing and completed modpack installation jobs
+MODPACK_TASKS: Dict[str, Dict] = {}
 
 
 def slugify(text: str) -> str:
@@ -301,6 +345,23 @@ class RcloneTestModel(BaseModel):
 
 class RcloneRawModel(BaseModel):
     content: str = Field(..., description="Raw rclone.conf content")
+
+
+class CurseForgeInfoRequest(BaseModel):
+    url_or_id: str = Field(..., min_length=1, max_length=500, description="CurseForge URL, slug, or numeric ID")
+
+
+class CurseForgeInstallRequest(BaseModel):
+    url_or_id: str = Field(..., min_length=1, max_length=500, description="CurseForge URL, slug, or numeric ID")
+    server_dir_name: Optional[str] = Field(default=None, description="Optional custom folder name inside server_modpacks")
+
+
+class CurseForgeActivateRequest(BaseModel):
+    slug: str = Field(..., min_length=1, max_length=100, description="Modpack folder slug")
+    clean_all_data: bool = Field(default=True, description="Clean all files and folders in data/ before copying to avoid conflicts")
+
+
+
 
 
 def render_env_content(cfg: ServerConfigModel) -> str:
@@ -697,3 +758,328 @@ def save_config(config: ServerConfigModel):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
+
+
+# ─── CurseForge Modpack API Endpoints ───────────────────────────────────────
+
+@app.post("/api/curseforge/info")
+def get_curseforge_modpack_info(req: CurseForgeInfoRequest):
+    """Fetches metadata and preview information for a CurseForge modpack."""
+    if not cf_installer:
+        raise HTTPException(status_code=500, detail="CurseForge installer module not available.")
+
+    target = req.url_or_id.strip()
+    if not target:
+        raise HTTPException(status_code=400, detail="Modpack URL or ID cannot be empty.")
+
+    try:
+        info = cf_installer.inspect_modpack(target)
+        return {
+            "status": "success",
+            "modpack": info
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Errore durante l'ispezione del modpack: {str(e)}")
+
+
+@app.post("/api/curseforge/install")
+def start_curseforge_installation(req: CurseForgeInstallRequest):
+    """Starts asynchronous modpack installation into server_modpacks/<slug>."""
+    if not cf_installer:
+        raise HTTPException(status_code=500, detail="CurseForge installer module not available.")
+
+    target = req.url_or_id.strip()
+    if not target:
+        raise HTTPException(status_code=400, detail="Modpack URL or ID cannot be empty.")
+
+    task_id = str(uuid.uuid4())
+    MODPACK_TASKS[task_id] = {
+        "id": task_id,
+        "target": target,
+        "status": "pending",
+        "progress": 0,
+        "current_step": "Inizializzazione task...",
+        "logs": [],
+        "created_at": datetime.now().isoformat(),
+        "result": None,
+        "error": None,
+    }
+
+    def run_worker():
+        task = MODPACK_TASKS[task_id]
+        task["status"] = "running"
+
+        def log_cb(msg: str):
+            clean_msg = str(msg).strip()
+            if clean_msg:
+                task["logs"].append({
+                    "time": datetime.now().strftime("%H:%M:%S"),
+                    "text": clean_msg
+                })
+
+        def progress_cb(pct: int, text: str = ""):
+            task["progress"] = max(0, min(100, pct))
+            if text:
+                task["current_step"] = text
+
+        try:
+            target_dir = None
+            if req.server_dir_name:
+                clean_name = slugify(req.server_dir_name)
+                target_dir = MODPACKS_DIR_PATH / clean_name
+            else:
+                cf_installer.DEFAULT_SERVER_DIR = MODPACKS_DIR_PATH
+
+            res = cf_installer.install_modpack_task(
+                target=target,
+                server_dir=target_dir,
+                log_callback=log_cb,
+                progress_callback=progress_cb
+            )
+            task["status"] = "completed"
+            task["progress"] = 100
+            task["current_step"] = "Completato con successo!"
+            task["result"] = res
+        except Exception as exc:
+            task["status"] = "failed"
+            task["error"] = str(exc)
+            task["current_step"] = f"Errore: {str(exc)}"
+            log_cb(f"ERRORE FATALE: {exc}")
+
+    t = threading.Thread(target=run_worker, daemon=True)
+    t.start()
+
+    return {
+        "status": "success",
+        "task_id": task_id,
+        "message": "Installazione avviata in background."
+    }
+
+
+@app.get("/api/curseforge/tasks/{task_id}")
+def get_curseforge_task_status(task_id: str):
+    """Get the current progress and logs of a modpack installation task."""
+    task = MODPACK_TASKS.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task non trovato.")
+    return {
+        "status": "success",
+        "task": task
+    }
+
+
+@app.get("/api/curseforge/installed")
+def list_installed_modpacks():
+    """List all installed modpacks found in server_modpacks/ directory."""
+    MODPACKS_DIR_PATH.mkdir(parents=True, exist_ok=True)
+    modpacks = []
+
+    for p in sorted(MODPACKS_DIR_PATH.iterdir()):
+        if p.is_dir() and not p.name.startswith("."):
+            # Check modpack_metadata.json first
+            metadata_file = p / "modpack_metadata.json"
+            manifest_file = p / "manifest.json"
+            mods_dir = p / "mods"
+            mods_count = len(list(mods_dir.glob("*.jar"))) if mods_dir.is_dir() else 0
+
+            mc_ver = "1.20.1"
+            loader = "FORGE"
+            loader_ver = ""
+            name = p.name
+
+            if metadata_file.is_file():
+                try:
+                    meta = json.loads(metadata_file.read_text(encoding="utf-8"))
+                    name = meta.get("name", name)
+                    mc_ver = meta.get("mc_version", mc_ver)
+                    loader = (meta.get("server_type") or loader).upper()
+                    loader_ver = meta.get("loader_version", loader_ver)
+                except Exception:
+                    pass
+            elif manifest_file.is_file():
+                try:
+                    data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                    name = data.get("name", p.name)
+                    mc_data = data.get("minecraft", {})
+                    mc_ver = mc_data.get("version", mc_ver)
+                    loaders = mc_data.get("modLoaders", [])
+                    if loaders:
+                        primary = next((l for l in loaders if l.get("primary")), loaders[0])
+                        loader_id = str(primary.get("id", ""))
+                        l_name, _, l_ver = loader_id.partition("-")
+                        loader = l_name.upper()
+                        loader_ver = l_ver
+                except Exception:
+                    pass
+
+            total_size_bytes = 0
+            try:
+                for f in p.rglob("*"):
+                    if f.is_file():
+                        total_size_bytes += f.stat().st_size
+            except Exception:
+                pass
+
+            size_mb = round(total_size_bytes / (1024 * 1024), 1)
+
+            modpacks.append({
+                "slug": p.name,
+                "name": name,
+                "path": str(p.resolve()),
+                "mc_version": mc_ver,
+                "server_type": loader,
+                "loader_version": loader_ver,
+                "mods_count": mods_count,
+                "size_mb": size_mb,
+                "has_eula": (p / "eula.txt").is_file(),
+            })
+
+    return {
+        "status": "success",
+        "modpacks_dir": str(MODPACKS_DIR_PATH),
+        "modpacks": modpacks
+    }
+
+
+@app.delete("/api/curseforge/installed/{slug}")
+def delete_installed_modpack(slug: str):
+    """Safely delete an installed modpack folder."""
+    clean_slug = slugify(slug)
+    target_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
+
+    # Strict sandboxing boundary check
+    if not str(target_dir).startswith(str(MODPACKS_DIR_PATH.resolve()) + os.sep):
+        raise HTTPException(status_code=400, detail="Accesso al percorso non consentito.")
+
+    if not target_dir.exists():
+        raise HTTPException(status_code=404, detail="Cartella modpack non trovata.")
+
+    try:
+        shutil.rmtree(target_dir)
+        return {
+            "status": "success",
+            "message": f"Modpack '{clean_slug}' eliminato con successo."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore durante l'eliminazione: {str(e)}")
+
+
+@app.post("/api/curseforge/activate")
+def activate_modpack(req: CurseForgeActivateRequest):
+    """Copies all modpack files from server_modpacks/<slug> into data/ and applies configuration."""
+    clean_slug = slugify(req.slug)
+    src_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
+
+    if not str(src_dir).startswith(str(MODPACKS_DIR_PATH.resolve()) + os.sep):
+        raise HTTPException(status_code=400, detail="Percorso non valido.")
+
+    if not src_dir.is_dir():
+        raise HTTPException(status_code=404, detail=f"Modpack 'server_modpacks/{clean_slug}' non trovato.")
+
+    DATA_DIR_PATH.mkdir(parents=True, exist_ok=True)
+
+    # 1. Clean the entire data/ directory to prevent any conflicts between different modpacks/versions
+    if req.clean_all_data:
+        if DATA_DIR_PATH.exists():
+            for item in list(DATA_DIR_PATH.iterdir()):
+                try:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink()
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                except OSError:
+                    pass
+
+    # 2. Copy contents from server_modpacks/<slug> into data/
+    copied_files_count = 0
+    for item in src_dir.iterdir():
+        dest_item = DATA_DIR_PATH / item.name
+        if item.is_dir():
+            dest_item.mkdir(parents=True, exist_ok=True)
+            for sub_file in item.rglob("*"):
+                if sub_file.is_file():
+                    rel = sub_file.relative_to(item)
+                    target_file = dest_item / rel
+                    target_file.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(sub_file, target_file)
+                    copied_files_count += 1
+        elif item.is_file():
+            shutil.copy2(item, dest_item)
+            copied_files_count += 1
+
+    # Ensure required base folders exist
+    (DATA_DIR_PATH / "world").mkdir(parents=True, exist_ok=True)
+    (DATA_DIR_PATH / "mods").mkdir(parents=True, exist_ok=True)
+    (DATA_DIR_PATH / "config").mkdir(parents=True, exist_ok=True)
+
+    # 3. Read metadata / manifest to extract MC version, loader, etc. and update env/.env
+    metadata_file = src_dir / "modpack_metadata.json"
+    manifest_file = src_dir / "manifest.json"
+    name = clean_slug
+    mc_ver = "1.20.1"
+    loader = "FORGE"
+    loader_ver = ""
+
+    if metadata_file.is_file():
+        try:
+            meta = json.loads(metadata_file.read_text(encoding="utf-8"))
+            name = meta.get("name", name)
+            mc_ver = meta.get("mc_version", mc_ver)
+            loader = (meta.get("server_type") or loader).upper()
+            loader_ver = meta.get("loader_version", loader_ver)
+        except Exception:
+            pass
+    elif manifest_file.is_file():
+        try:
+            data = json.loads(manifest_file.read_text(encoding="utf-8"))
+            name = data.get("name", clean_slug)
+            mc_data = data.get("minecraft", {})
+            mc_ver = mc_data.get("version", mc_ver)
+            loaders = mc_data.get("modLoaders", [])
+            if loaders:
+                primary = next((l for l in loaders if l.get("primary")), loaders[0])
+                loader_id = str(primary.get("id", ""))
+                l_name, _, l_ver = loader_id.partition("-")
+                loader = l_name.upper()
+                loader_ver = l_ver
+        except Exception:
+            pass
+
+    # Read current .env to preserve network/backup settings
+    source_env = ENV_FILE_PATH if ENV_FILE_PATH.is_file() else ENV_EXAMPLE_PATH
+    current_env = parse_env_file(source_env)
+
+    # Build ServerConfigModel and save
+    try:
+        cfg = ServerConfigModel(
+            name=clean_slug,
+            version=mc_ver,
+            server_type=loader,
+            forge_version=loader_ver if loader == "FORGE" else "",
+            neoforge_version=loader_ver if loader == "NEOFORGE" else "",
+            fabric_loader_version=loader_ver if loader == "FABRIC" else "",
+            motd=f"§6{name} §7| §b{loader} {mc_ver}",
+            ip_server=current_env.get("IP_SERVER", "127.0.0.1"),
+            ip_fallbacks=current_env.get("IP_FALLBACKS", ""),
+            rclone_service=current_env.get("MUTEX_REMOTE_DIR", "mega:/aura").split(":")[0],
+            ddns_provider=current_env.get("DDNS_PROVIDER", "duckdns"),
+            ddns_domain=current_env.get("DDNS_DOMAIN", ""),
+            ddns_token=current_env.get("DDNS_TOKEN", ""),
+        )
+        save_config(cfg)
+    except Exception:
+        pass
+
+    return {
+        "status": "success",
+        "message": f"Modpack '{name}' attivato con successo! Copiati {copied_files_count} file in ./data e aggiornato env/.env.",
+        "slug": clean_slug,
+        "name": name,
+        "mc_version": mc_ver,
+        "server_type": loader,
+        "loader_version": loader_ver,
+        "copied_files": copied_files_count,
+        "data_path": str(DATA_DIR_PATH.resolve())
+    }
+
+

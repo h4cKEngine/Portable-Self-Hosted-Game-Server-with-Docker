@@ -38,6 +38,85 @@
         </header>
 
         <form id="config-form" onsubmit="return false;">
+            <!-- 0. CurseForge Modpack Downloader & Manager -->
+            <section class="form-card cf-modpack-section" id="cf-modpack-card">
+                <div class="card-header">
+                    <div class="card-icon">📦</div>
+                    <div>
+                        <h2>Downloader Modpack CurseForge</h2>
+                        <p class="card-desc">Inserisci il link o ID di un modpack per scaricarlo direttamente nella cartella <code>server_modpacks/</code></p>
+                    </div>
+                </div>
+
+                <div class="cf-search-box">
+                    <div class="cf-input-wrapper">
+                        <span class="cf-search-icon">🔗</span>
+                        <input type="text" id="input-cf-url" class="form-input cf-search-input" placeholder="Incolla link CurseForge (es. https://www.curseforge.com/minecraft/modpacks/better-mc-forge-bmc4) o slug" autocomplete="off">
+                        <button type="button" class="btn btn-secondary btn-cf-search" id="btn-cf-inspect" onclick="inspectCurseForgeModpack()">
+                            🔍 Cerca Modpack
+                        </button>
+                    </div>
+                    <small class="form-hint">Supporta URL completi di CurseForge, slug (es. <code>all-the-mods-9</code>) o ID numerici.</small>
+                </div>
+
+                <!-- Modpack Preview Card (hidden by default) -->
+                <div class="cf-preview-container" id="cf-preview-container" style="display: none;">
+                    <div class="cf-preview-card">
+                        <img id="cf-preview-logo" class="cf-preview-img" src="" alt="Modpack Logo">
+                        <div class="cf-preview-info">
+                            <div class="cf-preview-header">
+                                <h3 id="cf-preview-title" class="cf-preview-title">Nome Modpack</h3>
+                                <span class="badge badge-loader" id="cf-preview-loader">FORGE</span>
+                                <span class="badge badge-version" id="cf-preview-version">1.20.1</span>
+                            </div>
+                            <p id="cf-preview-summary" class="cf-preview-summary">Descrizione del modpack...</p>
+                            <div class="cf-preview-meta">
+                                <span>📁 File: <strong id="cf-preview-filename">-</strong></span>
+                                <span>📥 Download: <strong id="cf-preview-downloads">-</strong></span>
+                                <span>📅 Aggiornato: <strong id="cf-preview-date">-</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cf-actions-row">
+                        <button type="button" class="btn btn-primary btn-install-modpack" id="btn-cf-install" onclick="startModpackDownload()">
+                            ⬇️ Scarica & Installa in server_modpacks/
+                        </button>
+                        <button type="button" class="btn btn-accent" id="btn-cf-apply-form" onclick="applyPreviewToForm()">
+                            ⚡ Compila Configurazione con questo Modpack
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Installation Progress & Console Box (hidden by default) -->
+                <div class="cf-progress-container" id="cf-progress-container" style="display: none;">
+                    <div class="cf-progress-header">
+                        <span class="cf-progress-step" id="cf-progress-step">Preparazione download...</span>
+                        <span class="cf-progress-pct" id="cf-progress-pct">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="cf-progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <div class="cf-console-wrapper">
+                        <div class="cf-console-header">
+                            <span>📟 Log di Installazione Console</span>
+                            <button type="button" class="btn-console-clear" onclick="clearConsoleLog()">Pulisci</button>
+                        </div>
+                        <pre class="cf-console-log" id="cf-console-log">In attesa dell'avvio...</pre>
+                    </div>
+                </div>
+
+                <!-- Installed Modpacks in server_modpacks/ -->
+                <div class="cf-installed-container">
+                    <div class="cf-installed-header">
+                        <h4>📂 Modpack Scaricati in <code>server_modpacks/</code></h4>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="loadInstalledModpacks()">🔄 Aggiorna Lista</button>
+                    </div>
+                    <div class="cf-installed-list" id="cf-installed-list">
+                        <div class="cf-empty-notice">Nessun modpack attualmente scaricato in server_modpacks/.</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 1. Nome Server & Descrizione -->
             <section class="form-card">
                 <div class="card-header">
