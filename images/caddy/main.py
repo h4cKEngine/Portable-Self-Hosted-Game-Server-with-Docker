@@ -45,6 +45,21 @@ def slugify(text: str) -> str:
     return cleaned or "minecraft-server"
 
 
+def get_full_ddns_domain(domain: str, provider: str) -> str:
+    """Format full FQDN for DDNS domain based on provider."""
+    if not domain or not domain.strip():
+        return ""
+    d = domain.strip()
+    if "." in d:
+        return d
+    p = (provider or "duckdns").strip().lower()
+    if p in ["duckdns", "duckdns.org"]:
+        return f"{d}.duckdns.org"
+    if p in ["desec", "desec.io"]:
+        return f"{d}.dedyn.io"
+    return d
+
+
 def derive_ddns_provider_name(provider: str) -> str:
     """Map DDNS provider domain/name to Caddy DNS plugin shortname."""
     if not provider:
@@ -388,6 +403,23 @@ def render_env_content(cfg: ServerConfigModel) -> str:
 
 
 # ─── API Endpoints ───────────────────────────────────────────────────────────
+
+@app.get("/api/server-info")
+def get_server_info():
+    """Returns dynamic server information including full DDNS FQDN."""
+    source_file = ENV_FILE_PATH if ENV_FILE_PATH.is_file() else ENV_EXAMPLE_PATH
+    parsed = parse_env_file(source_file)
+    raw_domain = parsed.get("DDNS_DOMAIN", os.getenv("DDNS_DOMAIN", ""))
+    provider = parsed.get("DDNS_PROVIDER", os.getenv("DDNS_PROVIDER", "duckdns"))
+    full_domain = get_full_ddns_domain(raw_domain, provider)
+    return {
+        "ip": parsed.get("IP_SERVER", os.getenv("IP_SERVER", "127.0.0.1")),
+        "domain": full_domain,
+        "raw_domain": raw_domain,
+        "provider": provider,
+        "name": parsed.get("MC_CONTAINER_NAME", os.getenv("MC_CONTAINER_NAME", "minecraft-server"))
+    }
+
 
 @app.get("/api/status")
 async def get_status():

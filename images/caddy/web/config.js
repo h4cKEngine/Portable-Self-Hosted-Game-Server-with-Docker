@@ -551,6 +551,20 @@ function selectDDNSProvider(provider) {
     updateDDNSPluginPreview(currentDDNSProvider);
 }
 
+function formatFullDomain(domain, provider) {
+    if (!domain || !domain.trim()) return '';
+    const d = domain.trim();
+    if (d.includes('.')) return d;
+    const p = (provider || 'duckdns').toLowerCase().trim();
+    if (p === 'duckdns' || p === 'duckdns.org') {
+        return `${d}.duckdns.org`;
+    }
+    if (p === 'desec' || p === 'desec.io') {
+        return `${d}.dedyn.io`;
+    }
+    return d;
+}
+
 function updateDDNSPluginPreview(provider) {
     const pluginPreview = document.getElementById('preview-ddns-plugin');
     if (!provider) {
@@ -775,7 +789,7 @@ function openConfirmModal() {
         { label: 'Server IP (Principale)', val: payload.ip_server },
         { label: 'Fallback IPs', val: payload.ip_fallbacks || '(nessuno)' },
         { label: 'Rclone Remote', val: payload.rclone_service },
-        { label: 'DDNS Domain', val: payload.ddns_domain || '(disabilitato)' },
+        { label: 'DDNS Domain', val: payload.ddns_domain ? formatFullDomain(payload.ddns_domain, payload.ddns_provider) : '(disabilitato)' },
         { label: 'RAM Allocata', val: `${payload.init_memory} - ${payload.memory}` },
     ];
 

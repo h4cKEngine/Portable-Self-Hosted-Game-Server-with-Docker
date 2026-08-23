@@ -1,8 +1,9 @@
 {
-    auto_https off
+    debug
+    auto_https disable_redirects
 }
 
-:80 {
+(common) {
     # Security Headers
     header {
         X-Content-Type-Options "nosniff"
@@ -15,10 +16,10 @@
         reverse_proxy 127.0.0.1:8000
     }
 
-    # Serve server info endpoint
+    # Serve dynamic server info endpoint via FastAPI
     handle /server-info.json {
-        header Content-Type application/json
-        respond `{"ip":"{$IP_SERVER:127.0.0.1}","domain":"{$DDNS_DOMAIN:}","name":"{$MC_CONTAINER_NAME:minecraft-server}"}` 200
+        rewrite * /api/server-info
+        reverse_proxy 127.0.0.1:8000
     }
 
     # Serve static frontend files
@@ -27,4 +28,13 @@
         try_files {path} {path}.html {path}/ index.html
         file_server
     }
+}
+
+http://localhost, http://127.0.0.1, :80 {
+    import common
+}
+
+https://localhost, https://127.0.0.1, :443 {
+    tls internal
+    import common
 }

@@ -39,6 +39,20 @@ async function loadMembers() {
     }).join('');
 }
 
+function formatFullDomain(domain, provider) {
+    if (!domain || !domain.trim()) return '';
+    const d = domain.trim();
+    if (d.includes('.')) return d;
+    const p = (provider || 'duckdns').toLowerCase().trim();
+    if (p === 'duckdns' || p === 'duckdns.org') {
+        return `${d}.duckdns.org`;
+    }
+    if (p === 'desec' || p === 'desec.io') {
+        return `${d}.dedyn.io`;
+    }
+    return d;
+}
+
 async function loadServerInfo() {
     try {
         const res = await fetch('/server-info.json');
@@ -47,15 +61,17 @@ async function loadServerInfo() {
         console.warn('Could not fetch server-info.json:', e);
     }
 
+    const fullDomain = formatFullDomain(serverInfo.domain, serverInfo.provider);
+
     // Fill static fields immediately
     document.getElementById('server-name').textContent =
         serverInfo.name ? serverInfo.name.toUpperCase() : 'Minecraft Server';
     document.getElementById('server-ip').textContent =
         serverInfo.ip || '—';
     document.getElementById('server-address').textContent =
-        serverInfo.domain || serverInfo.ip || '—';
+        fullDomain || serverInfo.ip || '—';
 
-    const connectAddr = serverInfo.domain || serverInfo.ip || '—';
+    const connectAddr = fullDomain || serverInfo.ip || '—';
     document.getElementById('connect-address').textContent = connectAddr;
 }
 
