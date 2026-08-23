@@ -6,13 +6,16 @@ RUN xcaddy build --with github.com/caddy-dns/$CADDY_DNS_PROVIDER
 
 FROM caddy:alpine
 
-# Install Python and pip
-RUN apk add --no-cache python3 py3-pip
+# Install Python, pip, and rclone for remote management
+RUN apk add --no-cache rclone python3 py3-pip
 
 # Install FastAPI API requirements
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
+
+# Setup directory for persistent environment files
+RUN mkdir -p /app/env
 
 # Copy Caddy and Python API scripts
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy

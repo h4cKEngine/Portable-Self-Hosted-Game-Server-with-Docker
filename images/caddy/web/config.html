@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Configuration - Minecraft Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="config.css">
+</head>
+
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- Navigation Header -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <span class="nav-icon">⛏️</span>
+            <span class="nav-title">MC Server Control</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn">📊 Status Dashboard</a>
+            <a href="config.html" class="nav-btn active">⚙️ Server Configurator</a>
+        </div>
+    </nav>
+
+    <main class="config-container">
+        <header class="config-header">
+            <h1>Server Environment Configurator</h1>
+            <p class="subtitle">Quick setup for server addresses, engine, cloud storage, and domain</p>
+            <div class="status-indicator-bar" id="config-status-bar">
+                <span class="status-pill loading" id="status-pill">⏳ Loading configuration...</span>
+                <span class="env-path-badge" id="env-path-display">env/.env</span>
+            </div>
+        </header>
+
+        <form id="config-form" onsubmit="return false;">
+            <!-- 1. Nome Server & Descrizione -->
+            <section class="form-card">
+                <div class="card-header">
+                    <div class="card-icon">🎮</div>
+                    <div>
+                        <h2>Nome Server & Descrizione</h2>
+                        <p class="card-desc">Identificatore del server e messaggio di benvenuto (MOTD)</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="input-name">
+                            Nome Server / Container
+                            <span class="tooltip-icon" title="Nome identificativo per il server Docker, repository cloud e backup">ℹ️</span>
+                        </label>
+                        <input type="text" id="input-name" class="form-input" placeholder="es. minecraft-server, all-the-mods" required>
+                        <small class="form-hint">Slug generato: <span id="preview-slug" class="preview-tag">minecraft-server</span></small>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="input-motd">
+                            Descrizione / Message of the Day (MOTD)
+                            <span class="optional-tag">(Supporta i codici colore §a, §6, §b, ecc.)</span>
+                        </label>
+                        <input type="text" id="input-motd" class="form-input" placeholder="es. §6Server Principale §7| §bForge 1.21.1">
+                        
+                        <div class="color-palette-bar">
+                            <span class="color-tag" data-code="§0" style="background:#000000; color:#fff;" title="Black (§0)">§0</span>
+                            <span class="color-tag" data-code="§1" style="background:#0000aa; color:#fff;" title="Dark Blue (§1)">§1</span>
+                            <span class="color-tag" data-code="§2" style="background:#00aa00; color:#fff;" title="Dark Green (§2)">§2</span>
+                            <span class="color-tag" data-code="§3" style="background:#00aaaa; color:#fff;" title="Dark Aqua (§3)">§3</span>
+                            <span class="color-tag" data-code="§4" style="background:#aa0000; color:#fff;" title="Dark Red (§4)">§4</span>
+                            <span class="color-tag" data-code="§5" style="background:#aa00aa; color:#fff;" title="Dark Purple (§5)">§5</span>
+                            <span class="color-tag" data-code="§6" style="background:#ffaa00; color:#000;" title="Gold (§6)">§6</span>
+                            <span class="color-tag" data-code="§7" style="background:#aaaaaa; color:#000;" title="Gray (§7)">§7</span>
+                            <span class="color-tag" data-code="§8" style="background:#555555; color:#fff;" title="Dark Gray (§8)">§8</span>
+                            <span class="color-tag" data-code="§9" style="background:#5555ff; color:#fff;" title="Blue (§9)">§9</span>
+                            <span class="color-tag" data-code="§a" style="background:#55ff55; color:#000;" title="Green (§a)">§a</span>
+                            <span class="color-tag" data-code="§b" style="background:#55ffff; color:#000;" title="Aqua (§b)">§b</span>
+                            <span class="color-tag" data-code="§c" style="background:#ff5555; color:#fff;" title="Red (§c)">§c</span>
+                            <span class="color-tag" data-code="§d" style="background:#ff55ff; color:#fff;" title="Light Purple (§d)">§d</span>
+                            <span class="color-tag" data-code="§e" style="background:#ffff55; color:#000;" title="Yellow (§e)">§e</span>
+                            <span class="color-tag" data-code="§f" style="background:#ffffff; color:#000;" title="White (§f)">§f</span>
+                            <span class="color-tag" data-code="§l" style="background:#334155; color:#fff; font-weight:bold;" title="Bold (§l)">§l</span>
+                            <span class="color-tag" data-code="§r" style="background:#1e293b; color:#fff;" title="Reset (§r)">§r</span>
+                        </div>
+
+                        <div class="motd-preview-card">
+                            <span class="preview-label">Anteprima MOTD in gioco:</span>
+                            <div class="motd-render-box" id="motd-render-box">
+                                <span id="motd-rendered-text">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Framework & Versione Minecraft -->
+            <section class="form-card">
+                <div class="card-header">
+                    <div class="card-icon">🧱</div>
+                    <div>
+                        <h2>Framework & Versione Minecraft</h2>
+                        <p class="card-desc">Scegli il motore di gioco e la versione di Minecraft</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Framework / Engine</label>
+                        <div class="type-selector" id="type-selector">
+                            <button type="button" class="type-btn" data-type="FORGE">
+                                <span class="type-icon">🔨</span>
+                                <span class="type-name">Forge</span>
+                            </button>
+                            <button type="button" class="type-btn" data-type="NEOFORGE">
+                                <span class="type-icon">⚡</span>
+                                <span class="type-name">NeoForge</span>
+                            </button>
+                            <button type="button" class="type-btn" data-type="FABRIC">
+                                <span class="type-icon">🧵</span>
+                                <span class="type-name">Fabric</span>
+                            </button>
+                            <button type="button" class="type-btn" data-type="VANILLA">
+                                <span class="type-icon">🌱</span>
+                                <span class="type-name">Vanilla</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="input-type" value="FORGE">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="input-version">Versione Minecraft</label>
+                        <input type="text" id="input-version" class="form-input" placeholder="1.21.1" required>
+                        <small class="form-hint">es. 1.21.1, 1.20.1, 1.12.2</small>
+                    </div>
+                </div>
+
+                <!-- Dynamic Engine Specifics -->
+                <div class="engine-specific-box" id="engine-forge-box">
+                    <div class="form-group">
+                        <label for="input-forge-version">Versione Forge <span class="optional-tag">(Opzionale - lascia vuoto per rilevamento automatico)</span></label>
+                        <input type="text" id="input-forge-version" class="form-input" placeholder="es. 47.3.0">
+                    </div>
+                </div>
+
+                <div class="engine-specific-box" id="engine-neoforge-box" style="display:none;">
+                    <div class="form-group">
+                        <label for="input-neoforge-version">Versione NeoForge <span class="optional-tag">(Opzionale - lascia vuoto per auto)</span></label>
+                        <input type="text" id="input-neoforge-version" class="form-input" placeholder="es. 21.1.65">
+                        <small class="form-hint" style="color:#fbbf24;">⚡ Nota: NeoForge è disponibile solo da Minecraft 1.20.2 in poi (per versioni precedenti come 1.19.2 seleziona <strong>Forge</strong>).</small>
+                    </div>
+                </div>
+
+                <div class="engine-specific-box" id="engine-fabric-box" style="display:none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="input-fabric-launcher">Fabric Launcher Version <span class="optional-tag">(Opzionale)</span></label>
+                            <input type="text" id="input-fabric-launcher" class="form-input" placeholder="es. 1.0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-fabric-loader">Fabric Loader Version <span class="optional-tag">(Opzionale)</span></label>
+                            <input type="text" id="input-fabric-loader" class="form-input" placeholder="es. 0.16.5">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Server IP & Fallback IPs -->
+            <section class="form-card">
+                <div class="card-header">
+                    <div class="card-icon">📡</div>
+                    <div>
+                        <h2>Indirizzi IP Server (Main & Fallback)</h2>
+                        <p class="card-desc">Indirizzo IP primario e indirizzi secondari di riserva in caso di problemi di rete</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="input-ip">
+                            👑 Server IP Principale (Main)
+                            <span class="tooltip-icon" title="Indirizzo IP principale utilizzato dal server per il gioco e per gli aggiornamenti DDNS">ℹ️</span>
+                        </label>
+                        <input type="text" id="input-ip" class="form-input form-input-primary" placeholder="es. 127.0.0.1 oppure ZeroTier IP 10.147.x.x" required>
+                        <small class="form-hint">IP primario (VPN ZeroTier, IP Pubblico o LAN)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-ip-fallback-1">🔄 Fallback IP #1</label>
+                        <input type="text" id="input-ip-fallback-1" class="form-input" placeholder="es. 192.168.1.100 (IP LAN locale)">
+                        <small class="form-hint">Indirizzo alternativo (es. rete locale)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-ip-fallback-2">🔄 Fallback IP #2 (Opzionale)</label>
+                        <input type="text" id="input-ip-fallback-2" class="form-input" placeholder="es. 10.0.0.5 (Seconda VPN)">
+                        <small class="form-hint">Ulteriore IP alternativo di riserva</small>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="input-ip-fallback-3">🔄 Fallback IP #3 (Opzionale)</label>
+                        <input type="text" id="input-ip-fallback-3" class="form-input" placeholder="es. IP Pubblico router o VPN di emergenza">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Rclone Account & Cloud Storage -->
+            <section class="form-card">
+                <div class="card-header">
+                    <div class="card-icon">☁️</div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <h2>Account Rclone & Cloud Storage</h2>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="openAddRemoteModal()">
+                                    ➕ Aggiungi Account Cloud
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="openRawRcloneModal()">
+                                    ✏️ Modifica rclone.conf
+                                </button>
+                            </div>
+                        </div>
+                        <p class="card-desc">Configura e gestisci gli account cloud (MEGA, Google Drive, ecc.) per i backup Restic e il blocco Mutex</p>
+                    </div>
+                </div>
+
+                <!-- Configured Remotes List -->
+                <div class="remotes-manager-box" id="remotes-manager-box">
+                    <div class="remotes-manager-header">
+                        <span class="sub-label">Account configurati in <code class="code-badge">env/rclone.conf</code>:</span>
+                    </div>
+                    <div class="remotes-list" id="remotes-list-container">
+                        <!-- Populated dynamically via safe DOM manipulation -->
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top: 14px;">
+                    <div class="form-group full-width">
+                        <label for="input-rclone-service">Account Rclone Attivo per il Server</label>
+                        <div class="input-with-select">
+                            <input type="text" id="input-rclone-service" class="form-input" placeholder="mega" required>
+                            <select id="select-detected-remotes" class="form-select" onchange="applyDetectedRemote(this.value)">
+                                <option value="">Remoti rilevati in rclone.conf...</option>
+                            </select>
+                        </div>
+                        <small class="form-hint">Il remoto selezionato verrà usato per i backup e il cloud lock: <code class="preview-tag" id="preview-mutex-path">mega:/minecraft-server</code></small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Account Dynamic DNS (DDNS) -->
+            <section class="form-card">
+                <div class="card-header">
+                    <div class="card-icon">🌐</div>
+                    <div>
+                        <h2>Account Dynamic DNS (DDNS)</h2>
+                        <p class="card-desc">Assegna un dominio dinamico al server per connettersi senza ricordare l'indirizzo IP</p>
+                    </div>
+                </div>
+
+                <div class="ddns-provider-grid" id="ddns-provider-grid">
+                    <div class="provider-card active" data-provider="duckdns" onclick="selectDDNSProvider('duckdns')">
+                        <div class="provider-badge">🦆 DuckDNS</div>
+                        <div class="provider-sub">Consigliato & Semplice</div>
+                    </div>
+                    <div class="provider-card" data-provider="desec" onclick="selectDDNSProvider('desec')">
+                        <div class="provider-badge">🔒 DeSEC.io</div>
+                        <div class="provider-sub">Sicuro & API</div>
+                    </div>
+                    <div class="provider-card" data-provider="dynu" onclick="selectDDNSProvider('dynu')">
+                        <div class="provider-badge">🌍 Dynu</div>
+                        <div class="provider-sub">Nessuna scadenza</div>
+                    </div>
+                    <div class="provider-card" data-provider="ydns" onclick="selectDDNSProvider('ydns')">
+                        <div class="provider-badge">🇪🇺 YDNS</div>
+                        <div class="provider-sub">Hosting europeo</div>
+                    </div>
+                    <div class="provider-card" data-provider="afraid" onclick="selectDDNSProvider('afraid')">
+                        <div class="provider-badge">🆓 FreeDNS</div>
+                        <div class="provider-sub">afraid.org</div>
+                    </div>
+                    <div class="provider-card" data-provider="noip" onclick="selectDDNSProvider('noip')">
+                        <div class="provider-badge">⚡ No-IP</div>
+                        <div class="provider-sub">Dominio standard</div>
+                    </div>
+                    <div class="provider-card" data-provider="" onclick="selectDDNSProvider('')">
+                        <div class="provider-badge">🚫 Disabilitato</div>
+                        <div class="provider-sub">Solo IP diretto</div>
+                    </div>
+                </div>
+
+                <div class="form-grid" id="ddns-fields-grid">
+                    <div class="form-group">
+                        <label for="input-ddns-provider">Provider DDNS</label>
+                        <input type="text" id="input-ddns-provider" class="form-input" placeholder="duckdns">
+                        <small class="form-hint">Plugin Caddy: <strong id="preview-ddns-plugin" class="accent-text">duckdns</strong></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-ddns-domain">Nome Dominio DDNS</label>
+                        <input type="text" id="input-ddns-domain" class="form-input" placeholder="il-mio-server.duckdns.org">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="input-ddns-token">Token / Password DDNS</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="input-ddns-token" class="form-input" placeholder="Inserisci il token o la password del provider">
+                            <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-ddns-token', this)">👁️</button>
+                        </div>
+                        <small class="form-hint" id="ddns-hint-text">DuckDNS: Inserisci il token dal pannello di controllo duckdns.org</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Collapsible: Advanced Settings -->
+            <div class="accordion-section">
+                <button type="button" class="accordion-toggle" onclick="toggleAdvancedSettings()">
+                    <span>⚙️ Impostazioni Avanzate (RAM, Seed, Admin, Backup)</span>
+                    <span id="accordion-arrow">▼</span>
+                </button>
+
+                <div class="accordion-content" id="advanced-settings-content" style="display:none;">
+                    <section class="form-card" style="margin-top: 14px;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="input-init-memory">RAM Iniziale</label>
+                                <input type="text" id="input-init-memory" class="form-input" value="2G">
+                                <div class="preset-chips">
+                                    <button type="button" class="chip" onclick="setInitMemory('1G')">1G</button>
+                                    <button type="button" class="chip" onclick="setInitMemory('2G')">2G</button>
+                                    <button type="button" class="chip" onclick="setInitMemory('4G')">4G</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-max-memory">RAM Massima</label>
+                                <input type="text" id="input-max-memory" class="form-input" value="6G">
+                                <div class="preset-chips">
+                                    <button type="button" class="chip" onclick="setMaxMemory('4G')">4G</button>
+                                    <button type="button" class="chip" onclick="setMaxMemory('6G')">6G</button>
+                                    <button type="button" class="chip" onclick="setMaxMemory('8G')">8G</button>
+                                    <button type="button" class="chip" onclick="setMaxMemory('12G')">12G</button>
+                                    <button type="button" class="chip" onclick="setMaxMemory('16G')">16G</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-max-players">Giocatori Max</label>
+                                <input type="number" id="input-max-players" class="form-input" min="1" max="1000" value="8">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-seed">Seed del Mondo</label>
+                                <input type="text" id="input-seed" class="form-input" placeholder="Lascia vuoto per seed casuale">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-ops">Operatori / Admin (separati da virgola)</label>
+                                <input type="text" id="input-ops" class="form-input" placeholder="player1,player2">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-rcon-password">Password RCON</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="input-rcon-password" class="form-input" value="minecraft">
+                                    <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-rcon-password', this)">👁️</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-view-distance">View Distance (Chunks)</label>
+                                <div class="range-row">
+                                    <input type="range" id="slider-view-distance" min="4" max="32" value="10" class="range-slider">
+                                    <input type="number" id="input-view-distance" class="form-input range-num" min="2" max="64" value="10">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-sim-distance">Simulation Distance (Chunks)</label>
+                                <div class="range-row">
+                                    <input type="range" id="slider-sim-distance" min="2" max="16" value="5" class="range-slider">
+                                    <input type="number" id="input-sim-distance" class="form-input range-num" min="2" max="32" value="5">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-restic-hostname">Restic Hostname</label>
+                                <input type="text" id="input-restic-hostname" class="form-input" value="MinecraftServer">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-restic-password">Password Crittografia Restic</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="input-restic-password" class="form-input" value="minecraft">
+                                    <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-restic-password', this)">👁️</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-restic-keep">Numero Snapshot da Mantenere</label>
+                                <input type="number" id="input-restic-keep" class="form-input" min="1" max="1000" value="10">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-pause-empty">Pausa se Vuoto (Secondi)</label>
+                                <input type="number" id="input-pause-empty" class="form-input" min="0" max="86400" value="300">
+                            </div>
+
+                            <div class="form-group toggle-group">
+                                <label for="input-online-mode">Online Mode (Autenticazione Mojang)</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="input-online-mode">
+                                    <span class="slider-toggle"></span>
+                                </div>
+                                <small class="form-hint" id="online-mode-hint">OFF (Permette connessioni offline)</small>
+                            </div>
+
+                            <div class="form-group toggle-group">
+                                <label for="input-enable-autostop">AutoStop Container quando inattivo</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="input-enable-autostop">
+                                    <span class="slider-toggle"></span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs for paths & defaults -->
+                            <input type="hidden" id="input-rclone-config" value="/etc/rclone/rclone.conf">
+                            <input type="hidden" id="input-rclone-host" value="./env/rclone.conf">
+                            <input type="hidden" id="input-restic-image" value="docker.io/tofran/restic-rclone:0.17.0_1.68.2">
+                            <input type="hidden" id="input-enable-autopause" value="">
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </form>
+
+        <!-- Floating Action Bar -->
+        <div class="action-dock">
+            <div class="dock-content">
+                <button type="button" class="btn btn-secondary" onclick="reloadConfig()">
+                    🔄 Ricarica
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="openRawModal()">
+                    👁️ Visualizza .env
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="downloadEnvFile()">
+                    📥 Scarica .env
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-save-main" onclick="openConfirmModal()">
+                    💾 Salva Configurazione
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>💾 Conferma Salvataggio</h3>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-summary-text">Le seguenti impostazioni verranno salvate in <code class="code-badge">env/.env</code> (un backup sarà salvato come <code class="code-badge">.env.bak</code>):</p>
+                <div class="summary-list" id="confirm-summary-list">
+                    <!-- Populated via safe DOM manipulation -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Annulla</button>
+                <button class="btn btn-primary" id="btn-modal-confirm-save" onclick="executeSave()">
+                    ✅ Salva in env/.env
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw .env Viewer Modal -->
+    <div class="modal-overlay" id="raw-modal" style="display:none;">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3>📄 Anteprima env/.env</h3>
+                <button class="modal-close" onclick="closeRawModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <pre class="code-block" id="raw-code-block"></pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-copy-raw" onclick="copyRawEnv()">📋 Copia</button>
+                <button class="btn btn-primary" onclick="closeRawModal()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Configure Rclone Remote Modal -->
+    <div class="modal-overlay" id="add-remote-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>☁️ Aggiungi Account Cloud Storage</h3>
+                <button class="modal-close" onclick="closeAddRemoteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="remote-form" onsubmit="return false;" class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="remote-input-name">Nome Account Remoto</label>
+                        <input type="text" id="remote-input-name" class="form-input" placeholder="es. mega, gdrive, dropbox" required>
+                        <small class="form-hint">Nome breve univoco (es. <code>mega</code>)</small>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="remote-select-type">Servizio Cloud</label>
+                        <select id="remote-select-type" class="form-select">
+                            <option value="mega">MEGA (Consigliato)</option>
+                            <option value="drive">Google Drive</option>
+                            <option value="dropbox">Dropbox</option>
+                            <option value="onedrive">Microsoft OneDrive</option>
+                            <option value="s3">Amazon S3 / MinIO</option>
+                            <option value="box">Box</option>
+                            <option value="pcloud">pCloud</option>
+                            <option value="sftp">Server SFTP</option>
+                            <option value="webdav">WebDAV</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="remote-input-user">Email / Username</label>
+                        <input type="text" id="remote-input-user" class="form-input" placeholder="tua-email@example.com" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="remote-input-pass">Password / Chiave API</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="remote-input-pass" class="form-input" placeholder="La password verrà offuscata automaticamente con rclone" required>
+                            <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('remote-input-pass', this)">👁️</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddRemoteModal()">Annulla</button>
+                <button class="btn btn-primary" id="btn-save-remote" onclick="saveRcloneRemote()">
+                    💾 Salva Account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw rclone.conf Editor Modal -->
+    <div class="modal-overlay" id="raw-rclone-modal" style="display:none;">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3>📄 Modifica env/rclone.conf</h3>
+                <button class="modal-close" onclick="closeRawRcloneModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea class="code-editor" id="raw-rclone-textarea" rows="12" placeholder="[remote_name]&#10;type = mega&#10;user = ...&#10;pass = ..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRawRcloneModal()">Annulla</button>
+                <button class="btn btn-primary" id="btn-save-raw-rclone" onclick="saveRawRcloneConf()">
+                    💾 Salva rclone.conf
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="config.js"></script>
+</body>
+
+</html>

@@ -1,6 +1,7 @@
 # === Secrets (NEVER COMMIT) ===
 env/.env
 env/*.env
+env/.env.bak
 env/rclone.conf
 env/rclone.conf.bak*
 

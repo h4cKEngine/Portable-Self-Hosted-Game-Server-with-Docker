@@ -8,7 +8,7 @@ set -eu
 : "${RESTIC_SNAPSHOT:=latest}"
 
 # ========== ENV rclone/mutex ==========
-: "${RCLONE_CONFIG:=/root/.config/rclone/rclone.conf}"  # mounted from compose
+: "${RCLONE_CONFIG:=/etc/rclone/rclone.conf}"  # mounted from compose
 : "${MUTEX_FILE:=mutex.txt}"
 : "${CLOUD_MUTEX_DIR:=/Root/modpack}"                   # used if MUTEX_REMOTE_DIR not provided
 : "${MUTEX_REMOTE_DIR:=}"                               # e.g. mega:/tekkmodpackit (priority if set)

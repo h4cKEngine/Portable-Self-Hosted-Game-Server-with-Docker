@@ -1,27 +1,30 @@
 {
-    # Let Caddy provision certificates without an email address to avoid ACME registration failures
+    auto_https off
 }
 
-http:// {
-    redir https://{$DDNS_DOMAIN}.{$DDNS_PROVIDER}{uri}
-}
-
-{$DDNS_DOMAIN}.{$DDNS_PROVIDER} {
-    tls {
-        dns {$DDNS_PROVIDER_NAME} {$DUCKDNS_TOKEN}
+:80 {
+    # Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
     }
 
-    # Proxy status requests to the local Python status API service
-    route /api/status* {
+    # Proxy all API requests to the Python FastAPI backend
+    handle /api/* {
         reverse_proxy 127.0.0.1:8000
     }
 
-    # Serve server info as a JSON endpoint for the web page
-    route /server-info.json {
+    # Serve server info endpoint
+    handle /server-info.json {
         header Content-Type application/json
-        respond `{"ip":"{$IP_SERVER}","domain":"{$DDNS_DOMAIN}.{$DDNS_PROVIDER}","name":"{$MC_CONTAINER_NAME}"}` 200
+        respond `{"ip":"{$IP_SERVER:127.0.0.1}","domain":"{$DDNS_DOMAIN:}","name":"{$MC_CONTAINER_NAME:minecraft-server}"}` 200
     }
 
-    root * /usr/share/caddy
-    file_server
+    # Serve static frontend files
+    handle {
+        root * /usr/share/caddy
+        try_files {path} {path}.html {path}/ index.html
+        file_server
+    }
 }

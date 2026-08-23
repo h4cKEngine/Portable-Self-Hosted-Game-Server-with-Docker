@@ -1,0 +1,927 @@
+// State
+let currentConfig = {};
+let availableRemotes = [];
+let currentDDNSProvider = 'duckdns';
+
+const MINECRAFT_COLORS = {
+    '§0': '#000000',
+    '§1': '#0000aa',
+    '§2': '#00aa00',
+    '§3': '#00aaaa',
+    '§4': '#aa0000',
+    '§5': '#aa00aa',
+    '§6': '#ffaa00',
+    '§7': '#aaaaaa',
+    '§8': '#555555',
+    '§9': '#5555ff',
+    '§a': '#55ff55',
+    '§b': '#55ffff',
+    '§c': '#ff5555',
+    '§d': '#ff55ff',
+    '§e': '#ffff55',
+    '§f': '#ffffff',
+};
+
+const DDNS_HINTS = {
+    'duckdns': 'DuckDNS: Domain is usually "name.duckdns.org". Token is your DuckDNS Token.',
+    'desec': 'DeSEC.io: Domain is your desec domain. Token is your API token.',
+    'dynu': 'Dynu: Domain is your dynu domain. Token is your API Password/Hash.',
+    'ydns': 'YDNS: Domain is your ydns domain. Token is "username:password" or API key.',
+    'afraid': 'FreeDNS (afraid.org): Domain is chosen domain. Token is your Direct URL hash.',
+    'noip': 'No-IP: Domain is your no-ip domain. Token is "username:password" or auth token.',
+    '': 'DDNS is disabled. The server will rely only on direct IP addresses.',
+};
+
+// ─── Initialization ──────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+    initEventListeners();
+    fetchConfig();
+});
+
+function initEventListeners() {
+    // Name slugification & live previews
+    const nameInput = document.getElementById('input-name');
+    nameInput.addEventListener('input', () => {
+        updateDerivedPreviews();
+    });
+
+    // Version input
+    const versionInput = document.getElementById('input-version');
+    versionInput.addEventListener('input', () => {
+        updateDerivedPreviews();
+    });
+
+    // MOTD input
+    const motdInput = document.getElementById('input-motd');
+    motdInput.addEventListener('input', () => {
+        renderMotdPreview(motdInput.value);
+    });
+
+    // Color tags click
+    document.querySelectorAll('.color-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            const code = tag.getAttribute('data-code');
+            insertAtCursor(motdInput, code);
+            renderMotdPreview(motdInput.value);
+        });
+    });
+
+    // Type buttons
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.getAttribute('data-type');
+            selectServerType(type);
+        });
+    });
+
+    // Range slider sync
+    syncSliderAndNumber('slider-view-distance', 'input-view-distance');
+    syncSliderAndNumber('slider-sim-distance', 'input-sim-distance');
+
+    // Rclone service live update
+    const rcloneInput = document.getElementById('input-rclone-service');
+    rcloneInput.addEventListener('input', () => {
+        updateDerivedPreviews();
+    });
+
+    // DDNS provider input
+    const ddnsInput = document.getElementById('input-ddns-provider');
+    ddnsInput.addEventListener('input', () => {
+        updateDDNSPluginPreview(ddnsInput.value);
+    });
+
+    // Online mode toggle
+    const onlineModeToggle = document.getElementById('input-online-mode');
+    onlineModeToggle.addEventListener('change', () => {
+        const hint = document.getElementById('online-mode-hint');
+        hint.textContent = onlineModeToggle.checked ?
+            'ON (Enforces Mojang official account validation)' :
+            'OFF (Allows offline & direct connects)';
+    });
+}
+
+function syncSliderAndNumber(sliderId, numberId) {
+    const slider = document.getElementById(sliderId);
+    const num = document.getElementById(numberId);
+    if (!slider || !num) return;
+
+    slider.addEventListener('input', () => {
+        num.value = slider.value;
+    });
+    num.addEventListener('input', () => {
+        slider.value = num.value;
+    });
+}
+
+function insertAtCursor(input, text) {
+    const start = input.selectionStart || 0;
+    const end = input.selectionEnd || 0;
+    const val = input.value;
+    input.value = val.substring(0, start) + text + val.substring(end);
+    input.focus();
+    input.setSelectionRange(start + text.length, start + text.length);
+}
+
+// ─── API Fetch & Populate ────────────────────────────────────────────────────
+
+async function fetchConfig() {
+    const statusPill = document.getElementById('status-pill');
+    try {
+        const res = await fetch('/api/config');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+
+        currentConfig = data.config || {};
+        availableRemotes = data.available_remotes || [];
+
+        populateForm(currentConfig);
+        populateRemotes(availableRemotes, data.remotes_info || []);
+
+        statusPill.replaceChildren();
+        if (data.has_custom_env) {
+            statusPill.className = 'status-pill success';
+            statusPill.textContent = '✅ Loaded active .env';
+        } else {
+            statusPill.className = 'status-pill warning';
+            statusPill.textContent = '⚠️ Using .env-example defaults';
+        }
+
+        const envPathBadge = document.getElementById('env-path-display');
+        envPathBadge.textContent = data.env_path || 'env/.env';
+    } catch (e) {
+        console.error('Failed to load config:', e);
+        statusPill.className = 'status-pill warning';
+        statusPill.textContent = '❌ Could not load config';
+        showToast('Could not load configuration from server.', 'error');
+    }
+}
+
+function toggleAdvancedSettings() {
+    const content = document.getElementById('advanced-settings-content');
+    const btn = document.querySelector('.accordion-toggle');
+    const isHidden = content.style.display === 'none';
+    content.style.display = isHidden ? 'block' : 'none';
+    if (btn) {
+        btn.classList.toggle('active', isHidden);
+    }
+}
+
+function populateForm(cfg) {
+    // 1. Server & Modpack
+    document.getElementById('input-name').value = cfg.name || 'minecraft-server';
+    document.getElementById('input-version').value = cfg.version || '1.21.1';
+    
+    // Server IP & Fallbacks
+    document.getElementById('input-ip').value = cfg.ip_server || '127.0.0.1';
+    const fallbacks = (cfg.ip_fallbacks || '').split(',').map(s => s.trim()).filter(Boolean);
+    const fb1El = document.getElementById('input-ip-fallback-1');
+    const fb2El = document.getElementById('input-ip-fallback-2');
+    const fb3El = document.getElementById('input-ip-fallback-3');
+    if (fb1El) fb1El.value = fallbacks[0] || '';
+    if (fb2El) fb2El.value = fallbacks[1] || '';
+    if (fb3El) fb3El.value = fallbacks[2] || '';
+
+    selectServerType(cfg.server_type || 'FORGE');
+
+    document.getElementById('input-forge-version').value = cfg.forge_version || '';
+    document.getElementById('input-neoforge-version').value = cfg.neoforge_version || '';
+    document.getElementById('input-fabric-launcher').value = cfg.fabric_launcher_version || '';
+    document.getElementById('input-fabric-loader').value = cfg.fabric_loader_version || '';
+
+    // 2. Performance & Memory
+    document.getElementById('input-init-memory').value = cfg.init_memory || '2G';
+    document.getElementById('input-max-memory').value = cfg.memory || '6G';
+
+    const viewDist = cfg.view_distance || 10;
+    const sliderView = document.getElementById('slider-view-distance');
+    const inputView = document.getElementById('input-view-distance');
+    if (sliderView) sliderView.value = viewDist;
+    if (inputView) inputView.value = viewDist;
+
+    const simDist = cfg.simulation_distance || 5;
+    const sliderSim = document.getElementById('slider-sim-distance');
+    const inputSim = document.getElementById('input-sim-distance');
+    if (sliderSim) sliderSim.value = simDist;
+    if (inputSim) inputSim.value = simDist;
+
+    // 3. Properties & MOTD
+    document.getElementById('input-motd').value = cfg.motd || '';
+    renderMotdPreview(cfg.motd || '');
+
+    document.getElementById('input-max-players').value = cfg.max_players || 8;
+    document.getElementById('input-seed').value = cfg.seed || '';
+    document.getElementById('input-ops').value = cfg.operators || '';
+    document.getElementById('input-rcon-password').value = cfg.rcon_password || 'minecraft';
+
+    const onlineCheck = document.getElementById('input-online-mode');
+    if (onlineCheck) {
+        onlineCheck.checked = (cfg.online_mode || '').toUpperCase() === 'TRUE';
+        onlineCheck.dispatchEvent(new Event('change'));
+    }
+
+    // 4. Cloud & Rclone
+    document.getElementById('input-rclone-service').value = cfg.rclone_service || 'mega';
+    document.getElementById('input-rclone-config').value = cfg.rclone_config || '/etc/rclone/rclone.conf';
+    document.getElementById('input-rclone-host').value = cfg.rclone_conf_host || './env/rclone.conf';
+
+    // 5. DDNS
+    const ddnsProv = cfg.ddns_provider !== undefined ? cfg.ddns_provider : 'duckdns';
+    selectDDNSProvider(ddnsProv);
+    document.getElementById('input-ddns-domain').value = cfg.ddns_domain || '';
+    document.getElementById('input-ddns-token').value = cfg.ddns_token || '';
+
+    // 6. Restic
+    document.getElementById('input-restic-hostname').value = cfg.restic_hostname || 'MinecraftServer';
+    document.getElementById('input-restic-password').value = cfg.restic_password || 'minecraft';
+    document.getElementById('input-restic-keep').value = cfg.restic_keep_last || 10;
+    document.getElementById('input-restic-image').value = cfg.restic_image || 'docker.io/tofran/restic-rclone:0.17.0_1.68.2';
+
+    // 7. AutoStop / Pause
+    const pauseEmpty = document.getElementById('input-pause-empty');
+    if (pauseEmpty) pauseEmpty.value = cfg.pause_when_empty_seconds !== undefined ? cfg.pause_when_empty_seconds : 300;
+    
+    const autoStop = document.getElementById('input-enable-autostop');
+    if (autoStop) autoStop.checked = (cfg.enable_autostop || '').toUpperCase() === 'TRUE';
+    
+    const autoPause = document.getElementById('input-enable-autopause');
+    if (autoPause) autoPause.checked = (cfg.enable_autopause || '').toUpperCase() === 'TRUE';
+
+    updateDerivedPreviews();
+}
+
+function populateRemotes(remotes, remotesInfo = []) {
+    const sel = document.getElementById('select-detected-remotes');
+    sel.replaceChildren();
+
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = remotes.length ? 'Detected Remotes in rclone.conf...' : '(No remotes found in rclone.conf)';
+    sel.appendChild(defOpt);
+
+    remotes.forEach(remote => {
+        const opt = document.createElement('option');
+        opt.value = remote;
+        opt.textContent = `📁 ${remote}`;
+        sel.appendChild(opt);
+    });
+
+    renderRemotesList(remotesInfo);
+}
+
+function renderRemotesList(remotesInfo) {
+    const container = document.getElementById('remotes-list-container');
+    container.replaceChildren();
+
+    if (!remotesInfo || !remotesInfo.length) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'form-hint';
+        emptyMsg.textContent = 'No remotes configured yet. Click "+ Add Remote" to add a cloud storage account (e.g. MEGA).';
+        container.appendChild(emptyMsg);
+        return;
+    }
+
+    remotesInfo.forEach(rem => {
+        const item = document.createElement('div');
+        item.className = 'remote-item';
+
+        const left = document.createElement('div');
+        left.className = 'remote-item-left';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'remote-name';
+        nameSpan.textContent = `[${rem.name}]`;
+
+        const typeBadge = document.createElement('span');
+        typeBadge.className = 'remote-type-badge';
+        typeBadge.textContent = rem.type;
+
+        left.appendChild(nameSpan);
+        left.appendChild(typeBadge);
+
+        if (rem.user) {
+            const userSpan = document.createElement('span');
+            userSpan.className = 'remote-user';
+            userSpan.textContent = `(${rem.user})`;
+            left.appendChild(userSpan);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'remote-actions';
+
+        const selectBtn = document.createElement('button');
+        selectBtn.type = 'button';
+        selectBtn.className = 'btn btn-secondary btn-sm';
+        selectBtn.textContent = 'Use as Active';
+        selectBtn.onclick = () => {
+            document.getElementById('input-rclone-service').value = rem.name;
+            updateDerivedPreviews();
+            showToast(`Selected [${rem.name}] as active remote`, 'info');
+        };
+
+        const testBtn = document.createElement('button');
+        testBtn.type = 'button';
+        testBtn.className = 'btn btn-secondary btn-sm';
+        testBtn.textContent = '🧪 Test';
+        testBtn.onclick = () => testRemoteConnection(rem.name, testBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn btn-secondary btn-sm';
+        delBtn.textContent = '🗑️';
+        delBtn.title = 'Delete remote';
+        delBtn.onclick = () => deleteRemote(rem.name);
+
+        actions.appendChild(selectBtn);
+        actions.appendChild(testBtn);
+        actions.appendChild(delBtn);
+
+        item.appendChild(left);
+        item.appendChild(actions);
+        container.appendChild(item);
+    });
+}
+
+async function refreshRcloneRemotes() {
+    try {
+        const res = await fetch('/api/rclone/remotes');
+        if (!res.ok) return;
+        const data = await res.json();
+        availableRemotes = data.remotes || [];
+        populateRemotes(availableRemotes, data.remotes_info || []);
+    } catch (e) {
+        console.error('Error fetching remotes:', e);
+    }
+}
+
+function applyDetectedRemote(remoteName) {
+    if (!remoteName) return;
+    document.getElementById('input-rclone-service').value = remoteName;
+    updateDerivedPreviews();
+}
+
+// ─── Rclone Modals & Actions ────────────────────────────────────────────────
+
+function openAddRemoteModal() {
+    document.getElementById('remote-input-name').value = '';
+    document.getElementById('remote-input-user').value = '';
+    document.getElementById('remote-input-pass').value = '';
+    document.getElementById('add-remote-modal').style.display = 'flex';
+}
+
+function closeAddRemoteModal() {
+    document.getElementById('add-remote-modal').style.display = 'none';
+}
+
+async function saveRcloneRemote() {
+    const name = document.getElementById('remote-input-name').value.trim();
+    const serviceType = document.getElementById('remote-select-type').value;
+    const user = document.getElementById('remote-input-user').value.trim();
+    const password = document.getElementById('remote-input-pass').value;
+
+    if (!name) {
+        showToast('Remote name is required', 'error');
+        return;
+    }
+    if (!user || !password) {
+        showToast('Username/Email and Password are required', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-remote');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+
+    try {
+        const res = await fetch('/api/rclone/remote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                service_type: serviceType,
+                user: user,
+                password: password
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to save remote');
+
+        closeAddRemoteModal();
+        showToast(data.message || `Configured remote [${name}]`, 'success');
+        document.getElementById('input-rclone-service').value = name;
+        updateDerivedPreviews();
+        await refreshRcloneRemotes();
+    } catch (e) {
+        showToast(`Save error: ${e.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save Remote';
+    }
+}
+
+async function testRemoteConnection(remoteName, btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Testing...';
+
+    try {
+        const res = await fetch('/api/rclone/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ remote_name: remoteName })
+        });
+        const data = await res.json();
+        if (data.connected) {
+            showToast(`✅ [${remoteName}] connection successful!`, 'success');
+        } else {
+            showToast(`⚠️ [${remoteName}]: ${data.message}`, 'error');
+        }
+    } catch (e) {
+        showToast(`Test error: ${e.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
+}
+
+async function deleteRemote(remoteName) {
+    if (!confirm(`Are you sure you want to delete remote [${remoteName}] from rclone.conf?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/rclone/remote/${encodeURIComponent(remoteName)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Delete failed');
+
+        showToast(`Remote [${remoteName}] removed`, 'success');
+        await refreshRcloneRemotes();
+    } catch (e) {
+        showToast(`Delete error: ${e.message}`, 'error');
+    }
+}
+
+async function openRawRcloneModal() {
+    const textarea = document.getElementById('raw-rclone-textarea');
+    textarea.value = 'Loading env/rclone.conf...';
+    document.getElementById('raw-rclone-modal').style.display = 'flex';
+
+    try {
+        const res = await fetch('/api/rclone/raw');
+        const data = await res.json();
+        textarea.value = data.content || '';
+    } catch (e) {
+        textarea.value = `Error loading rclone.conf: ${e.message}`;
+    }
+}
+
+function closeRawRcloneModal() {
+    document.getElementById('raw-rclone-modal').style.display = 'none';
+}
+
+async function saveRawRcloneConf() {
+    const content = document.getElementById('raw-rclone-textarea').value;
+    const btn = document.getElementById('btn-save-raw-rclone');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+
+    try {
+        const res = await fetch('/api/rclone/raw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Save failed');
+
+        closeRawRcloneModal();
+        showToast('rclone.conf successfully saved!', 'success');
+        await refreshRcloneRemotes();
+    } catch (e) {
+        showToast(`Save failed: ${e.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Save rclone.conf';
+    }
+}
+
+// ─── Type & Provider Selectors ───────────────────────────────────────────────
+
+function selectServerType(type) {
+    type = type ? type.toUpperCase() : 'FORGE';
+    document.getElementById('input-type').value = type;
+
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        if (btn.getAttribute('data-type') === type) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Toggle conditional boxes
+    document.getElementById('engine-forge-box').style.display = (type === 'FORGE') ? 'block' : 'none';
+    document.getElementById('engine-neoforge-box').style.display = (type === 'NEOFORGE') ? 'block' : 'none';
+    document.getElementById('engine-fabric-box').style.display = (type === 'FABRIC') ? 'block' : 'none';
+
+    updateDerivedPreviews();
+}
+
+function selectDDNSProvider(provider) {
+    currentDDNSProvider = provider ? provider.toLowerCase() : '';
+    const provInput = document.getElementById('input-ddns-provider');
+    provInput.value = currentDDNSProvider;
+
+    document.querySelectorAll('.provider-card').forEach(card => {
+        const p = card.getAttribute('data-provider');
+        if (p === currentDDNSProvider) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
+
+    const hintText = document.getElementById('ddns-hint-text');
+    const firstPart = currentDDNSProvider.split('.')[0];
+    hintText.textContent = DDNS_HINTS[firstPart] || DDNS_HINTS[''] || 'Enter provider domain and authentication token.';
+
+    updateDDNSPluginPreview(currentDDNSProvider);
+}
+
+function updateDDNSPluginPreview(provider) {
+    const pluginPreview = document.getElementById('preview-ddns-plugin');
+    if (!provider) {
+        pluginPreview.textContent = '(none)';
+        return;
+    }
+    const norm = provider.trim().toLowerCase();
+    const firstPart = norm.split('.')[0];
+    const mapping = {
+        'duckdns': 'duckdns',
+        'desec': 'desec',
+        'dynu': 'dynu',
+        'ydns': 'ydns',
+        'afraid': 'freedns',
+        'freedns': 'freedns',
+        'noip': 'noip'
+    };
+    pluginPreview.textContent = mapping[firstPart] || firstPart;
+}
+
+// ─── Preset Helpers ──────────────────────────────────────────────────────────
+
+function setInitMemory(val) {
+    document.getElementById('input-init-memory').value = val;
+}
+
+function setMaxMemory(val) {
+    document.getElementById('input-max-memory').value = val;
+}
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🔒';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
+
+// ─── Real-time Derived Previews & MOTD ───────────────────────────────────────
+
+function slugify(text) {
+    if (!text) return 'minecraft-server';
+    const cleaned = text.toLowerCase().replace(/[^a-z0-9_-]/g, '').replace(/^[-_]+|[-_]+$/g, '');
+    return cleaned || 'minecraft-server';
+}
+
+function updateDerivedPreviews() {
+    const rawName = document.getElementById('input-name').value;
+    const cleanName = slugify(rawName);
+
+    // Update slug preview
+    const slugEl = document.getElementById('preview-slug');
+    if (slugEl) slugEl.textContent = cleanName;
+
+    // Mutex path
+    const rcloneService = document.getElementById('input-rclone-service').value.trim() || 'mega';
+    const mutexPath = `${rcloneService}:/${cleanName}`;
+    const mutexEl = document.getElementById('preview-mutex-path');
+    if (mutexEl) mutexEl.textContent = mutexPath;
+
+    // Restic Repo & Tag
+    const resticRepoEl = document.getElementById('preview-restic-repo');
+    const resticTagEl = document.getElementById('preview-restic-tag');
+    if (resticRepoEl) resticRepoEl.textContent = `rclone:${rcloneService}:/${cleanName}`;
+    if (resticTagEl) resticTagEl.textContent = `${cleanName}_backups`;
+
+    // Refresh MOTD preview if custom motd is empty
+    const motdVal = document.getElementById('input-motd').value;
+    renderMotdPreview(motdVal);
+}
+
+function renderMotdPreview(motd) {
+    const box = document.getElementById('motd-render-box');
+    box.replaceChildren();
+
+    const rawName = document.getElementById('input-name').value;
+    const cleanName = slugify(rawName);
+    const sType = document.getElementById('input-type').value || 'FORGE';
+    const sVer = document.getElementById('input-version').value || '1.21.1';
+
+    let textToRender = motd && motd.trim() ? motd : `§6${cleanName} §7| §b${sType} ${sVer}`;
+
+    // Parse Minecraft formatting codes safely via DOM nodes
+    const segments = parseMinecraftText(textToRender);
+    segments.forEach(seg => {
+        const span = document.createElement('span');
+        span.textContent = seg.text;
+        if (seg.color) span.style.color = seg.color;
+        if (seg.bold) span.style.fontWeight = 'bold';
+        if (seg.italic) span.style.fontStyle = 'italic';
+        if (seg.underline) span.style.textDecoration = 'underline';
+        box.appendChild(span);
+    });
+}
+
+function parseMinecraftText(input) {
+    const segments = [];
+    let currentColor = '#ffffff';
+    let isBold = false;
+    let isItalic = false;
+    let isUnderline = false;
+
+    let buffer = '';
+
+    for (let i = 0; i < input.length; i++) {
+        if (input[i] === '§' && i + 1 < input.length) {
+            if (buffer.length > 0) {
+                segments.push({
+                    text: buffer,
+                    color: currentColor,
+                    bold: isBold,
+                    italic: isItalic,
+                    underline: isUnderline
+                });
+                buffer = '';
+            }
+
+            const code = '§' + input[i + 1].toLowerCase();
+            if (MINECRAFT_COLORS[code]) {
+                currentColor = MINECRAFT_COLORS[code];
+                isBold = false;
+                isItalic = false;
+                isUnderline = false;
+            } else if (code === '§l') {
+                isBold = true;
+            } else if (code === '§o') {
+                isItalic = true;
+            } else if (code === '§n') {
+                isUnderline = true;
+            } else if (code === '§r') {
+                currentColor = '#ffffff';
+                isBold = false;
+                isItalic = false;
+                isUnderline = false;
+            }
+            i++; // skip code char
+        } else {
+            buffer += input[i];
+        }
+    }
+
+    if (buffer.length > 0) {
+        segments.push({
+            text: buffer,
+            color: currentColor,
+            bold: isBold,
+            italic: isItalic,
+            underline: isUnderline
+        });
+    }
+
+    return segments;
+}
+
+// ─── Payload Gathering & Validation ──────────────────────────────────────────
+
+function gatherPayload() {
+    const rawName = document.getElementById('input-name').value;
+    const name = slugify(rawName);
+
+    const fb1 = (document.getElementById('input-ip-fallback-1')?.value || '').trim();
+    const fb2 = (document.getElementById('input-ip-fallback-2')?.value || '').trim();
+    const fb3 = (document.getElementById('input-ip-fallback-3')?.value || '').trim();
+    const fallbackList = [fb1, fb2, fb3].filter(Boolean);
+    const ipFallbacks = fallbackList.join(',');
+
+    return {
+        name: name,
+        version: document.getElementById('input-version').value.trim() || '1.21.1',
+        server_type: document.getElementById('input-type').value || 'FORGE',
+        ip_server: document.getElementById('input-ip').value.trim() || '127.0.0.1',
+        ip_fallbacks: ipFallbacks,
+        forge_version: document.getElementById('input-forge-version')?.value.trim() || '',
+        neoforge_version: document.getElementById('input-neoforge-version')?.value.trim() || '',
+        fabric_launcher_version: document.getElementById('input-fabric-launcher')?.value.trim() || '',
+        fabric_loader_version: document.getElementById('input-fabric-loader')?.value.trim() || '',
+        init_memory: document.getElementById('input-init-memory')?.value.trim().toUpperCase() || '2G',
+        memory: document.getElementById('input-max-memory')?.value.trim().toUpperCase() || '6G',
+        max_players: parseInt(document.getElementById('input-max-players')?.value, 10) || 8,
+        motd: document.getElementById('input-motd')?.value.trim() || '',
+        seed: document.getElementById('input-seed')?.value.trim() || '',
+        operators: document.getElementById('input-ops')?.value.trim() || '',
+        view_distance: parseInt(document.getElementById('input-view-distance')?.value, 10) || 10,
+        simulation_distance: parseInt(document.getElementById('input-sim-distance')?.value, 10) || 5,
+        eula: 'TRUE',
+        online_mode: document.getElementById('input-online-mode')?.checked ? 'TRUE' : 'FALSE',
+        rclone_service: document.getElementById('input-rclone-service')?.value.trim() || 'mega',
+        rclone_config: document.getElementById('input-rclone-config')?.value.trim() || '/etc/rclone/rclone.conf',
+        rclone_conf_host: document.getElementById('input-rclone-host')?.value.trim() || './env/rclone.conf',
+        ddns_provider: document.getElementById('input-ddns-provider')?.value.trim() || '',
+        ddns_domain: document.getElementById('input-ddns-domain')?.value.trim() || '',
+        ddns_token: document.getElementById('input-ddns-token')?.value.trim() || '',
+        restic_hostname: document.getElementById('input-restic-hostname')?.value.trim() || 'MinecraftServer',
+        restic_password: document.getElementById('input-restic-password')?.value.trim() || 'minecraft',
+        restic_keep_last: parseInt(document.getElementById('input-restic-keep')?.value, 10) || 10,
+        restic_image: document.getElementById('input-restic-image')?.value.trim() || 'docker.io/tofran/restic-rclone:0.17.0_1.68.2',
+        rcon_password: document.getElementById('input-rcon-password')?.value.trim() || 'minecraft',
+        backup_enabled: 'true',
+        enable_autostop: document.getElementById('input-enable-autostop')?.checked ? 'TRUE' : '',
+        autostop_timeout_est: 3600,
+        autostop_timeout_init: 1800,
+        enable_autopause: document.getElementById('input-enable-autopause')?.checked ? 'TRUE' : '',
+        max_tick_time: -1,
+        pause_when_empty_seconds: parseInt(document.getElementById('input-pause-empty')?.value, 10) || 300,
+    };
+}
+
+// ─── Modal & Actions ─────────────────────────────────────────────────────────
+
+function openConfirmModal() {
+    const payload = gatherPayload();
+    const list = document.getElementById('confirm-summary-list');
+    list.replaceChildren();
+
+    const summaryItems = [
+        { label: 'Container / Modpack Name', val: payload.name },
+        { label: 'Minecraft Engine & Version', val: `${payload.server_type} ${payload.version}` },
+        { label: 'Server IP (Principale)', val: payload.ip_server },
+        { label: 'Fallback IPs', val: payload.ip_fallbacks || '(nessuno)' },
+        { label: 'Rclone Remote', val: payload.rclone_service },
+        { label: 'DDNS Domain', val: payload.ddns_domain || '(disabilitato)' },
+        { label: 'RAM Allocata', val: `${payload.init_memory} - ${payload.memory}` },
+    ];
+
+    summaryItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'summary-item';
+
+        const k = document.createElement('span');
+        k.className = 'summary-item-key';
+        k.textContent = item.label;
+
+        const v = document.createElement('span');
+        v.className = 'summary-item-val';
+        v.textContent = item.val;
+
+        row.appendChild(k);
+        row.appendChild(v);
+        list.appendChild(row);
+    });
+
+    document.getElementById('confirm-modal').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirm-modal').style.display = 'none';
+}
+
+async function executeSave() {
+    const btn = document.getElementById('btn-modal-confirm-save');
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+
+    const payload = gatherPayload();
+
+    try {
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || `Save failed with status ${res.status}`);
+        }
+
+        closeConfirmModal();
+        showToast('Configuration successfully written to env/.env!', 'success');
+        fetchConfig();
+    } catch (e) {
+        console.error('Save error:', e);
+        showToast(`Save failed: ${e.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+    }
+}
+
+async function openRawModal() {
+    const payload = gatherPayload();
+    const codeBlock = document.getElementById('raw-code-block');
+    codeBlock.textContent = 'Loading generated .env preview...';
+
+    document.getElementById('raw-modal').style.display = 'flex';
+
+    try {
+        const res = await fetch('/api/config/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Preview generation failed');
+        codeBlock.textContent = data.rendered_env || '';
+    } catch (e) {
+        codeBlock.textContent = `Error rendering preview: ${e.message}`;
+    }
+}
+
+function closeRawModal() {
+    document.getElementById('raw-modal').style.display = 'none';
+}
+
+function copyRawEnv() {
+    const text = document.getElementById('raw-code-block').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy-raw');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 1800);
+    });
+}
+
+async function downloadEnvFile() {
+    const payload = gatherPayload();
+    try {
+        const res = await fetch('/api/config/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const content = data.rendered_env || '';
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '.env';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Downloaded .env file!', 'success');
+    } catch (e) {
+        showToast(`Download failed: ${e.message}`, 'error');
+    }
+}
+
+function reloadConfig() {
+    fetchConfig();
+    showToast('Configuration reloaded from disk', 'success');
+}
+
+// ─── Toast Notifications ─────────────────────────────────────────────────────
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon = document.createElement('span');
+    icon.textContent = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+
+    const msg = document.createElement('span');
+    msg.textContent = message;
+
+    toast.appendChild(icon);
+    toast.appendChild(msg);
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}

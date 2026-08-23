@@ -22,7 +22,7 @@ RESTIC_FORGET_ARGS="${RESTIC_FORGET_ARGS:---prune --keep-last ${RESTIC_KEEP_LAST
 rc(){ restic -r "${RESTIC_REPOSITORY}" "$@"; }
 
 # ================== Mutex (rclone) ==============
-: "${RCLONE_CONFIG:=/root/.config/rclone/rclone.conf}"
+: "${RCLONE_CONFIG:=/etc/rclone/rclone.conf}"
 : "${MUTEX_FILE:=mutex.txt}"
 : "${CLOUD_MUTEX_TRIES:=60}"
 : "${CLOUD_MUTEX_WAIT_SECS:=5}"
@@ -89,8 +89,10 @@ mutex_release() {
 wait_resty_locks_clear() {
   log "Checking existing or stale restic locks..."
   while :; do
-    cnt="$(rc list locks 2>/dev/null | wc -l | tr -d ' ' || echo 0)"
-    if [ "${cnt:-0}" -le 0 ]; then
+    local cnt
+    cnt="$(rc list locks 2>/dev/null | wc -l || echo 0)"
+    cnt="$(echo "$cnt" | tr -dc '0-9')"
+    if [ -z "$cnt" ] || [ "$cnt" -le 0 ]; then
       break
     fi
     log "Waiting 10s for unlocking repo - ${cnt}"
