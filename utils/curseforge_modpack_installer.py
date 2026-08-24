@@ -58,6 +58,7 @@ CLIENT_ONLY_KEYWORDS = (
 
 # Hardcoded key for public download
 CURSEFORGE_API_KEY = "$2a$10$n/Yb8yC2d3Yvd2wWkP9.HeKMCC9A1l2/p0I2LCx/cI8LiPESErmae"
+CHUNK_SIZE = 8192
 
 
 class CurseForgeError(Exception):

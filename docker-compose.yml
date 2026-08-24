@@ -137,4 +137,6 @@ services:
       - ./server_modpacks:/app/server_modpacks
       - ./data:/app/data
       - ./utils:/app/utils:ro
+      - ./:/project
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

@@ -161,3 +161,83 @@ async function refresh() {
     await loadServerInfo();
     await Promise.all([checkStatus(), loadMembers()]);
 })();
+
+async function startServer() {
+    const btn = document.getElementById('start-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Starting...';
+    try {
+        const res = await fetch('/api/server/start', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            btn.textContent = '✅ Started';
+            setTimeout(() => { btn.textContent = '▶ Start Server'; btn.disabled = false; }, 3000);
+            refresh();
+        } else {
+            alert('Error: ' + data.message);
+            btn.textContent = '▶ Start Server';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Failed to start server: ' + e);
+        btn.textContent = '▶ Start Server';
+        btn.disabled = false;
+    }
+}
+
+async function stopServer() {
+    if (!confirm("Are you sure you want to stop the server?")) return;
+    const btn = document.getElementById('stop-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Stopping...';
+    try {
+        const res = await fetch('/api/server/stop', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            btn.textContent = '✅ Stopped';
+            setTimeout(() => { btn.textContent = '⏹ Stop Server'; btn.disabled = false; }, 3000);
+            refresh();
+        } else {
+            alert('Error: ' + data.message);
+            btn.textContent = '⏹ Stop Server';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Failed to stop server: ' + e);
+        btn.textContent = '⏹ Stop Server';
+        btn.disabled = false;
+    }
+}
+
+// --- Log Viewer Logic ---
+let logInterval = null;
+
+function toggleLogs() {
+    const logViewer = document.getElementById('log-viewer');
+    if (logViewer.style.display === 'none') {
+        logViewer.style.display = 'block';
+        fetchLogs();
+        logInterval = setInterval(fetchLogs, 2000);
+    } else {
+        logViewer.style.display = 'none';
+        clearInterval(logInterval);
+    }
+}
+
+async function fetchLogs() {
+    const logContent = document.getElementById('log-content');
+    try {
+        const response = await fetch('/api/server/logs');
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.logs && data.logs.trim() !== '') {
+            logContent.textContent = data.logs;
+            logContent.scrollTop = logContent.scrollHeight;
+        } else {
+            logContent.textContent = "No logs available yet. The server might still be starting...";
+        }
+    } catch (err) {
+        console.error("Failed to fetch logs", err);
+        logContent.textContent = "Error fetching logs. Is the web container running?";
+    }
+}

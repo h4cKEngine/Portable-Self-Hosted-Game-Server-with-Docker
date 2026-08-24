@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="config.css">
+    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="config.css?v=5">
 </head>
 
 <body>
@@ -69,6 +69,20 @@
                 <div class="connect-address" id="connect-address">—</div>
                 <button class="copy-btn" id="copy-btn" onclick="copyAddress()">📋 Copy</button>
             </div>
+
+            <div class="server-controls">
+                <button class="control-btn start-btn" id="start-btn" onclick="startServer()">▶ Start Server</button>
+                <button class="control-btn stop-btn" id="stop-btn" onclick="stopServer()">⏹ Stop Server</button>
+                <button class="control-btn log-btn" id="toggle-log-btn" onclick="toggleLogs()">📜 View Logs</button>
+            </div>
+
+            <div class="log-viewer" id="log-viewer" style="display: none;">
+                <div class="log-header">
+                    <span>Server Logs</span>
+                    <button class="log-refresh-btn" onclick="fetchLogs()">↻</button>
+                </div>
+                <pre class="log-content" id="log-content">Loading logs...</pre>
+            </div>
         </section>
 
         <section class="members-card">
@@ -77,14 +91,14 @@
                 <li class="member-placeholder">Loading...</li>
             </ul>
         </section>
-
+        
         <footer>
             <p>Last updated: <span id="last-updated">—</span></p>
             <button class="refresh-btn" onclick="refresh()">↻ Refresh</button>
         </footer>
     </main>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
 </body>
 
 </html>

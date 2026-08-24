@@ -25,6 +25,7 @@ fi
 
 # Ensure default fallback container name
 export MC_CONTAINER_NAME="${MC_CONTAINER_NAME:-minecraft-server}"
+export COMPOSE_PROJECT_NAME="${MC_CONTAINER_NAME}"
 
 # Detect IP address
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "127.0.0.1")

@@ -79,6 +79,9 @@ load_env() {
   export TARGET_UID="${UID:-$(id -u)}"
   export TARGET_GID="${GID:-$(id -g)}"
 
+  # Ensure consistent project name across different paths (host vs container)
+  export COMPOSE_PROJECT_NAME="${MC_CONTAINER_NAME:-minecraft-server}"
+
   # Default for rclone mutex (can be overridden in .env)
   : "${CLOUD_MUTEX_DIR:=/Root/modpack}"          # /Root/<dir> in MEGA (e.g. /Root/modpack)
   : "${MUTEX_FILE:=mutex.txt}"                   # flag file name

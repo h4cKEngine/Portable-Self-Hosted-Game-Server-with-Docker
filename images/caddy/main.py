@@ -1082,4 +1082,44 @@ def activate_modpack(req: CurseForgeActivateRequest):
         "data_path": str(DATA_DIR_PATH.resolve())
     }
 
+# ─── Server Control Endpoints ───────────────────────────────────────────────
+@app.post("/api/server/start")
+def start_server():
+    """Tells the host agent to start the game server."""
+    try:
+        with open("/project/action.txt", "w") as f:
+            f.write("start")
+        return {"status": "success", "message": "Server start initiated."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate start: {str(e)}")
 
+@app.post("/api/server/stop")
+def stop_server():
+    """Tells the host agent to stop the game server."""
+    try:
+        with open("/project/action.txt", "w") as f:
+            f.write("stop")
+        return {"status": "success", "message": "Server stop initiated."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate stop: {str(e)}")
+
+@app.get("/api/server/logs")
+def get_logs():
+    """Fetches the latest server logs."""
+    logs = []
+    try:
+        startup = subprocess.check_output(["tail", "-n", "20", "/project/logs/startup.log"], text=True)
+        logs.append("--- STARTUP SCRIPT LOGS ---")
+        logs.append(startup.strip())
+    except Exception:
+        pass
+        
+    try:
+        container_name = os.environ.get("MC_CONTAINER_NAME", "minecraft-server")
+        mc = subprocess.check_output(["docker", "logs", "--tail", "50", container_name], text=True, stderr=subprocess.STDOUT)
+        logs.append("\n--- MINECRAFT SERVER LOGS ---")
+        logs.append(mc.strip())
+    except Exception:
+        pass
+
+    return {"status": "success", "logs": "\n".join(logs)}

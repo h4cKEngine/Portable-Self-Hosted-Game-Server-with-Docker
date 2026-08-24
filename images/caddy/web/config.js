@@ -183,7 +183,7 @@ function populateForm(cfg) {
     // 1. Server & Modpack
     document.getElementById('input-name').value = cfg.name || 'minecraft-server';
     document.getElementById('input-version').value = cfg.version || '1.21.1';
-    
+
     // Server IP & Fallbacks
     document.getElementById('input-ip').value = cfg.ip_server || '127.0.0.1';
     const fallbacks = (cfg.ip_fallbacks || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -252,10 +252,10 @@ function populateForm(cfg) {
     // 7. AutoStop / Pause
     const pauseEmpty = document.getElementById('input-pause-empty');
     if (pauseEmpty) pauseEmpty.value = cfg.pause_when_empty_seconds !== undefined ? cfg.pause_when_empty_seconds : 300;
-    
+
     const autoStop = document.getElementById('input-enable-autostop');
     if (autoStop) autoStop.checked = (cfg.enable_autostop || '').toUpperCase() === 'TRUE';
-    
+
     const autoPause = document.getElementById('input-enable-autopause');
     if (autoPause) autoPause.checked = (cfg.enable_autopause || '').toUpperCase() === 'TRUE';
 
@@ -1261,8 +1261,8 @@ async function loadInstalledModpacks() {
             const applyBtn = document.createElement('button');
             applyBtn.type = 'button';
             applyBtn.className = 'btn btn-sm btn-secondary';
-            applyBtn.textContent = '⚙️ Compila Form';
-            applyBtn.title = 'Compila solo i campi del form di configurazione';
+            applyBtn.textContent = '⚙️ Applica Modpack Config';
+            applyBtn.title = 'Applica la configurazione del modpack';
             applyBtn.onclick = () => applyModpackToConfig(mp);
 
             const delBtn = document.createElement('button');

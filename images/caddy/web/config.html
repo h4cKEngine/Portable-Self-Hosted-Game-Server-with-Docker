@@ -29,7 +29,10 @@
 
     <main class="config-container">
         <header class="config-header">
-            <h1>Server Environment Configurator</h1>
+            <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%;">
+                <a href="index.html" title="Torna alla Dashboard" style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);" onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
+                <h1 style="margin: 0;">Server Environment Configurator</h1>
+            </div>
             <p class="subtitle">Quick setup for server addresses, engine, cloud storage, and domain</p>
             <div class="status-indicator-bar" id="config-status-bar">
                 <span class="status-pill loading" id="status-pill">⏳ Loading configuration...</span>
