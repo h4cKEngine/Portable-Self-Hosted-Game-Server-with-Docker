@@ -84,6 +84,7 @@ services:
       - ./data:/data
       - ./env/rclone.conf:${RCLONE_CONFIG:-/etc/rclone/rclone.conf}:ro
       - ./overrides:/overrides:ro
+      - ./backups:/backups
 
   backups:
     image: itzg/mc-backup

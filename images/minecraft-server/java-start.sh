@@ -105,6 +105,24 @@ do_backup() {
   log "Backup starting..."
   rc forget ${RESTIC_FORGET_ARGS} || warn "restic forget failed"
   rc backup --tag "${RESTIC_TAG}" -vv --host "${RESTIC_HOSTNAME}" /data/world || warn "restic backup failed"
+  
+  # Local Backup
+  local modpack="${MC_CONTAINER_NAME:-minecraft-server}"
+  if [[ -d /backups ]]; then
+     local timestamp
+     timestamp=$(date +"%Y%m%d_%H%M%S")
+     log "Creating local copy of /data for modpack '${modpack}' in /backups..."
+     mkdir -p "/backups/${modpack}"
+     tar -czf "/backups/${modpack}/data_${timestamp}.tar.gz" -C / data || warn "Local backup failed"
+     
+     # Mantieni solo gli ultimi 2 backup per evitare di riempire il disco
+     local count
+     count=$(ls -1 "/backups/${modpack}/data_"*.tar.gz 2>/dev/null | wc -l || echo 0)
+     if [ "$count" -gt 2 ]; then
+       ls -1tr "/backups/${modpack}/data_"*.tar.gz 2>/dev/null | head -n -2 | while read -r f; do rm -f "$f"; done
+     fi
+  fi
+  
   log "Backup end."
 }
 
