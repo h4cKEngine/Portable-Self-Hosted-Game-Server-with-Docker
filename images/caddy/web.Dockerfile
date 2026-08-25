@@ -1,10 +1,10 @@
-FROM caddy:builder-alpine AS builder
+FROM caddy:2.8-builder-alpine AS builder
 
 ARG CADDY_DNS_PROVIDER=duckdns
 
 RUN xcaddy build --with github.com/caddy-dns/$CADDY_DNS_PROVIDER
 
-FROM caddy:alpine
+FROM caddy:2.8-alpine
 
 # Install Python, pip, rclone and Docker CLI for remote management/logging
 RUN apk add --no-cache rclone python3 py3-pip docker-cli docker-cli-compose

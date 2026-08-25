@@ -87,7 +87,7 @@ services:
       - ./backups:/backups
 
   backups:
-    image: itzg/mc-backup
+    image: itzg/mc-backup:2026.8.2
     container_name: ${MC_CONTAINER_NAME:-minecraft-server}-backup
     environment:
       UID: ${TARGET_UID:-1000}
