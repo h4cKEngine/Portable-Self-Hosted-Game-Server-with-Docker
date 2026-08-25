@@ -5,7 +5,7 @@ Hosting locale di server di gioco (Minecraft Java Vanilla o con mod loader Forge
 #### Vincolo: evitare che due host facciano girare lo stesso server contemporaneamente -> mutex su cloud storage
 ---
 
-> [Read this document in English](README.md) 🇬🇧
+> [Read this document in English](../README.md) 🇬🇧
 
 ## Cosa sono Restic e Rclone?
 Restic gestisce *cosa* e *come* fare il backup, Rclone gestisce *dove* memorizzarlo.
@@ -29,12 +29,12 @@ Viene utilizzata un'immagine Docker personalizzata basata su [itzg/minecraft-ser
 ### 1. Configurazione Wizard
 Avviare il configuratore automatico.
 ```bash
-./install_and_configure.sh
+./utils/install_and_configure.sh
 ```
 
 ```bash
 # Oppure con il flag --full per opzioni avanzate (RAM, Versioni Forge/Fabric, View Distance, DuckDNS, ecc.)
-./install_and_configure.sh --full
+./utils/install_and_configure.sh --full
 ```
 
 ### 2. Autenticazione Cloud Storage
@@ -147,7 +147,7 @@ Di seguito sono elencate le migliori alternative DDNS gratuite, valutate in base
   - Verifica con `./utils/rclone-mutex.sh get` oppure con `./utils/rclone-mutex.sh status`.
   - Se nessun altro ha il server avviato, sblocca con `./utils/rclone-mutex.sh set 0`.
 
-- **Dettagli Tecnici**: Vedi [images/STRUTTURA.md](images/STRUTTURA.md) per info su come funziona il sistema sotto la scocca.
+- **Dettagli Tecnici**: Vedi [STRUTTURA.md](STRUTTURA.md) per info su come funziona il sistema sotto la scocca.
 
 ### Cambio Server (Modpack)
 Puoi mantenere più istanze di server isolate (es. modpack diversi) e passare da una all'altra facilmente.

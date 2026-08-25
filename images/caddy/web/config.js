@@ -243,6 +243,9 @@ function populateForm(cfg) {
     selectDDNSProvider(ddnsProv);
     document.getElementById('input-ddns-domain').value = cfg.ddns_domain || '';
     document.getElementById('input-ddns-token').value = cfg.ddns_token || '';
+    if (document.getElementById('input-ddns-skip')) {
+        document.getElementById('input-ddns-skip').checked = cfg.ddns_skip === true;
+    }
 
     // 6. Restic
     document.getElementById('input-restic-hostname').value = cfg.restic_hostname || 'MinecraftServer';
@@ -774,6 +777,7 @@ function gatherPayload() {
         ddns_provider: document.getElementById('input-ddns-provider')?.value.trim() || '',
         ddns_domain: document.getElementById('input-ddns-domain')?.value.trim() || '',
         ddns_token: document.getElementById('input-ddns-token')?.value.trim() || '',
+        ddns_skip: document.getElementById('input-ddns-skip')?.checked || false,
         restic_hostname: document.getElementById('input-restic-hostname')?.value.trim() || 'MinecraftServer',
         restic_password: document.getElementById('input-restic-password')?.value.trim() || 'minecraft',
         restic_keep_last: parseInt(document.getElementById('input-restic-keep')?.value, 10) || 10,

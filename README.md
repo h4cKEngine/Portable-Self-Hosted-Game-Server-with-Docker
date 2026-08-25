@@ -5,7 +5,7 @@ Local hosting of game servers (Minecraft Java Vanilla or Forge/Fabric) container
 #### Constraint: prevent two hosts from running the same server simultaneously -> mutex on cloud storage
 ---
 
-> [Leggi questo documento in Italiano](LEGGIMI.md) 🇮🇹
+> [Leggi questo documento in Italiano](docs/LEGGIMI.md) 🇮🇹
 
 ## What are Restic and Rclone?
 Restic manages *what* and *how* to backup, Rclone manages *where* to store it.
@@ -29,12 +29,12 @@ A custom Docker image based on [itzg/minecraft-server](https://github.com/itzg/d
 ### 1. Configuration Wizard
 Start the automatic configurator.
 ```bash
-./install_and_configure.sh
+./utils/install_and_configure.sh
 ```
 
 ```bash
 # Or with the --full flag for advanced options (RAM, Forge/Fabric Versions, View Distance, DuckDNS, etc.)
-./install_and_configure.sh --full
+./utils/install_and_configure.sh --full
 ```
 
 ### 2. Cloud Storage Authentication
@@ -147,7 +147,7 @@ Below are the best free DDNS alternatives, evaluated based on record update spee
   - Verify with `./utils/rclone-mutex.sh get` or `./utils/rclone-mutex.sh status`.
   - If no one else has the server running, unlock with `./utils/rclone-mutex.sh set 0`.
 
-- **Technical Details**: See [images/STRUCTURE.md](images/STRUCTURE.md) for info on how the system works under the hood.
+- **Technical Details**: See [docs/STRUCTURE.md](docs/STRUCTURE.md) for info on how the system works under the hood.
 ### Swapping Servers (Modpacks)
 You can maintain multiple isolated server instances (e.g. different modpacks) on the same machine and swap between them easily.
 

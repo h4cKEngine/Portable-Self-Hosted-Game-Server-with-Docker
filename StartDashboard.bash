@@ -10,7 +10,7 @@ echo "Starting web container and host agent..."
 chmod +x *.sh utils/*.sh
 
 # Start the web interface
-./setup-web.sh
+./utils/setup-web.sh
 
 # Try to open the browser automatically
 if command -v xdg-open &> /dev/null; then

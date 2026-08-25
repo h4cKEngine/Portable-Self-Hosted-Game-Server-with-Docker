@@ -36,6 +36,6 @@ echo       STARTING GAME SERVER DASHBOARD (WSL Bridge)
 echo ==========================================================
 echo Project Path: %WSL_PATH%
 echo Starting web container and host agent...
-wsl -e bash -c "cd %WSL_PATH% && chmod +x *.sh utils/*.sh && ./setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
+wsl -e bash -c "cd %WSL_PATH% && chmod +x *.sh utils/*.sh && ./utils/setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
 echo Dashboard closed.
 pause

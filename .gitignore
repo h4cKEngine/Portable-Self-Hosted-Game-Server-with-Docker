@@ -13,9 +13,10 @@ fullbackup/
 # === Mods (Unless this is a specific modpack repo) ===
 # mods/*.jar
 # mods/memory_repo/
-logs/mods_list.txt
+logs/
 data/
 server_modpacks/
+servers_played/
 
 # === Web ===
 images/caddy/caddy_config/caddy/

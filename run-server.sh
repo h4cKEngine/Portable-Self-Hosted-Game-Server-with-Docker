@@ -46,7 +46,7 @@ if [ -f "env/.env" ]; then
     source "env/.env"
     set +a
 else
-    err ".env file not found in env/.env! Run ./install_and_configure.sh first."
+    err ".env file not found in env/.env! Run ./utils/install_and_configure.sh first."
 fi
 
 # Source mod-specific functions

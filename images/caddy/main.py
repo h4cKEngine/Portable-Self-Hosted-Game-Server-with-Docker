@@ -64,6 +64,13 @@ if not DATA_DIR_PATH.exists():
         except OSError:
             pass
 
+# Determine overrides directory for ddns.skip logic
+OVERRIDES_DIR_PATH = Path(os.getenv("OVERRIDES_DIR", "/project/overrides")).resolve()
+if not OVERRIDES_DIR_PATH.exists():
+    local_overrides_dir = Path("./overrides").resolve()
+    if local_overrides_dir.exists():
+        OVERRIDES_DIR_PATH = local_overrides_dir
+
 # Add utils to sys.path to allow importing curseforge_modpack_installer
 for possible_utils in [Path("/app/utils"), Path("./utils").resolve(), Path(__file__).parent.parent.parent / "utils"]:
     if possible_utils.exists() and str(possible_utils) not in sys.path:
@@ -276,6 +283,7 @@ class ServerConfigModel(BaseModel):
     ddns_provider: Optional[str] = Field(default="duckdns", description="DDNS Provider")
     ddns_domain: Optional[str] = Field(default="", description="DDNS Domain")
     ddns_token: Optional[str] = Field(default="", description="DDNS Token / Key")
+    ddns_skip: bool = Field(default=False, description="Skip DDNS configuration")
     
     # Restic Backup
     restic_hostname: str = Field(default="MinecraftServer", description="Restic Hostname")
@@ -693,6 +701,7 @@ def get_config():
         "ddns_provider": parsed.get("DDNS_PROVIDER", "duckdns"),
         "ddns_domain": parsed.get("DDNS_DOMAIN", ""),
         "ddns_token": parsed.get("DDNS_TOKEN", ""),
+        "ddns_skip": (OVERRIDES_DIR_PATH / "ddns.skip").exists() if OVERRIDES_DIR_PATH.exists() else False,
         "restic_hostname": parsed.get("RESTIC_HOSTNAME", "MinecraftServer"),
         "restic_password": parsed.get("RESTIC_PASSWORD", "minecraft"),
         "restic_keep_last": to_int(parsed.get("RESTIC_KEEP_LAST"), 10),
@@ -748,6 +757,17 @@ def save_config(config: ServerConfigModel):
         # Write out new .env
         with open(ENV_FILE_PATH, "w", encoding="utf-8") as f:
             f.write(rendered_content)
+
+        # Handle ddns.skip
+        if OVERRIDES_DIR_PATH.exists():
+            skip_file = OVERRIDES_DIR_PATH / "ddns.skip"
+            rename_file = OVERRIDES_DIR_PATH / "ddns.skip-renameme"
+            if config.ddns_skip:
+                if rename_file.exists():
+                    rename_file.rename(skip_file)
+            else:
+                if skip_file.exists():
+                    skip_file.rename(rename_file)
 
         return {
             "status": "success",
