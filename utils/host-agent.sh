@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+cd "$(dirname "$0")/.."
 
 # Host Agent Script
 # This script runs on the WSL host and waits for commands from the web UI.
@@ -9,7 +10,7 @@ echo "=========================================================="
 echo "Keep this terminal open while using the web dashboard."
 echo "If sudo password is required, it will be prompted here."
 
-ACTION_FILE="./action.txt"
+ACTION_FILE="./logs/action.log"
 
 # Ensure clean state
 rm -f "$ACTION_FILE"
@@ -40,6 +41,15 @@ while true; do
             source env/.env 2>/dev/null || true
             PROJ_NAME="${MC_CONTAINER_NAME:-minecraft-server}"
             docker compose -p "$PROJ_NAME" --env-file env/.env stop mc backups
+        elif [[ "$ACTION" == swap\ * ]]; then
+            MODPACK="${ACTION#swap }"
+            echo "[$(date)] Web UI requested: SWAP MODPACK to $MODPACK"
+            source env/.env 2>/dev/null || true
+            PROJ_NAME="${MC_CONTAINER_NAME:-minecraft-server}"
+            echo "[$(date)] Stopping current server ($PROJ_NAME) before swapping..."
+            docker compose -p "$PROJ_NAME" --env-file env/.env stop mc backups
+            echo "[$(date)] Swapping to $MODPACK..."
+            ./utils/swap-server.sh "$MODPACK"
         fi
     fi
     sleep 2

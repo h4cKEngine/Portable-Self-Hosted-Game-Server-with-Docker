@@ -40,6 +40,28 @@
             </div>
         </header>
 
+        <!-- 00. Modpack Management -->
+        <section class="form-card modpack-management-section" id="modpack-management-card" style="border: 2px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);">
+            <div class="card-header">
+                <div class="card-icon">🔄</div>
+                <div>
+                    <h2>Gestione Modpack (Swap)</h2>
+                    <p class="card-desc">Scegli tra i server già giocati per renderli attivi (sovrascrive la configurazione attuale).</p>
+                </div>
+            </div>
+            <div class="form-group" style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label for="select-modpack" class="form-label">Modpack Disponibili:</label>
+                    <select id="select-modpack" class="form-input">
+                        <option value="">Caricamento in corso...</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" id="btn-swap-modpack" onclick="swapModpack()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    🔄 Swap Server
+                </button>
+            </div>
+        </section>
+
         <form id="config-form" onsubmit="return false;">
             <!-- 0. CurseForge Modpack Downloader & Manager -->
             <section class="form-card cf-modpack-section" id="cf-modpack-card">

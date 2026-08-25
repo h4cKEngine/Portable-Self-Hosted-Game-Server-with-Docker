@@ -148,3 +148,16 @@ Di seguito sono elencate le migliori alternative DDNS gratuite, valutate in base
   - Se nessun altro ha il server avviato, sblocca con `./utils/rclone-mutex.sh set 0`.
 
 - **Dettagli Tecnici**: Vedi [images/STRUTTURA.md](images/STRUTTURA.md) per info su come funziona il sistema sotto la scocca.
+
+### Cambio Server (Modpack)
+Puoi mantenere più istanze di server isolate (es. modpack diversi) e passare da una all'altra facilmente.
+
+Per cambiare server, esegui:
+```bash
+./utils/swap-server.sh <nuovo_nome_server>
+```
+
+- Questo script sposterà in modo sicuro l'attuale cartella `./data` e copierà la configurazione `./env` in `servers_played/<nome_server_attuale>/`.
+- Successivamente caricherà il server specificato in `./data` e `./env`.
+- I vecchi container rimangono spenti ma intatti, permettendoti di riprendere esattamente da dove avevi lasciato.
+- Se `<nuovo_nome_server>` non esiste, verrà inizializzata una nuova installazione pulita.

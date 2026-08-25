@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     fetchConfig();
     loadInstalledModpacks();
+    loadAvailableModpacks();
 });
 
 function initEventListeners() {
@@ -1337,3 +1338,86 @@ async function deleteInstalledModpack(slug) {
 }
 
 
+
+// ─── Modpack Management (Swap) ───────────────────────────────────────────────
+
+async function loadAvailableModpacks() {
+    const select = document.getElementById('select-modpack');
+    if (!select) return;
+    
+    try {
+        const res = await fetch('/api/modpacks');
+        if (!res.ok) throw new Error("Failed to fetch modpacks");
+        
+        const data = await res.json();
+        const { active, available } = data;
+        
+        select.innerHTML = '';
+        if (available.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "Nessun modpack disponibile";
+            select.appendChild(opt);
+            return;
+        }
+        
+        available.forEach(mp => {
+            const opt = document.createElement('option');
+            opt.value = mp;
+            opt.textContent = mp === active ? `${mp} (Attivo)` : mp;
+            if (mp === active) {
+                opt.selected = true;
+                opt.disabled = true;
+            }
+            select.appendChild(opt);
+        });
+        
+    } catch (err) {
+        console.error("Error loading modpacks:", err);
+        select.innerHTML = '<option value="">Errore nel caricamento</option>';
+    }
+}
+
+async function swapModpack() {
+    const select = document.getElementById('select-modpack');
+    if (!select) return;
+    
+    const target = select.value;
+    if (!target) {
+        alert("Seleziona un modpack valido per lo swap.");
+        return;
+    }
+    
+    if (!confirm(`Sei sicuro di voler attivare il server '${target}'?\nQuesto fermerà il server attuale e sostituirà la configurazione attuale.`)) {
+        return;
+    }
+    
+    const btn = document.getElementById('btn-swap-modpack');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '⏳ Swapping...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/api/modpacks/swap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modpack: target })
+        });
+        
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Failed to initiate swap');
+        }
+        
+        alert("Swap iniziato! Attendi il caricamento della nuova configurazione...");
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+        
+    } catch (err) {
+        console.error("Error swapping modpacks:", err);
+        alert("Errore durante lo swap: " + err.message);
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+    }
+}

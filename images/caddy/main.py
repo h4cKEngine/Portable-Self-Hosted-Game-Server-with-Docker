@@ -1087,7 +1087,7 @@ def activate_modpack(req: CurseForgeActivateRequest):
 def start_server():
     """Tells the host agent to start the game server."""
     try:
-        with open("/project/action.txt", "w") as f:
+        with open("/project/logs/action.log", "w") as f:
             f.write("start")
         return {"status": "success", "message": "Server start initiated."}
     except Exception as e:
@@ -1097,7 +1097,7 @@ def start_server():
 def stop_server():
     """Tells the host agent to stop the game server."""
     try:
-        with open("/project/action.txt", "w") as f:
+        with open("/project/logs/action.log", "w") as f:
             f.write("stop")
         return {"status": "success", "message": "Server stop initiated."}
     except Exception as e:
@@ -1123,3 +1123,38 @@ def get_logs():
         pass
 
     return {"status": "success", "logs": "\n".join(logs)}
+
+# ─── Modpack Management Endpoints ───────────────────────────────────────────
+@app.get("/api/modpacks")
+def list_modpacks():
+    """Lists available modpacks and the currently active one."""
+    try:
+        active = os.environ.get("MC_CONTAINER_NAME", "minecraft-server")
+        available = []
+        servers_dir = "/project/servers_played"
+        if os.path.isdir(servers_dir):
+            for item in os.listdir(servers_dir):
+                if os.path.isdir(os.path.join(servers_dir, item)):
+                    available.append(item)
+        if active not in available:
+            available.append(active)
+        return {"status": "success", "active": active, "available": sorted(list(set(available)))}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list modpacks: {str(e)}")
+
+class SwapRequest(BaseModel):
+    modpack: str
+
+@app.post("/api/modpacks/swap")
+def swap_modpack(req: SwapRequest):
+    """Tells the host agent to swap the active modpack."""
+    try:
+        modpack_name = req.modpack.strip()
+        if not modpack_name or "/" in modpack_name or "\\" in modpack_name:
+             raise HTTPException(status_code=400, detail="Invalid modpack name")
+             
+        with open("/project/logs/action.log", "w") as f:
+            f.write(f"swap {modpack_name}")
+        return {"status": "success", "message": f"Swap to {modpack_name} initiated."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate swap: {str(e)}")

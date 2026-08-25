@@ -148,3 +148,15 @@ Below are the best free DDNS alternatives, evaluated based on record update spee
   - If no one else has the server running, unlock with `./utils/rclone-mutex.sh set 0`.
 
 - **Technical Details**: See [images/STRUCTURE.md](images/STRUCTURE.md) for info on how the system works under the hood.
+### Swapping Servers (Modpacks)
+You can maintain multiple isolated server instances (e.g. different modpacks) on the same machine and swap between them easily.
+
+To swap to a different server, run:
+```bash
+./utils/swap-server.sh <new_server_name>
+```
+
+- This script will safely **move** your current `./data` folder and copy your `./env` configuration to `servers_played/<current_server_name>/`.
+- It will then load the specified `<new_server_name>` into the `./data` and `./env` folders.
+- Old containers remain stopped and intact, allowing you to resume exactly where you left off.
+- If `<new_server_name>` does not exist, a fresh empty installation will be initialized.
