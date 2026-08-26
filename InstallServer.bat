@@ -53,6 +53,9 @@ if ($dirExists -eq "1") {
         exit 1
     }
 
+    Write-Host "[INFO] Setting permissions (chmod 755)..."
+    wsl -e bash -c "chmod -R 755 $WslDir"
+
     if (Test-Path $ShortcutPath) {
         Write-Host "=========================================================="
         Write-Host "[INFO] Repository updated successfully." -ForegroundColor Green
@@ -68,6 +71,8 @@ if ($dirExists -eq "1") {
         Write-Host "[ERROR] Failed to download the repository. Please check your internet connection." -ForegroundColor Red
         exit 1
     }
+    Write-Host "[INFO] Setting permissions (chmod 755)..."
+    wsl -e bash -c "chmod -R 755 $WslDir"
 }
 
 Write-Host "`n[INFO] Creating quick start shortcut on Windows Desktop..."
