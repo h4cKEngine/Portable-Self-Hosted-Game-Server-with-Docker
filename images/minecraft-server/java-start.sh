@@ -12,9 +12,18 @@ warn() { echo "[WARN] $*" >&2; }
 err()  { echo "[ERROR] $*" >&2; exit 1; }
 require_bin(){ command -v "$1" >/dev/null 2>&1 || err "Required command not found: $1"; }
 
+is_rclone_skip() {
+  [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]
+}
+
 # ================== Restic cfg ==================
-: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set (e.g. rclone:mega:/modpack)}"
-: "${RESTIC_PASSWORD:?RESTIC_PASSWORD not set}"
+if ! is_rclone_skip; then
+  : "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set (e.g. rclone:mega:/modpack)}"
+  : "${RESTIC_PASSWORD:?RESTIC_PASSWORD not set}"
+else
+  RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-}"
+  RESTIC_PASSWORD="${RESTIC_PASSWORD:-}"
+fi
 RESTIC_HOSTNAME="${RESTIC_HOSTNAME:-Mondo}"
 RESTIC_TAG="${RESTIC_TAG:-mc_backups}"
 : "${RESTIC_KEEP_LAST:=10}"
@@ -31,6 +40,10 @@ rc(){ restic -r "${RESTIC_REPOSITORY}" "$@"; }
 rc_m(){ rclone --config "$RCLONE_CONFIG" "$@"; }
 
 mutex_remote_dir() {
+  if is_rclone_skip; then
+    printf '%s' "disabled"
+    return
+  fi
   if [[ -n "${MUTEX_REMOTE_DIR:-}" ]]; then
     printf '%s' "${MUTEX_REMOTE_DIR%/}"; return
   fi
@@ -44,20 +57,29 @@ MUTEX_REMOTE="$(mutex_remote_dir)"
 MUTEX_PATH="${MUTEX_REMOTE}/${MUTEX_FILE}"
 
 mutex_read() {
-  rc_m cat "$MUTEX_PATH" 2>/dev/null \
-    | dd bs=1 count=1 2>/dev/null \
-    | tr -dc '01' \
-    | { read -r v; [[ "$v" == "1" ]] && echo 1 || echo 0; }
+  if is_rclone_skip; then
+    echo 0
+    return
+  fi
+  local v
+  v="$(rc_m cat "$MUTEX_PATH" 2>/dev/null | dd bs=1 count=1 2>/dev/null | tr -dc '01' || true)"
+  if [[ "$v" == "1" ]]; then echo 1; else echo 0; fi
 }
 # Robust overwrite: MEGA might not overwrite if size is identical
 mutex_set() {
+  if is_rclone_skip; then
+    return 0
+  fi
   local v="$1"
   local t; t="$(mktemp)"; printf '%s\n' "$v" > "$t"
   rc_m deletefile "$MUTEX_PATH" >/dev/null 2>&1 || true
-  rc_m copyto --ignore-times "$t" "$MUTEX_PATH" >/dev/null
+  rc_m copyto --ignore-times "$t" "$MUTEX_PATH" >/dev/null 2>&1 || true
   rm -f "$t"
 }
 mutex_wait_for_1() {
+  if is_rclone_skip; then
+    return 0
+  fi
   local i=1 cur
   while [ "$i" -le "$CLOUD_MUTEX_TRIES" ]; do
     cur="$(mutex_read)"
@@ -68,6 +90,9 @@ mutex_wait_for_1() {
   err "Timeout waiting for mutex=1 on ${MUTEX_PATH}"
 }
 mutex_keepalive_start() {
+  if is_rclone_skip; then
+    return 0
+  fi
   if [[ "$CLOUD_MUTEX_KEEPALIVE" == "1" ]]; then
     (
       while true; do
@@ -80,6 +105,9 @@ mutex_keepalive_start() {
   fi
 }
 mutex_release() {
+  if is_rclone_skip; then
+    return 0
+  fi
   [[ -n "${MC_MUTEX_KEEPALIVE_PID:-}" ]] && kill "$MC_MUTEX_KEEPALIVE_PID" 2>/dev/null || true
   mutex_set 0
   log "Cloud mutex released (1->0) on ${MUTEX_PATH}"
@@ -87,6 +115,9 @@ mutex_release() {
 
 # ================== Restic locks ==================
 wait_resty_locks_clear() {
+  if is_rclone_skip; then
+    return 0
+  fi
   log "Checking existing or stale restic locks..."
   while :; do
     local cnt
@@ -103,8 +134,12 @@ wait_resty_locks_clear() {
 # ================== Backup on-exit ===============
 do_backup() {
   log "Backup starting..."
-  rc forget ${RESTIC_FORGET_ARGS} || warn "restic forget failed"
-  rc backup --tag "${RESTIC_TAG}" -vv --host "${RESTIC_HOSTNAME}" /data/world || warn "restic backup failed"
+  if ! is_rclone_skip && [[ -n "${RESTIC_REPOSITORY:-}" ]]; then
+    rc forget ${RESTIC_FORGET_ARGS} || warn "restic forget failed"
+    rc backup --tag "${RESTIC_TAG}" -vv --host "${RESTIC_HOSTNAME}" /data/world || warn "restic backup failed"
+  else
+    log "RCLONE_SKIP=true -> Skipping cloud restic backup."
+  fi
   
   # Local Backup
   local modpack="${MC_CONTAINER_NAME:-minecraft-server}"
@@ -345,21 +380,16 @@ main() {
     setup_trap
     update_ddns   # async by default; sets DUCKDNS_ASYNC_PID
 
-    # Wait for restore to set mutex to 1 and start keepalive
-    mutex_wait_for_1
-    mutex_keepalive_start   # starts a background job
+    if ! is_rclone_skip; then
+      # Wait for restore to set mutex to 1 and start keepalive
+      mutex_wait_for_1
+      mutex_keepalive_start   # starts a background job
+    else
+      log "RCLONE_SKIP=true -> Skipping Cloud Mutex wait and Keepalive."
+    fi
   else
     log "BACKUP=false -> Skip Cloud Mutex, Keepalive, and Backup-on-exit trap."
-    # We still might want to trap TERM to kill the child properly, even if we don't backup
     trap 'on_term' TERM INT
-    # But skip on_exit (which does backup)
-    # update_ddns? User request said "nessun download/caricamento". 
-    # DDNS updates IP, distinct from backup/restore. But usually "backupoff" implies "local mode"?
-    # Request says "interrompere tutti i backup... download da cloud... caricamento verso cloud".
-    # Doesn't explicitly say DDNS. I will leave DDNS as is or maybe it's safer to run it?
-    # Let's keep DDNS running as it helps connectivity, unless user wanted total isolation.
-    # User said: "restoreoff backupoff" -> "nessun download ... né caricamento ... sia da container mc che backups".
-    # I'll stick to disabling backup/restore-related cloud, but DDNS is connectivity.
     update_ddns
   fi
 

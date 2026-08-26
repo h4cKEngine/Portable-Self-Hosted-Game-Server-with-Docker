@@ -15,6 +15,7 @@ services:
       RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
       RCLONE_CONFIG: ${RCLONE_CONFIG:-/etc/rclone/rclone.conf}
       MUTEX_REMOTE_DIR: ${MUTEX_REMOTE_DIR:-}
+      RCLONE_SKIP: ${RCLONE_SKIP:-false}
       XDG_CACHE_HOME: /data/.cache
     user: "${TARGET_UID:-1000}:${TARGET_GID:-1000}"
     volumes:
@@ -63,6 +64,8 @@ services:
       DDNS_PROVIDER: ${DDNS_PROVIDER:-}
       DDNS_DOMAIN: ${DDNS_DOMAIN:-}
       DDNS_TOKEN: ${DDNS_TOKEN:-}
+      DDNS_SKIP: ${DDNS_SKIP:-false}
+      RCLONE_SKIP: ${RCLONE_SKIP:-false}
       BACKUP: ${BACKUP:-true}
 
       # === Restic
@@ -99,6 +102,7 @@ services:
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
       RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
       RCLONE_CONFIG: ${RCLONE_CONFIG:-/etc/rclone/rclone.conf}
+      RCLONE_SKIP: ${RCLONE_SKIP:-false}
       BACKUP_INTERVAL: "30m"
       BACKUP_METHOD: restic
       SRC_DIR: /data/world

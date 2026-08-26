@@ -339,124 +339,86 @@ compose_up() {
   local mode="${1:-auto}"  # auto | restoreon | restoreoff
   local scale_args=""
   
-  if [[ "${BACKUP:-true}" == "false" ]]; then
-     log "BACKUP=false -> Disabling backups container."
+  if [[ "${BACKUP:-true}" == "false" || "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
+     log "BACKUP=false or RCLONE_SKIP=true -> Disabling cloud backups container."
      scale_args="--scale backups=0"
   fi
 
   log "Starting Minecraft..."
-  case "$mode" in
-    restoreoff)
-      log "Starting without restore from cloud storage..."
-      update_mods_list
-      # Use --exit-code-from mc so that if mc stops (AutoStop), backups container is also stopped.
-      # shellcheck disable=SC2086
-      docker compose --env-file env/.env up --build --exit-code-from mc $scale_args
-      ;;
-    restoreon|auto|*)
-      if [[ "${BACKUP:-true}" == "false" ]]; then
-          if [[ "$mode" == "restoreon" ]]; then
-               log "BACKUP=false but restoreon requested -> Forcing restore attempt."
-               # Ensure MUTEX_REMOTE_DIR is set (it might not be if cloud_mutex_prepare was skipped)
-               if [[ -z "${MUTEX_REMOTE_DIR:-}" ]]; then
-                   export MUTEX_REMOTE_DIR="$(derive_mutex_remote_dir)"
-               fi
-          else
-               log "BACKUP=false -> FORCE restoreoff (default behavior when backup is disabled)."
-               log "Skipping restore step because BACKUP=false."
-               # Force mode to restoreoff to skip the restore block
-               mode="restoreoff"
-          fi
+  
+  if [[ "${BACKUP:-true}" == "false" || "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
+      if [[ "$mode" == "restoreon" && "${RCLONE_SKIP:-false}" != "true" && "${RCLONE_SKIP:-false}" != "TRUE" && "${RCLONE_SKIP:-0}" != "1" ]]; then
+           log "BACKUP=false but restoreon requested -> Forcing restore attempt."
+           if [[ -z "${MUTEX_REMOTE_DIR:-}" ]]; then
+               export MUTEX_REMOTE_DIR="$(derive_mutex_remote_dir)"
+           fi
+      else
+           log "BACKUP=false or RCLONE_SKIP=true -> FORCE restoreoff (skipping cloud restore)."
+           mode="restoreoff"
       fi
+  fi
 
-      if [[ "$mode" != "restoreoff" ]]; then
-          log "Mode ${mode} -> using restore profile."
-          
-          # --- SMART RESTORE CHECK ---
-          # Run a temp container to check timestamps (since we can't do it on host easily if restic is missing)
-          # Only if we have a local world to compare
-          if [[ -f "./world/level.dat" ]]; then
-             log "Checking for Smart Restore (Local vs Cloud timestamps)..."
-             # We use the same image as restore-backup service
-             IMG="${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}"
+  if [[ "$mode" != "restoreoff" ]]; then
+      log "Mode ${mode} -> using restore profile."
+      
+      # --- SMART RESTORE CHECK ---
+      if [[ "${RCLONE_SKIP:-false}" != "true" && "${RCLONE_SKIP:-false}" != "TRUE" && "${RCLONE_SKIP:-0}" != "1" && -f "./world/level.dat" ]]; then
+         log "Checking for Smart Restore (Local vs Cloud timestamps)..."
+         IMG="${RESTIC_IMAGE:-docker.io/tofran/restic-rclone:0.17.0_1.68.2}"
+         
+         json_out=$(docker run --rm --entrypoint "" --env-file env/.env \
+            -v "$(pwd)/env/rclone.conf:${RCLONE_CONFIG}:ro" \
+            "$IMG" restic -r "$RESTIC_REPOSITORY" snapshots --host "$RESTIC_HOSTNAME" --latest 1 --json 2>/dev/null || true)
+         
+         cloud_time_str=$(echo "$json_out" | grep -o '"time":"[^"]*"' | cut -d'"' -f4 | head -n1 || true)
+         
+         if [[ -n "$cloud_time_str" ]]; then
+             cloud_ts=$(date -d "$cloud_time_str" +%s 2>/dev/null || echo 0)
+             local_ts=$(stat -c %Y ./world/level.dat 2>/dev/null || echo 0)
              
-             # Get Cloud Timestamp (JSON parsing via grep/sed since jq might be missing)
-             # We mount rclone config. We don't need to mount world, just read metadata.
-             # We assume default values from .env are exported.
+             log "Smart Restore: Local=$(date -d @$local_ts), Cloud=$(date -d @$cloud_ts)"
              
-             # Capture output. We use --json to get precise time.
-             # We need to pass env vars.
-             # We must override entrypoint because the image has a custom one.
-             json_out=$(docker run --rm --entrypoint "" --env-file env/.env \
-                -v "$(pwd)/env/rclone.conf:${RCLONE_CONFIG}:ro" \
-                "$IMG" restic -r "$RESTIC_REPOSITORY" snapshots --host "$RESTIC_HOSTNAME" --latest 1 --json 2>/dev/null || true)
-             
-             # Parse time: "time":"2026-02-10T16:28:01.123456789+00:00"
-             # grep -o matches only the part.
-             cloud_time_str=$(echo "$json_out" | grep -o '"time":"[^"]*"' | cut -d'"' -f4 | head -n1 || true)
-             
-             if [[ -n "$cloud_time_str" ]]; then
-                 # Convert to epoch. 'date' in alpine/busybox (in container) or host?
-                 # Host 'date' is usually GNU date on Linux, which handles ISO8601.
-                 cloud_ts=$(date -d "$cloud_time_str" +%s 2>/dev/null || echo 0)
-                 
-                 # Local timestamp
-                 local_ts=$(stat -c %Y ./world/level.dat 2>/dev/null || echo 0)
-                 
-                 log "Smart Restore: Local=$(date -d @$local_ts), Cloud=$(date -d @$cloud_ts)"
-                 
-                 if [[ "$local_ts" -gt "$cloud_ts" ]]; then
-                     if [[ "$mode" == "restoreon" ]]; then
-                         log ">>> Local world is NEWER than cloud, but 'restoreon' was requested. FORCING RESTORE."
-                     else
-                         log ">>> Local world is NEWER than cloud. SKIPPING RESTORE (Smart Restore)."
-                         RESTORE_MODE="restoreoff"
-                         # We must break/skip the restore block below
-                         mode="restoreoff" 
-                     fi
+             if [[ "$local_ts" -gt "$cloud_ts" ]]; then
+                 if [[ "$mode" == "restoreon" ]]; then
+                     log ">>> Local world is NEWER than cloud, but 'restoreon' was requested. FORCING RESTORE."
                  else
-                     log "Cloud is newer or same. Proceeding with restore."
+                     log ">>> Local world is NEWER than cloud. SKIPPING RESTORE (Smart Restore)."
+                     mode="restoreoff" 
                  fi
              else
-                 warn "Could not fetch/parse cloud snapshot time. Proceeding with standard restore."
+                 log "Cloud is newer or same. Proceeding with restore."
              fi
-          fi
-          # ---------------------------
+         else
+             warn "Could not fetch/parse cloud snapshot time. Proceeding with standard restore."
+         fi
+      fi
+      
+      if [[ "$mode" != "restoreoff" ]]; then
+          log "Pre-restore: Syncing data from cloud (run-server/cloud-sync)..."
+          bash ./utils/cloud-sync.sh restore
+
+          docker compose -f docker-compose.yml -f ./images/minecraft-server/docker-compose.restore-overrides.yml \
+            --profile restore --env-file env/.env up --build restore-backup
+
+          log "Post-restore: Fixing permissions..."
+          ensure_permissions
           
-          if [[ "$mode" != "restoreoff" ]]; then
-              # [NEW] Restore data/ from cloud (excluding world)
-              log "Pre-restore: Syncing data from cloud (run-server/cloud-sync)..."
-              bash ./utils/cloud-sync.sh restore
-
-              # 1. Execute Restore (blocks until finish)
-              # We target ONLY restore-backup service.
-              docker compose -f docker-compose.yml -f ./images/minecraft-server/docker-compose.restore-overrides.yml \
-                --profile restore --env-file env/.env up --build restore-backup
-
-              log "Post-restore: Fixing permissions..."
-              ensure_permissions
-              
-              log "Post-restore: Enforcing clean OP list (removing restored ops.json)..."
-              log "Post-restore: Enforcing clean OP list (removing restored ops.json)..."
-              robust_rm ./data/ops.json
-              robust_rm ./data/usercache.json
-          fi
+          log "Post-restore: Enforcing clean OP list (removing restored ops.json)..."
+          robust_rm ./data/ops.json
+          robust_rm ./data/usercache.json
       fi
+  fi
 
-      # 2. Main Start
-      # We do NOT include the restore-overrides (dependencies) nor the restore profile.
-      # This avoids "container stopped" abort triggers from the completed restore service.
-      log "Restore completed (or skipped). Starting Server..."
-      update_mods_list
-      # shellcheck disable=SC2086
-      if [[ "${DETACH:-false}" == "true" ]]; then
-          log "Server run in Detatch mode!"
-          docker compose -f docker-compose.yml --env-file env/.env up -d --build $scale_args > ./logs/compose-up.log 2>&1
-      else
-          docker compose -f docker-compose.yml --env-file env/.env up --build --exit-code-from mc $scale_args
-      fi
-      ;;
-  esac
+  # Main Server Start
+  log "Restore completed (or skipped). Starting Server..."
+  update_mods_list
+  # shellcheck disable=SC2086
+  if [[ "${DETACH:-false}" == "true" ]]; then
+      log "Server run in Detatch mode!"
+      docker compose -f docker-compose.yml --env-file env/.env up -d --build $scale_args > ./logs/compose-up.log 2>&1
+  else
+      docker compose -f docker-compose.yml --env-file env/.env up --build --exit-code-from mc $scale_args
+  fi
 }
 
 # --- Dynamic Dockerfile Selection ---
