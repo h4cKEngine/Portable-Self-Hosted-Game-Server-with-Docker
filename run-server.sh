@@ -34,15 +34,15 @@ log()  {
 warn() { echo "[WARN] $*" | tee -a "$LOG_FILE" >&2; }
 err()  { echo "[ERROR] $*" | tee -a "$LOG_FILE" >&2; exit 1; }
 
-# Helper to remove files robustly (try normal rm, then sudo rm)
+# Helper to remove files robustly without sudo prompt
 robust_rm() {
   local file="$1"
-  if [[ -f "$file" ]]; then
+  if [[ -e "$file" ]]; then
       log "Removing $file..."
-      rm -f "$file" 2>/dev/null || true
-      if [[ -f "$file" ]]; then
-          log "Normal remove failed for $file. Trying sudo..."
-          sudo rm -f "$file" || warn "Failed to remove $file with sudo."
+      rm -rf "$file" 2>/dev/null || true
+      if [[ -e "$file" ]]; then
+          local rel_path="${file#./data/}"
+          docker run --rm -v "$(pwd)/data":/data alpine:3.20 rm -rf "/data/${rel_path}" 2>/dev/null || true
       fi
   fi
 }
@@ -113,24 +113,27 @@ load_env() {
 ensure_permissions() {
   log "Checking/fixing permissions on ./data"
   mkdir -p ./data/world ./data/mods ./data/config ./backups
+  chmod +x *.sh utils/*.sh images/minecraft-server/*.sh images/restic-rclone/*.sh 2>/dev/null || true
 
   # Fix permissions for the whole data directory
-  # Optimize: Only chown if owner/group is different
-  find "./data" \( ! -user "${TARGET_UID}" -o ! -group "${TARGET_GID}" \) -exec chown "${TARGET_UID}:${TARGET_GID}" {} + 2>/dev/null || {
-      warn "Conditional chown on ./data failed, retrying with sudo..."
-      sudo find "./data" \( ! -user "${TARGET_UID}" -o ! -group "${TARGET_GID}" \) -exec chown "${TARGET_UID}:${TARGET_GID}" {} + 2>/dev/null || \
-        warn "chown ./data failed even with sudo."
-  }
+  # 1. Try direct user chown/chmod
+  if ! find "./data" \( ! -user "${TARGET_UID}" -o ! -group "${TARGET_GID}" \) -exec chown "${TARGET_UID}:${TARGET_GID}" {} + 2>/dev/null; then
+      # 2. Use ephemeral alpine container to fix ownership without asking for sudo password
+      docker run --rm -v "$(pwd)/data":/data alpine:3.20 chown -R "${TARGET_UID}:${TARGET_GID}" /data 2>/dev/null || true
+  fi
 
-  # Optimize: Only chmod if permissions are different
-  find "./data" -type d ! -perm 775 -exec chmod 775 {} + 2>/dev/null || sudo find "./data" -type d ! -perm 775 -exec chmod 775 {} +
+  find "./data" -type d ! -perm 775 -exec chmod 775 {} + 2>/dev/null || true
 
   # stale world lock
-  rm -f ./data/world/session.lock 2>/dev/null || sudo rm -f ./data/world/session.lock 2>/dev/null || true
+  rm -f ./data/world/session.lock 2>/dev/null || true
 
   # check writability
   if ! test -w ./data ; then
-    err "./data is not writable. Check owner/permissions."
+    warn "./data was not writable directly. Fixing ownership via Docker..."
+    docker run --rm -v "$(pwd)/data":/data alpine:3.20 chown -R "${TARGET_UID}:${TARGET_GID}" /data 2>/dev/null || true
+    if ! test -w ./data ; then
+      err "./data is not writable. Check owner/permissions."
+    fi
   fi
 }
 
