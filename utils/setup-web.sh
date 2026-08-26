@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Ensure env directory and base files exist
-mkdir -p ./env ./logs ./data ./server_modpacks ./servers_played
+mkdir -p ./env ./logs ./data ./server_modpacks ./servers_played ./images/caddy/caddy_data ./images/caddy/caddy_config
 if [ ! -f "./env/.env" ] && [ -f "./env/.env-example" ]; then
   echo "[INFO] Creating initial env/.env from .env-example..."
   cp ./env/.env-example ./env/.env
