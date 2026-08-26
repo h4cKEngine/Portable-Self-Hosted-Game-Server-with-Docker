@@ -7,6 +7,7 @@ Write-Host "   PORTABLE GAME SERVER INSTALLATION IN WSL"
 Write-Host "=========================================================="
 Write-Host "This script will download the server to the default WSL environment"
 Write-Host "and create a shortcut on your Desktop to start it."
+Write-Host "If already installed, it will automatically update the repository."
 Write-Host ""
 
 # Check WSL
