@@ -230,7 +230,7 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .connect-label {
@@ -240,11 +240,47 @@ h1 {
     letter-spacing: .5px;
 }
 
+.ip-selector-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ip-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ip-tab:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text);
+}
+
+.ip-tab.active {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: rgba(74, 222, 128, 0.5);
+    color: var(--green);
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.2);
+}
+
 .connect-address {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--green);
     letter-spacing: .5px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: 1px dashed rgba(74, 222, 128, 0.3);
 }
 
 .copy-btn {
@@ -262,6 +298,139 @@ h1 {
 .copy-btn:hover {
     background: rgba(74, 222, 128, .22);
     transform: translateY(-1px);
+}
+
+/* ── ip manager card ──────────────────────── */
+.ip-manager-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 20px 24px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .03), 0 24px 48px rgba(0, 0, 0, .4);
+    transition: all 0.3s ease;
+}
+
+.ip-manager-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ip-manager-card .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.ip-manager-card .card-subtitle {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.toggle-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    color: var(--muted);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.ip-manager-body {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.section-desc {
+    font-size: 0.84rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.section-desc code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #a7f3d0;
+}
+
+.ip-inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.ip-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ip-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.ip-field input {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #f8fafc;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.ip-field input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    background: rgba(15, 23, 42, 0.85);
+}
+
+.ip-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.save-ips-btn {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    box-shadow: 0 4px 15px -3px rgba(2, 132, 199, 0.4), 0 0 0 1px rgba(2, 132, 199, 0.5) inset;
+    padding: 10px 20px !important;
+    font-size: 0.9rem !important;
+}
+
+.save-ips-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(2, 132, 199, 0.6), 0 0 0 1px rgba(2, 132, 199, 0.8) inset;
+}
+
+.save-status {
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
 /* ── footer ───────────────────────────────── */

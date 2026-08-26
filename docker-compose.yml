@@ -33,6 +33,7 @@ services:
     stop_grace_period: 15m
     env_file:
       - ./env/.env
+      - ./env/server_ips.env
     environment:
       UID: ${TARGET_UID:-1000}
       GID: ${TARGET_GID:-1000}
@@ -40,6 +41,8 @@ services:
       VIEW_DISTANCE: ${VIEW_DISTANCE:-15}
       SIMULATION_DISTANCE: ${SIMULATION_DISTANCE:-5}
       IP_SERVER: ${IP_SERVER:-127.0.0.1}
+      IP_VPN1: ${IP_VPN1:-}
+      IP_VPN2: ${IP_VPN2:-}
       VERSION: ${VERSION:-1.21.1}
       TYPE: ${TYPE:-FORGE}
       FORGE_VERSION: ${FORGE_VERSION:-}

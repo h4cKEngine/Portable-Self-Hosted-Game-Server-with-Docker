@@ -11,16 +11,21 @@ elif [ ! -f "./env/.env" ]; then
   touch ./env/.env
 fi
 
-if [ ! -f "./env/rclone.conf" ] && [ -f "./env/rclone.conf.example" ]; then
-  cp ./env/rclone.conf.example ./env/rclone.conf
-elif [ ! -f "./env/rclone.conf" ]; then
-  touch ./env/rclone.conf
+if [ ! -f "./env/server_ips.env" ] && [ -f "./env/server_ips.env-example" ]; then
+  cp ./env/server_ips.env-example ./env/server_ips.env
+elif [ ! -f "./env/server_ips.env" ]; then
+  touch ./env/server_ips.env
 fi
 
-# Export environment variables from env/.env if present
+# Export environment variables from env/.env and env/server_ips.env if present
 if [ -f "./env/.env" ]; then
   set -a
   source "./env/.env" 2>/dev/null || true
+  set +a
+fi
+if [ -f "./env/server_ips.env" ]; then
+  set -a
+  source "./env/server_ips.env" 2>/dev/null || true
   set +a
 fi
 
@@ -83,13 +88,14 @@ case "${1:-start}" in
     echo ""
     echo "  👉 Local Access:   http://localhost/config.html (or https://localhost/config.html)"
     if [ -n "${IP_SERVER:-}" ] && [ "$IP_SERVER" != "127.0.0.1" ]; then
-      echo "  👉 Configured IP:  http://${IP_SERVER}/config.html"
+      echo "  👉 IP Normale:     http://${IP_SERVER}/config.html"
     fi
-    for ip in $(hostname -I 2>/dev/null || true); do
-      if [ "$ip" != "127.0.0.1" ] && [ "$ip" != "${IP_SERVER:-}" ]; then
-        echo "  👉 Network IP:     http://${ip}/config.html"
-      fi
-    done
+    if [ -n "${IP_VPN1:-}" ]; then
+      echo "  👉 IP VPN 1:       http://${IP_VPN1}/config.html"
+    fi
+    if [ -n "${IP_VPN2:-}" ]; then
+      echo "  👉 IP VPN 2:       http://${IP_VPN2}/config.html"
+    fi
     echo "  👉 Status Page:    http://localhost/index.html (or https://localhost/index.html)"
     echo ""
     echo "Configure your server in the browser and click 'Save Configuration'."

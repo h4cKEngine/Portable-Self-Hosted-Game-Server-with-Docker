@@ -39,6 +39,9 @@ async function loadMembers() {
     }).join('');
 }
 
+let serverIpsData = { ip_server: '127.0.0.1', ip_vpn1: '', ip_vpn2: '' };
+let currentIpTab = 'normal';
+
 function formatFullDomain(domain, provider) {
     if (!domain || !domain.trim()) return '';
     const d = domain.trim();
@@ -53,10 +56,118 @@ function formatFullDomain(domain, provider) {
     return d;
 }
 
+function updateConnectAddress() {
+    const fullDomain = formatFullDomain(serverInfo.domain, serverInfo.provider);
+    let target = '—';
+
+    if (currentIpTab === 'normal') {
+        target = serverIpsData.ip_server || serverInfo.ip || '127.0.0.1';
+    } else if (currentIpTab === 'vpn1') {
+        target = serverIpsData.ip_vpn1 || '— (Non configurato)';
+    } else if (currentIpTab === 'vpn2') {
+        target = serverIpsData.ip_vpn2 || '— (Non configurato)';
+    } else if (currentIpTab === 'ddns') {
+        target = fullDomain || '— (Non configurato)';
+    }
+
+    const connectEl = document.getElementById('connect-address');
+    if (connectEl) connectEl.textContent = target;
+}
+
+function selectConnectIp(tab) {
+    currentIpTab = tab;
+    ['normal', 'vpn1', 'vpn2', 'ddns'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+            btn.classList.toggle('active', t === tab);
+        }
+    });
+    updateConnectAddress();
+}
+
+async function loadServerIps() {
+    try {
+        const res = await fetch('/api/server-ips');
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+            serverIpsData = json.data;
+            const sInput = document.getElementById('ip-server-input');
+            const v1Input = document.getElementById('ip-vpn1-input');
+            const v2Input = document.getElementById('ip-vpn2-input');
+            if (sInput) sInput.value = serverIpsData.ip_server || '127.0.0.1';
+            if (v1Input) v1Input.value = serverIpsData.ip_vpn1 || '';
+            if (v2Input) v2Input.value = serverIpsData.ip_vpn2 || '';
+            updateConnectAddress();
+        }
+    } catch (e) {
+        console.warn('Could not fetch /api/server-ips:', e);
+    }
+}
+
+function toggleIpManager() {
+    const body = document.getElementById('ip-manager-body');
+    const btn = document.getElementById('ip-toggle-btn');
+    if (!body) return;
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    if (btn) btn.textContent = isHidden ? '▲' : '▼';
+}
+
+async function saveServerIps() {
+    const statusEl = document.getElementById('ip-save-status');
+    const sInput = document.getElementById('ip-server-input');
+    const v1Input = document.getElementById('ip-vpn1-input');
+    const v2Input = document.getElementById('ip-vpn2-input');
+    
+    if (statusEl) {
+        statusEl.textContent = '⏳ Salvataggio...';
+        statusEl.style.color = '#38bdf8';
+    }
+
+    const payload = {
+        ip_server: sInput ? sInput.value.trim() : '127.0.0.1',
+        ip_vpn1: v1Input ? v1Input.value.trim() : '',
+        ip_vpn2: v2Input ? v2Input.value.trim() : ''
+    };
+
+    try {
+        const res = await fetch('/api/server-ips', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+            serverIpsData = data.data;
+            if (statusEl) {
+                statusEl.textContent = '✅ Salvato con successo in env/server_ips.env!';
+                statusEl.style.color = '#4ade80';
+                setTimeout(() => { statusEl.textContent = ''; }, 4000);
+            }
+            updateConnectAddress();
+            document.getElementById('server-ip').textContent = serverIpsData.ip_server || '—';
+        } else {
+            if (statusEl) {
+                statusEl.textContent = `❌ Errore: ${data.detail || data.message || 'Salvataggio fallito'}`;
+                statusEl.style.color = '#ef4444';
+            }
+        }
+    } catch (e) {
+        if (statusEl) {
+            statusEl.textContent = `❌ Errore di rete: ${e.message}`;
+            statusEl.style.color = '#ef4444';
+        }
+    }
+}
+
 async function loadServerInfo() {
     try {
         const res = await fetch('/server-info.json');
         serverInfo = await res.json();
+        if (serverInfo.ips) {
+            serverIpsData = serverInfo.ips;
+        }
     } catch (e) {
         console.warn('Could not fetch server-info.json:', e);
     }
@@ -67,12 +178,12 @@ async function loadServerInfo() {
     document.getElementById('server-name').textContent =
         serverInfo.name ? serverInfo.name.toUpperCase() : 'Minecraft Server';
     document.getElementById('server-ip').textContent =
-        serverInfo.ip || '—';
+        serverIpsData.ip_server || serverInfo.ip || '—';
     document.getElementById('server-address').textContent =
-        fullDomain || serverInfo.ip || '—';
+        fullDomain || serverIpsData.ip_server || serverInfo.ip || '—';
 
-    const connectAddr = fullDomain || serverInfo.ip || '—';
-    document.getElementById('connect-address').textContent = connectAddr;
+    updateConnectAddress();
+    loadServerIps();
 }
 
 async function checkStatus() {

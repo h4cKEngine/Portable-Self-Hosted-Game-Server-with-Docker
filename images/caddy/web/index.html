@@ -79,6 +79,12 @@
 
             <div class="connect-section">
                 <p class="connect-label">Connect with:</p>
+                <div class="ip-selector-tabs" id="ip-selector-tabs">
+                    <button class="ip-tab active" id="tab-normal" onclick="selectConnectIp('normal')">🌐 IP Normale</button>
+                    <button class="ip-tab" id="tab-vpn1" onclick="selectConnectIp('vpn1')">🔒 VPN 1</button>
+                    <button class="ip-tab" id="tab-vpn2" onclick="selectConnectIp('vpn2')">🛡️ VPN 2</button>
+                    <button class="ip-tab" id="tab-ddns" onclick="selectConnectIp('ddns')">⚡ Dominio</button>
+                </div>
                 <div class="connect-address" id="connect-address">—</div>
                 <button class="copy-btn" id="copy-btn" onclick="copyAddress()">📋 Copy</button>
             </div>
@@ -99,6 +105,38 @@
             </div>
         </section>
 
+        <!-- Server IPs Configuration Card (server_ips.env) -->
+        <section class="ip-manager-card" id="ip-manager-card">
+            <div class="card-header" onclick="toggleIpManager()">
+                <div class="card-header-left">
+                    <h2 class="card-title">🌐 Configurazione Indirizzi IP (server_ips.env)</h2>
+                    <span class="card-subtitle">Gestisci IP Normale, VPN 1 e VPN 2</span>
+                </div>
+                <button class="toggle-btn" id="ip-toggle-btn" type="button">▼</button>
+            </div>
+            <div class="ip-manager-body" id="ip-manager-body">
+                <p class="section-desc">Specifica fino a 3 indirizzi IP per il server (IP Normale/LAN, VPN 1 ZeroTier, VPN 2 Radmin/Hamachi/WireGuard). Vengono salvati in <code>env/server_ips.env</code>.</p>
+                <div class="ip-inputs-grid">
+                    <div class="ip-field">
+                        <label for="ip-server-input">🌐 IP Normale / LAN</label>
+                        <input type="text" id="ip-server-input" placeholder="es. 127.0.0.1 o 192.168.1.100">
+                    </div>
+                    <div class="ip-field">
+                        <label for="ip-vpn1-input">🔒 IP VPN 1 (es. ZeroTier)</label>
+                        <input type="text" id="ip-vpn1-input" placeholder="es. 10.147.19.45">
+                    </div>
+                    <div class="ip-field">
+                        <label for="ip-vpn2-input">🛡️ IP VPN 2 (es. Radmin / Hamachi)</label>
+                        <input type="text" id="ip-vpn2-input" placeholder="es. 26.15.20.10">
+                    </div>
+                </div>
+                <div class="ip-actions">
+                    <button class="control-btn save-ips-btn" onclick="saveServerIps()">💾 Salva in server_ips.env</button>
+                    <span class="save-status" id="ip-save-status"></span>
+                </div>
+            </div>
+        </section>
+
         <section class="members-card">
             <h2 class="members-title">🌐 ZeroTier Members</h2>
             <ul class="members-list" id="members-list">
@@ -112,7 +150,7 @@
         </footer>
     </main>
 
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
 </body>
 
 </html>

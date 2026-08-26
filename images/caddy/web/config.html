@@ -287,41 +287,42 @@
                 </div>
             </section>
 
-            <!-- 3. Server IP & Fallback IPs -->
+            <!-- 3. Indirizzi IP Server (server_ips.env) -->
             <section class="form-card">
                 <div class="card-header">
-                    <div class="card-icon">📡</div>
+                    <div class="card-icon">🌐</div>
                     <div>
-                        <h2>Indirizzi IP Server (Main & Fallback)</h2>
-                        <p class="card-desc">Indirizzo IP primario e indirizzi secondari di riserva in caso di problemi di rete</p>
+                        <h2>Indirizzi IP Server (server_ips.env)</h2>
+                        <p class="card-desc">Specifica i 3 indirizzi IP per il server (IP Normale/LAN, VPN 1 ZeroTier, VPN 2 Radmin/Hamachi). Salvati in <code>env/server_ips.env</code>.</p>
                     </div>
                 </div>
 
                 <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label for="input-ip">
-                            👑 Server IP Principale (Main)
-                            <span class="tooltip-icon" title="Indirizzo IP principale utilizzato dal server per il gioco e per gli aggiornamenti DDNS">ℹ️</span>
+                    <div class="form-group">
+                        <label for="input-ip-normal">
+                            🌐 IP Normale / LAN
+                            <span class="tooltip-icon" title="Indirizzo IP primario o di rete locale LAN">ℹ️</span>
                         </label>
-                        <input type="text" id="input-ip" class="form-input form-input-primary" placeholder="es. 127.0.0.1 oppure ZeroTier IP 10.147.x.x" required>
-                        <small class="form-hint">IP primario (VPN ZeroTier, IP Pubblico o LAN)</small>
+                        <input type="text" id="input-ip-normal" class="form-input form-input-primary" placeholder="es. 127.0.0.1 oppure 192.168.1.100">
+                        <small class="form-hint">IP principale o locale</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="input-ip-fallback-1">🔄 Fallback IP #1</label>
-                        <input type="text" id="input-ip-fallback-1" class="form-input" placeholder="es. 192.168.1.100 (IP LAN locale)">
-                        <small class="form-hint">Indirizzo alternativo (es. rete locale)</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="input-ip-fallback-2">🔄 Fallback IP #2 (Opzionale)</label>
-                        <input type="text" id="input-ip-fallback-2" class="form-input" placeholder="es. 10.0.0.5 (Seconda VPN)">
-                        <small class="form-hint">Ulteriore IP alternativo di riserva</small>
+                        <label for="input-ip-vpn1">
+                            🔒 IP VPN 1 (es. ZeroTier)
+                            <span class="tooltip-icon" title="Indirizzo IP assegnato dal servizio VPN primario come ZeroTier">ℹ️</span>
+                        </label>
+                        <input type="text" id="input-ip-vpn1" class="form-input" placeholder="es. 10.147.19.45">
+                        <small class="form-hint">Indirizzo ZeroTier / VPN primaria</small>
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="input-ip-fallback-3">🔄 Fallback IP #3 (Opzionale)</label>
-                        <input type="text" id="input-ip-fallback-3" class="form-input" placeholder="es. IP Pubblico router o VPN di emergenza">
+                        <label for="input-ip-vpn2">
+                            🛡️ IP VPN 2 (es. Radmin / Hamachi / WireGuard)
+                            <span class="tooltip-icon" title="Indirizzo IP assegnato da un secondo servizio VPN">ℹ️</span>
+                        </label>
+                        <input type="text" id="input-ip-vpn2" class="form-input" placeholder="es. 26.15.20.10">
+                        <small class="form-hint">Seconda VPN o IP alternativo</small>
                     </div>
                 </div>
             </section>

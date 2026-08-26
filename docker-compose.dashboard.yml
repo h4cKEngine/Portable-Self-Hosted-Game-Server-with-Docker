@@ -6,12 +6,17 @@ services:
       args:
         CADDY_DNS_PROVIDER: ${DDNS_PROVIDER_NAME:-duckdns}
     container_name: mc-web-dashboard
+    env_file:
+      - ./env/.env
+      - ./env/server_ips.env
     environment:
       DUCKDNS_TOKEN: ${DDNS_TOKEN:-}
       DDNS_DOMAIN: ${DDNS_DOMAIN:-}
       DDNS_PROVIDER: ${DDNS_PROVIDER:-}
       DDNS_PROVIDER_NAME: ${DDNS_PROVIDER_NAME:-duckdns}
       IP_SERVER: ${IP_SERVER:-127.0.0.1}
+      IP_VPN1: ${IP_VPN1:-}
+      IP_VPN2: ${IP_VPN2:-}
       MC_CONTAINER_NAME: ${MC_CONTAINER_NAME:-minecraft-server}
       MC_HOST: "mc"
       MC_PORT: "25565"

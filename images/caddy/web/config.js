@@ -185,15 +185,13 @@ function populateForm(cfg) {
     document.getElementById('input-name').value = cfg.name || 'minecraft-server';
     document.getElementById('input-version').value = cfg.version || '1.21.1';
 
-    // Server IP & Fallbacks
-    document.getElementById('input-ip').value = cfg.ip_server || '127.0.0.1';
-    const fallbacks = (cfg.ip_fallbacks || '').split(',').map(s => s.trim()).filter(Boolean);
-    const fb1El = document.getElementById('input-ip-fallback-1');
-    const fb2El = document.getElementById('input-ip-fallback-2');
-    const fb3El = document.getElementById('input-ip-fallback-3');
-    if (fb1El) fb1El.value = fallbacks[0] || '';
-    if (fb2El) fb2El.value = fallbacks[1] || '';
-    if (fb3El) fb3El.value = fallbacks[2] || '';
+    // Server IPs (from server_ips.env)
+    const normEl = document.getElementById('input-ip-normal');
+    const v1El = document.getElementById('input-ip-vpn1');
+    const v2El = document.getElementById('input-ip-vpn2');
+    if (normEl) normEl.value = cfg.ip_server || '127.0.0.1';
+    if (v1El) v1El.value = cfg.ip_vpn1 || '';
+    if (v2El) v2El.value = cfg.ip_vpn2 || '';
 
     selectServerType(cfg.server_type || 'FORGE');
 
@@ -748,18 +746,17 @@ function gatherPayload() {
     const rawName = document.getElementById('input-name').value;
     const name = slugify(rawName);
 
-    const fb1 = (document.getElementById('input-ip-fallback-1')?.value || '').trim();
-    const fb2 = (document.getElementById('input-ip-fallback-2')?.value || '').trim();
-    const fb3 = (document.getElementById('input-ip-fallback-3')?.value || '').trim();
-    const fallbackList = [fb1, fb2, fb3].filter(Boolean);
-    const ipFallbacks = fallbackList.join(',');
+    const ipNormal = (document.getElementById('input-ip-normal')?.value || '127.0.0.1').trim() || '127.0.0.1';
+    const ipVpn1 = (document.getElementById('input-ip-vpn1')?.value || '').trim();
+    const ipVpn2 = (document.getElementById('input-ip-vpn2')?.value || '').trim();
 
     return {
         name: name,
         version: document.getElementById('input-version').value.trim() || '1.21.1',
         server_type: document.getElementById('input-type').value || 'FORGE',
-        ip_server: document.getElementById('input-ip').value.trim() || '127.0.0.1',
-        ip_fallbacks: ipFallbacks,
+        ip_server: ipNormal,
+        ip_vpn1: ipVpn1,
+        ip_vpn2: ipVpn2,
         forge_version: document.getElementById('input-forge-version')?.value.trim() || '',
         neoforge_version: document.getElementById('input-neoforge-version')?.value.trim() || '',
         fabric_launcher_version: document.getElementById('input-fabric-launcher')?.value.trim() || '',
@@ -807,8 +804,9 @@ function openConfirmModal() {
     const summaryItems = [
         { label: 'Container / Modpack Name', val: payload.name },
         { label: 'Minecraft Engine & Version', val: `${payload.server_type} ${payload.version}` },
-        { label: 'Server IP (Principale)', val: payload.ip_server },
-        { label: 'Fallback IPs', val: payload.ip_fallbacks || '(nessuno)' },
+        { label: 'IP Normale (server_ips.env)', val: payload.ip_server },
+        { label: 'IP VPN 1 (server_ips.env)', val: payload.ip_vpn1 || '(nessuno)' },
+        { label: 'IP VPN 2 (server_ips.env)', val: payload.ip_vpn2 || '(nessuno)' },
         { label: 'Rclone Remote', val: payload.rclone_service },
         { label: 'DDNS Domain', val: payload.ddns_domain ? formatFullDomain(payload.ddns_domain, payload.ddns_provider) : '(disabilitato)' },
         { label: 'RAM Allocata', val: `${payload.init_memory} - ${payload.memory}` },
@@ -847,6 +845,7 @@ async function executeSave() {
     const payload = gatherPayload();
 
     try {
+        // 1. Save .env
         const res = await fetch('/api/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -858,8 +857,19 @@ async function executeSave() {
             throw new Error(data.detail || `Save failed with status ${res.status}`);
         }
 
+        // 2. Save server_ips.env
+        await fetch('/api/server-ips', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ip_server: payload.ip_server,
+                ip_vpn1: payload.ip_vpn1,
+                ip_vpn2: payload.ip_vpn2
+            })
+        });
+
         closeConfirmModal();
-        showToast('Configuration successfully written to env/.env!', 'success');
+        showToast('Configurazione salvata con successo in env/.env e env/server_ips.env!', 'success');
         fetchConfig();
     } catch (e) {
         console.error('Save error:', e);

@@ -52,6 +52,9 @@ if [ -f "env/.env" ]; then
     # Using 'set -a' so that sourced variables are exported to the environment
     set -a
     source "env/.env"
+    if [ -f "env/server_ips.env" ]; then
+        source "env/server_ips.env"
+    fi
     set +a
 else
     err ".env file not found in env/.env! Run ./utils/install_and_configure.sh first."
@@ -81,6 +84,9 @@ load_env() {
   set -a
   # Warning: .env must be valid, e.g. MOTD quoted if containing spaces/special symbols
   source ./env/.env
+  if [ -f ./env/server_ips.env ]; then
+    source ./env/server_ips.env
+  fi
   set +a
 
   # Container UID/GID (default 1000:1000)
