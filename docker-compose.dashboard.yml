@@ -26,6 +26,7 @@ services:
       - ./images/caddy/main.py:/app/main.py
       - ./env:/app/env
       - ./server_modpacks:/app/server_modpacks
+      - ./servers_played:/app/servers_played
       - ./data:/app/data
       - ./utils:/app/utils:ro
       - ./:/project

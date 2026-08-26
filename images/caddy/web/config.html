@@ -41,18 +41,24 @@
             </div>
         </header>
 
-        <!-- 00. Modpack Management -->
+        <!-- 00. Modpack Management (Played Servers with Saved World) -->
         <section class="form-card modpack-management-section" id="modpack-management-card" style="border: 2px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);">
             <div class="card-header">
-                <div class="card-icon">🔄</div>
+                <div class="card-icon">💾</div>
                 <div>
-                    <h2>Gestione Modpack (Swap)</h2>
-                    <p class="card-desc">Scegli tra i server già giocati per renderli attivi (sovrascrive la configurazione attuale).</p>
+                    <h2>Server Giocati (Salvataggi Mondo in <code>servers_played/</code>)</h2>
+                    <p class="card-desc">Scegli tra i server con progressi e mondo salvato per caricarli come server attivo.</p>
                 </div>
             </div>
+
+            <div class="active-server-status-bar" id="active-server-status-bar" style="margin-bottom: 1rem; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <span>🎮 Server Attualmente Attivo: <strong id="active-server-name" style="color: #60a5fa;">Caricamento...</strong></span>
+                <span class="badge badge-sm badge-success" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 4px 8px; border-radius: 6px;">Attivo in ./data</span>
+            </div>
+
             <div class="form-group" style="display: flex; gap: 1rem; align-items: flex-end;">
                 <div style="flex: 1;">
-                    <label for="select-modpack" class="form-label">Modpack Disponibili:</label>
+                    <label for="select-modpack" class="form-label">Seleziona Server Giocato da Caricare:</label>
                     <select id="select-modpack" class="form-input">
                         <option value="">Caricamento in corso...</option>
                     </select>
@@ -60,6 +66,12 @@
                 <button type="button" class="btn btn-primary" id="btn-swap-modpack" onclick="swapModpack()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
                     🔄 Swap Server
                 </button>
+            </div>
+
+            <div class="played-servers-container" style="margin-top: 14px;">
+                <div class="played-servers-list" id="played-servers-list">
+                    <!-- Populated by JS -->
+                </div>
             </div>
         </section>
 
@@ -70,7 +82,7 @@
                     <div class="card-icon">📦</div>
                     <div>
                         <h2>Downloader Modpack CurseForge</h2>
-                        <p class="card-desc">Inserisci il link o ID di un modpack per scaricarlo direttamente nella cartella <code>server_modpacks/</code></p>
+                        <p class="card-desc">Scarica nuovi modpack puliti da CurseForge nella cartella <code>server_modpacks/</code> (senza mondo).</p>
                     </div>
                 </div>
 
@@ -134,7 +146,10 @@
                 <!-- Installed Modpacks in server_modpacks/ -->
                 <div class="cf-installed-container">
                     <div class="cf-installed-header">
-                        <h4>📂 Modpack Scaricati in <code>server_modpacks/</code></h4>
+                        <div>
+                            <h4>📂 Modpack Scaricati (Pronti per l'Attivazione in <code>server_modpacks/</code>)</h4>
+                            <small style="color: var(--muted); font-size: 0.8rem;">File puliti senza mondo. Clicca su "Attiva nel Server" per avviare una nuova partita.</small>
+                        </div>
                         <button type="button" class="btn btn-sm btn-secondary" onclick="loadInstalledModpacks()">🔄 Aggiorna Lista</button>
                     </div>
                     <div class="cf-installed-list" id="cf-installed-list">

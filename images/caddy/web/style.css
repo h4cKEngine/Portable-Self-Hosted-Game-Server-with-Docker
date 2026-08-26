@@ -441,6 +441,22 @@ footer {
     box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.8) inset;
 }
 
+.config-btn {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.4), 0 0 0 1px rgba(139, 92, 246, 0.5) inset;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.config-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px -5px rgba(139, 92, 246, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.8) inset;
+    color: white;
+}
+
 /* ── log viewer ───────────────────────────── */
 .log-viewer {
     margin-top: 16px;

@@ -52,6 +52,18 @@ if not MODPACKS_DIR_PATH.exists():
         except OSError:
             pass
 
+# Determine servers_played directory for played/saved modpack worlds
+PLAYED_DIR_PATH = Path(os.getenv("SERVERS_PLAYED_DIR", "/project/servers_played")).resolve()
+if not PLAYED_DIR_PATH.exists():
+    local_played_dir = Path("./servers_played").resolve()
+    if local_played_dir.exists():
+        PLAYED_DIR_PATH = local_played_dir
+    else:
+        try:
+            PLAYED_DIR_PATH.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+
 # Determine data directory for Minecraft server
 DATA_DIR_PATH = Path(os.getenv("DATA_DIR", "/app/data")).resolve()
 if not DATA_DIR_PATH.exists():
@@ -1157,18 +1169,45 @@ def get_logs():
 # ─── Modpack Management Endpoints ───────────────────────────────────────────
 @app.get("/api/modpacks")
 def list_modpacks():
-    """Lists available modpacks and the currently active one."""
+    """Lists saved/played modpacks in servers_played/ and the currently active one."""
     try:
-        active = os.environ.get("MC_CONTAINER_NAME", "minecraft-server")
+        source_file = ENV_FILE_PATH if ENV_FILE_PATH.is_file() else ENV_EXAMPLE_PATH
+        parsed = parse_env_file(source_file)
+        active = parsed.get("MC_CONTAINER_NAME", os.environ.get("MC_CONTAINER_NAME", "minecraft-server"))
+
         available = []
-        servers_dir = "/project/servers_played"
-        if os.path.isdir(servers_dir):
-            for item in os.listdir(servers_dir):
-                if os.path.isdir(os.path.join(servers_dir, item)):
+        played_details = []
+
+        if PLAYED_DIR_PATH.is_dir():
+            for item in sorted(os.listdir(PLAYED_DIR_PATH)):
+                item_path = PLAYED_DIR_PATH / item
+                if item_path.is_dir() and not item.startswith('.'):
                     available.append(item)
-        if active not in available:
-            available.append(active)
-        return {"status": "success", "active": active, "available": sorted(list(set(available)))}
+                    has_world = (item_path / "data" / "world").exists()
+                    has_env = (item_path / "env" / ".env").exists()
+                    mc_ver = "Sconosciuta"
+                    loader = "VANILLA"
+                    if has_env:
+                        try:
+                            env_p = parse_env_file(item_path / "env" / ".env")
+                            mc_ver = env_p.get("VERSION", mc_ver)
+                            loader = env_p.get("TYPE", loader)
+                        except Exception:
+                            pass
+                    played_details.append({
+                        "name": item,
+                        "has_world": has_world,
+                        "has_env": has_env,
+                        "mc_version": mc_ver,
+                        "server_type": loader
+                    })
+
+        return {
+            "status": "success",
+            "active": active,
+            "available": available,
+            "played_servers": played_details
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list modpacks: {str(e)}")
 

@@ -1246,7 +1246,15 @@ async function loadInstalledModpacks() {
             verBadge.className = 'badge badge-sm badge-version';
             verBadge.textContent = `MC ${mp.mc_version || '1.20.1'}`;
 
+            const newBadge = document.createElement('span');
+            newBadge.className = 'badge badge-sm badge-warning';
+            newBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+            newBadge.style.color = '#fde047';
+            newBadge.style.border = '1px solid rgba(234, 179, 8, 0.3)';
+            newBadge.textContent = '📦 Nuovo (Senza Mondo)';
+
             titleRow.appendChild(title);
+            titleRow.appendChild(newBadge);
             titleRow.appendChild(loaderBadge);
             titleRow.appendChild(verBadge);
 
@@ -1263,8 +1271,8 @@ async function loadInstalledModpacks() {
             const activateBtn = document.createElement('button');
             activateBtn.type = 'button';
             activateBtn.className = 'btn btn-sm btn-primary';
-            activateBtn.textContent = '🚀 Attiva nel Server (Copia in data/)';
-            activateBtn.title = 'Copia mod, config e impostazioni direttamente in ./data e aggiorna env/.env';
+            activateBtn.textContent = '🚀 Attiva nel Server (Nuovo Mondo)';
+            activateBtn.title = 'Attiva questo modpack pulito in ./data e crea un nuovo mondo';
             activateBtn.onclick = () => activateModpack(mp.slug);
 
             const applyBtn = document.createElement('button');
@@ -1320,6 +1328,8 @@ async function activateModpack(slug) {
 
         showToast(data.message || 'Modpack attivato con successo in ./data!', 'success');
         fetchConfig();
+        loadAvailableModpacks();
+        loadInstalledModpacks();
     } catch (err) {
         showToast(`Errore: ${err.message}`, 'error');
     }
@@ -1351,59 +1361,153 @@ async function deleteInstalledModpack(slug) {
 
 async function loadAvailableModpacks() {
     const select = document.getElementById('select-modpack');
-    if (!select) return;
+    const activeDisplay = document.getElementById('active-server-name');
+    const playedListContainer = document.getElementById('played-servers-list');
+    const swapBtn = document.getElementById('btn-swap-modpack');
     
     try {
         const res = await fetch('/api/modpacks');
         if (!res.ok) throw new Error("Failed to fetch modpacks");
         
         const data = await res.json();
-        const { active, available } = data;
-        
-        select.innerHTML = '';
-        if (available.length === 0) {
-            const opt = document.createElement('option');
-            opt.value = "";
-            opt.textContent = "Nessun modpack disponibile";
-            select.appendChild(opt);
-            return;
+        const { active, available, played_servers } = data;
+
+        if (activeDisplay) {
+            activeDisplay.textContent = active || 'Nessuno';
         }
         
-        available.forEach(mp => {
-            const opt = document.createElement('option');
-            opt.value = mp;
-            opt.textContent = mp === active ? `${mp} (Attivo)` : mp;
-            if (mp === active) {
-                opt.selected = true;
-                opt.disabled = true;
+        if (select) {
+            select.innerHTML = '';
+        }
+        if (playedListContainer) {
+            playedListContainer.replaceChildren();
+        }
+
+        const servers = available || [];
+        const details = played_servers || [];
+
+        if (servers.length === 0) {
+            if (select) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "Nessun server giocato in servers_played/";
+                select.appendChild(opt);
+                select.disabled = true;
             }
-            select.appendChild(opt);
-        });
+            if (swapBtn) {
+                swapBtn.disabled = true;
+            }
+            if (playedListContainer) {
+                const empty = document.createElement('div');
+                empty.className = 'cf-empty-notice';
+                empty.innerHTML = '📂 Nessun server giocato salvato in <code>servers_played/</code>.<br><small style="color: var(--muted); margin-top: 4px; display: block;">I server giocati appariranno qui automaticamente quando effettui uno Swap o archivi una sessione.</small>';
+                playedListContainer.appendChild(empty);
+            }
+            return;
+        }
+
+        if (select) {
+            select.disabled = false;
+            servers.forEach(mp => {
+                const opt = document.createElement('option');
+                opt.value = mp;
+                opt.textContent = mp === active ? `${mp} (Attualmente Attivo)` : mp;
+                if (mp === active) {
+                    opt.disabled = true;
+                }
+                select.appendChild(opt);
+            });
+        }
+
+        if (swapBtn) {
+            swapBtn.disabled = false;
+        }
+
+        if (playedListContainer) {
+            details.forEach(srv => {
+                const item = document.createElement('div');
+                item.className = 'cf-installed-item';
+
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'cf-item-icon';
+                iconDiv.textContent = '💾';
+
+                const itemDetails = document.createElement('div');
+                itemDetails.className = 'cf-item-details';
+
+                const titleRow = document.createElement('div');
+                titleRow.className = 'cf-item-title-row';
+
+                const title = document.createElement('strong');
+                title.className = 'cf-item-name';
+                title.textContent = srv.name;
+
+                const worldBadge = document.createElement('span');
+                worldBadge.className = 'badge badge-sm badge-success';
+                worldBadge.textContent = '🌍 Mondo Salvato';
+
+                const loaderBadge = document.createElement('span');
+                const loaderType = (srv.server_type || 'VANILLA').toUpperCase();
+                loaderBadge.className = `badge badge-sm badge-loader badge-${loaderType.toLowerCase()}`;
+                loaderBadge.textContent = loaderType;
+
+                const verBadge = document.createElement('span');
+                verBadge.className = 'badge badge-sm badge-version';
+                verBadge.textContent = `MC ${srv.mc_version || '1.21.1'}`;
+
+                titleRow.appendChild(title);
+                titleRow.appendChild(worldBadge);
+                titleRow.appendChild(loaderBadge);
+                titleRow.appendChild(verBadge);
+
+                const metaRow = document.createElement('div');
+                metaRow.className = 'cf-item-meta';
+                metaRow.textContent = `📁 servers_played/${srv.name} • Configurazione e mondo salvati`;
+
+                itemDetails.appendChild(titleRow);
+                itemDetails.appendChild(metaRow);
+
+                const actions = document.createElement('div');
+                actions.className = 'cf-item-actions';
+
+                if (srv.name !== active) {
+                    const swapToBtn = document.createElement('button');
+                    swapToBtn.type = 'button';
+                    swapToBtn.className = 'btn btn-sm btn-primary';
+                    swapToBtn.textContent = '🔄 Carica Server';
+                    swapToBtn.title = `Carica questo server salvato nel server attivo`;
+                    swapToBtn.onclick = () => swapToModpack(srv.name);
+                    actions.appendChild(swapToBtn);
+                } else {
+                    const activeBadge = document.createElement('span');
+                    activeBadge.className = 'badge badge-sm badge-success';
+                    activeBadge.textContent = '✅ In Esecuzione';
+                    actions.appendChild(activeBadge);
+                }
+
+                item.appendChild(iconDiv);
+                item.appendChild(itemDetails);
+                item.appendChild(actions);
+
+                playedListContainer.appendChild(item);
+            });
+        }
         
     } catch (err) {
         console.error("Error loading modpacks:", err);
-        select.innerHTML = '<option value="">Errore nel caricamento</option>';
+        if (select) {
+            select.innerHTML = '<option value="">Errore nel caricamento</option>';
+        }
     }
 }
 
-async function swapModpack() {
-    const select = document.getElementById('select-modpack');
-    if (!select) return;
-    
-    const target = select.value;
-    if (!target) {
-        alert("Seleziona un modpack valido per lo swap.");
+async function swapToModpack(target) {
+    if (!target) return;
+    if (!confirm(`Sei sicuro di voler attivare il server '${target}'?\n\nQuesto fermerà il server attuale, salverà i dati correnti in servers_played/ e caricherà il mondo di '${target}'.`)) {
         return;
     }
     
-    if (!confirm(`Sei sicuro di voler attivare il server '${target}'?\nQuesto fermerà il server attuale e sostituirà la configurazione attuale.`)) {
-        return;
-    }
-    
-    const btn = document.getElementById('btn-swap-modpack');
-    const oldHtml = btn.innerHTML;
-    btn.innerHTML = '⏳ Swapping...';
-    btn.disabled = true;
+    showToast(`Swap verso '${target}' avviato...`, 'info');
     
     try {
         const res = await fetch('/api/modpacks/swap', {
@@ -1417,15 +1521,26 @@ async function swapModpack() {
             throw new Error(err.detail || 'Failed to initiate swap');
         }
         
-        alert("Swap iniziato! Attendi il caricamento della nuova configurazione...");
+        showToast("Swap iniziato! Ricaricamento pagina tra 3 secondi...", 'success');
         setTimeout(() => {
             window.location.reload();
         }, 3000);
         
     } catch (err) {
         console.error("Error swapping modpacks:", err);
-        alert("Errore durante lo swap: " + err.message);
-        btn.innerHTML = oldHtml;
-        btn.disabled = false;
+        showToast("Errore durante lo swap: " + err.message, 'error');
     }
+}
+
+async function swapModpack() {
+    const select = document.getElementById('select-modpack');
+    if (!select) return;
+    
+    const target = select.value;
+    if (!target) {
+        alert("Seleziona un server giocato valido per lo swap.");
+        return;
+    }
+    
+    await swapToModpack(target);
 }
