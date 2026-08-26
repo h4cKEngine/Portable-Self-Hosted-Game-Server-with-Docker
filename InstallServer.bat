@@ -46,15 +46,15 @@ $dirExists = (wsl -e bash -c "[ -d $WslDir ] && echo 1 || echo 0").Trim()
 if ($dirExists -eq "1") {
     Write-Host "[INFO] The directory $WslDir already exists in WSL."
     Write-Host "[INFO] Updating the project to the latest version (git pull)..."
-    wsl -e bash -c "cd $WslDir && git pull"
+    wsl -e bash -c "cd $WslDir && git config core.fileMode false && git pull"
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to update the repository. Please resolve the git errors above." -ForegroundColor Red
         exit 1
     }
 
-    Write-Host "[INFO] Setting permissions (chmod 755)..."
-    wsl -e bash -c "chmod -R 755 $WslDir"
+    Write-Host "[INFO] Setting permissions on scripts..."
+    wsl -e bash -c "cd $WslDir && chmod +x *.sh utils/*.sh 2>/dev/null || true"
 
     if (Test-Path $ShortcutPath) {
         Write-Host "=========================================================="
@@ -71,8 +71,8 @@ if ($dirExists -eq "1") {
         Write-Host "[ERROR] Failed to download the repository. Please check your internet connection." -ForegroundColor Red
         exit 1
     }
-    Write-Host "[INFO] Setting permissions (chmod 755)..."
-    wsl -e bash -c "chmod -R 755 $WslDir"
+    Write-Host "[INFO] Setting permissions on scripts..."
+    wsl -e bash -c "cd $WslDir && git config core.fileMode false && chmod +x *.sh utils/*.sh 2>/dev/null || true"
 }
 
 Write-Host "`n[INFO] Creating quick start shortcut on Windows Desktop..."
