@@ -1,30 +1,10 @@
 [
     {
-        "name": "hAcK Portatile Win",
-        "ip": "172.29.81.230"
+        "name": "Friend IP_ADDRESS",
+        "ip": "[IP_ADDRESS]"
     },
     {
-        "name": "hAcK Portatile Kubuntu",
-        "ip": "172.29.26.49"
-    },
-    {
-        "name": "hAcK Fisso Win",
-        "ip": "172.29.139.188"
-    },
-    {
-        "name": "Jukiba Fisso Win",
-        "ip": "172.29.181.200"
-    },
-    {
-        "name": "Jukiba Portatile Pop os",
-        "ip": "172.29.217.118"
-    },
-    {
-        "name": "Ointn4 Fisso",
-        "ip": "172.29.48.115"
-    },
-    {
-        "name": "iMRogerz Portatile",
-        "ip": "172.29.54.26"
+        "name": "Another Friend IP_ADDRESS",
+        "ip": "[IP_ADDRESS]"
     }
 ]
