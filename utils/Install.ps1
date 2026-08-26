@@ -40,11 +40,21 @@ $dirExists = (wsl -e bash -c "[ -d $WslDir ] && echo 1 || echo 0").Trim()
 if ($dirExists -eq "1") {
     Write-Host "[INFO] The directory $WslDir already exists in WSL."
     Write-Host "[INFO] Updating the project to the latest version (git pull)..."
-    wsl -e bash -c "cd $WslDir && git config core.fileMode false && (git pull || (echo '[WARN] Stashing local changes to perform update...' && git stash && git pull && git stash pop 2>/dev/null || true))"
+    wsl -e bash -c "cd $WslDir && git config core.fileMode false && git pull"
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] Failed to update the repository. Please resolve the git errors above." -ForegroundColor Red
-        exit 1
+        Write-Host "`n[WARN] Local changes or conflicting files were detected in the project." -ForegroundColor Yellow
+        $choice = Read-Host "Do you want to overwrite local code changes with the latest version from GitHub? [Y/n]"
+        if ($choice -eq "" -or $choice -match "^[yY]") {
+            Write-Host "[INFO] Overwriting local changes and updating to latest GitHub version..." -ForegroundColor Cyan
+            wsl -e bash -c "cd $WslDir && git fetch origin main && git reset --hard origin/main"
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "[ERROR] Failed to update from GitHub. Please resolve the git errors manually." -ForegroundColor Red
+                exit 1
+            }
+        } else {
+            Write-Host "[INFO] Keeping local version. Skipping update." -ForegroundColor Yellow
+        }
     }
 
     Write-Host "[INFO] Setting permissions on scripts..."
