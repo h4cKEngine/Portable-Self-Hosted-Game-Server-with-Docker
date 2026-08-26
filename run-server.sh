@@ -268,8 +268,8 @@ derive_mutex_remote_dir() {
 
 # Ensures the mutex exists on the cloud
 cloud_mutex_prepare() {
-  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
-    log "RCLONE_SKIP=true -> Skipping Cloud Mutex Prepare."
+e}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
+    log "RCLONE_SKIP=true -> Skipping Cloud Mutex Prepare."  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-fals
     return 0
   fi
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
@@ -290,7 +290,7 @@ cloud_mutex_prepare() {
 
 # Releases the cloud mutex
 cloud_mutex_release() {
-  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
+  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
     return 0
   fi
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
@@ -530,10 +530,10 @@ main() {
   robust_rm ./data/usercache.json
 
   # Mutex before any operation (avoids multi-host race)
-  if [[ "$BACKUP" == "true" ]]; then
+  if [[ "$BACKUP" == "true" && "${RCLONE_SKIP:-false}" != "true" && "${RCLONE_SKIP:-false}" != "TRUE" && "${RCLONE_SKIP:-0}" != "1" ]]; then
       cloud_mutex_prepare
   else
-      log "BACKUP=false -> Skip Cloud Mutex Prepare."
+      log "BACKUP=false or RCLONE_SKIP=true -> Skip Cloud Mutex Prepare."
   fi
 
   # Offline backup BEFORE start

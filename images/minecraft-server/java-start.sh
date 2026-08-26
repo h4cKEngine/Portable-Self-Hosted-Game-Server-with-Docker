@@ -374,7 +374,11 @@ main() {
   fi
 
 
-  log "java-start wrapper ACTIVE; mutex path: ${MUTEX_PATH}"
+  if is_rclone_skip; then
+    log "java-start wrapper ACTIVE; Cloud Mutex & Sync DISABLED (RCLONE_SKIP=true)."
+  else
+    log "java-start wrapper ACTIVE; mutex path: ${MUTEX_PATH}"
+  fi
   
   if [[ "${BACKUP:-true}" == "true" ]]; then
     setup_trap
