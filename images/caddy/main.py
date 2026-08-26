@@ -741,12 +741,15 @@ def get_config():
         except ValueError:
             return default
 
+    ips = parse_server_ips()
     config_data = {
         "name": parsed.get("MC_CONTAINER_NAME", "minecraft-server"),
         "version": parsed.get("VERSION", "1.21.1"),
         "server_type": parsed.get("TYPE", "FORGE"),
-        "ip_server": parsed.get("IP_SERVER", "127.0.0.1"),
-        "ip_fallbacks": parsed.get("IP_FALLBACKS", ""),
+        "ip_server": ips.get("ip_server", "127.0.0.1"),
+        "ip_vpn1": ips.get("ip_vpn1", ""),
+        "ip_vpn2": ips.get("ip_vpn2", ""),
+        "ip_fallbacks": "",
         "forge_version": parsed.get("FORGE_VERSION", ""),
         "neoforge_version": parsed.get("NEOFORGE_VERSION", ""),
         "fabric_launcher_version": parsed.get("FABRIC_LAUNCHER_VERSION", ""),
