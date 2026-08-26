@@ -141,23 +141,27 @@
 .config-tabs-nav {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    background: rgba(15, 23, 42, 0.7);
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.75);
     padding: 8px;
     border-radius: 18px;
     border: 1px solid var(--card-border);
     backdrop-filter: blur(16px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tab-btn {
+    all: unset;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid transparent;
-    border-radius: 12px;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
     color: var(--muted);
     cursor: pointer;
     text-align: left;
@@ -165,25 +169,31 @@
     position: relative;
     user-select: none;
     font-family: inherit;
+    width: 100%;
 }
 
 .tab-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .tab-btn.active {
     background: linear-gradient(135deg, rgba(74, 222, 128, 0.18), rgba(56, 189, 248, 0.18));
-    border-color: rgba(74, 222, 128, 0.4);
+    border-color: rgba(74, 222, 128, 0.45);
     color: #ffffff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(74, 222, 128, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(74, 222, 128, 0.2);
 }
 
 .tab-btn.active .tab-btn-icon {
     transform: scale(1.15);
     filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
+}
+
+.tab-btn.active .tab-btn-title {
+    color: #ffffff;
 }
 
 .tab-btn.active .tab-btn-sub {
@@ -201,6 +211,7 @@
     flex-direction: column;
     gap: 2px;
     overflow: hidden;
+    flex: 1;
 }
 
 .tab-btn-title {
@@ -209,6 +220,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #e2e8f0;
 }
 
 .tab-btn-sub {
@@ -220,12 +232,30 @@
     transition: color 0.25s ease;
 }
 
-/* ── Tab Panes ─────────────────────────────────────────────────── */
+/* ── Form & Tab Panes ───────────────────────────────────────────── */
+#config-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .tab-pane {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 24px;
     animation: tabFadeIn 0.25s ease-out;
+}
+
+.tab-pane[style*="display: none"] {
+    display: none !important;
+}
+
+.tab-pane.active {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100%;
 }
 
 @keyframes tabFadeIn {

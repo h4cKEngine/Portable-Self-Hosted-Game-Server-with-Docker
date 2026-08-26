@@ -63,6 +63,7 @@ function switchConfigTab(tabId) {
 
     document.querySelectorAll('.tab-pane').forEach(pane => {
         const isMatch = pane.id === tabId;
+        pane.classList.toggle('active', isMatch);
         pane.style.display = isMatch ? 'flex' : 'none';
     });
 
