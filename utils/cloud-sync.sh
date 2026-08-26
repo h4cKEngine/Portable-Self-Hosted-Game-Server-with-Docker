@@ -29,6 +29,11 @@ RCLONE_CONF_HOST="${RCLONE_CONF_HOST:-./env/rclone.conf}"
 # Derive Remote and Path from RESTIC_REPOSITORY if not explicitly set
 # RESTIC_REPOSITORY example: rclone:mega:/modpack
 # We want to sync to mega:/modpack/data (or similar)
+if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
+  echo "[INFO] RCLONE_SKIP=true. Skipping cloud sync."
+  exit 0
+fi
+
 if [[ -z "${CLOUD_SYNC_TARGET:-}" ]]; then
     # Strip 'rclone:' prefix
     repo="${RESTIC_REPOSITORY#rclone:}"

@@ -284,6 +284,7 @@ class ServerConfigModel(BaseModel):
     ddns_domain: Optional[str] = Field(default="", description="DDNS Domain")
     ddns_token: Optional[str] = Field(default="", description="DDNS Token / Key")
     ddns_skip: bool = Field(default=False, description="Skip DDNS configuration")
+    rclone_skip: bool = Field(default=False, description="Skip Rclone configuration")
     
     # Restic Backup
     restic_hostname: str = Field(default="MinecraftServer", description="Restic Hostname")
@@ -404,6 +405,7 @@ def render_env_content(cfg: ServerConfigModel) -> str:
         f"DDNS_TOKEN={ddns_tok}",
         f"DDNS_PROVIDER={ddns_prov}",
         f"DDNS_PROVIDER_NAME={ddns_prov_name}",
+        f"DDNS_SKIP={'true' if cfg.ddns_skip else 'false'}",
         "",
         "# === RCON ===",
         f"RCON_PASSWORD={cfg.rcon_password.strip()}",
@@ -460,6 +462,7 @@ def render_env_content(cfg: ServerConfigModel) -> str:
     lines.append("# === Rclone ===")
     lines.append(f"RCLONE_CONFIG={cfg.rclone_config.strip()}")
     lines.append(f"RCLONE_CONF_HOST={cfg.rclone_conf_host.strip()}")
+    lines.append(f"RCLONE_SKIP={'true' if cfg.rclone_skip else 'false'}")
     lines.append("")
     lines.append("# === Mutex (Locking) ===")
     lines.append(f"MUTEX_REMOTE_DIR={final_mutex_dir}")
@@ -701,6 +704,8 @@ def get_config():
         "ddns_provider": parsed.get("DDNS_PROVIDER", "duckdns"),
         "ddns_domain": parsed.get("DDNS_DOMAIN", ""),
         "ddns_token": parsed.get("DDNS_TOKEN", ""),
+        "ddns_skip": parsed.get("DDNS_SKIP", "false").lower() == "true",
+        "rclone_skip": parsed.get("RCLONE_SKIP", "false").lower() == "true",
         "ddns_skip": (OVERRIDES_DIR_PATH / "ddns.skip").exists() if OVERRIDES_DIR_PATH.exists() else False,
         "restic_hostname": parsed.get("RESTIC_HOSTNAME", "MinecraftServer"),
         "restic_password": parsed.get("RESTIC_PASSWORD", "minecraft"),
@@ -1108,8 +1113,10 @@ def start_server():
     """Tells the host agent to start the game server."""
     try:
         os.makedirs("/project/logs", exist_ok=True)
+        os.chmod("/project/logs", 0o777)
         with open("/project/logs/action.log", "w") as f:
             f.write("start")
+        os.chmod("/project/logs/action.log", 0o666)
         return {"status": "success", "message": "Server start initiated."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate start: {str(e)}")
@@ -1119,8 +1126,10 @@ def stop_server():
     """Tells the host agent to stop the game server."""
     try:
         os.makedirs("/project/logs", exist_ok=True)
+        os.chmod("/project/logs", 0o777)
         with open("/project/logs/action.log", "w") as f:
             f.write("stop")
+        os.chmod("/project/logs/action.log", 0o666)
         return {"status": "success", "message": "Server stop initiated."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate stop: {str(e)}")
@@ -1176,8 +1185,10 @@ def swap_modpack(req: SwapRequest):
              raise HTTPException(status_code=400, detail="Invalid modpack name")
              
         os.makedirs("/project/logs", exist_ok=True)
+        os.chmod("/project/logs", 0o777)
         with open("/project/logs/action.log", "w") as f:
             f.write(f"swap {modpack_name}")
+        os.chmod("/project/logs/action.log", 0o666)
         return {"status": "success", "message": f"Swap to {modpack_name} initiated."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate swap: {str(e)}")

@@ -246,6 +246,9 @@ function populateForm(cfg) {
     if (document.getElementById('input-ddns-skip')) {
         document.getElementById('input-ddns-skip').checked = cfg.ddns_skip === true;
     }
+    if (document.getElementById('input-rclone-skip')) {
+        document.getElementById('input-rclone-skip').checked = cfg.rclone_skip === true;
+    }
 
     // 6. Restic
     document.getElementById('input-restic-hostname').value = cfg.restic_hostname || 'MinecraftServer';
@@ -774,6 +777,7 @@ function gatherPayload() {
         rclone_service: document.getElementById('input-rclone-service')?.value.trim() || 'mega',
         rclone_config: document.getElementById('input-rclone-config')?.value.trim() || '/etc/rclone/rclone.conf',
         rclone_conf_host: document.getElementById('input-rclone-host')?.value.trim() || './env/rclone.conf',
+        rclone_skip: document.getElementById('input-rclone-skip')?.checked || false,
         ddns_provider: document.getElementById('input-ddns-provider')?.value.trim() || '',
         ddns_domain: document.getElementById('input-ddns-domain')?.value.trim() || '',
         ddns_token: document.getElementById('input-ddns-token')?.value.trim() || '',

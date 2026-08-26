@@ -152,7 +152,7 @@ setup_trap() { trap 'on_exit' EXIT; trap 'on_term' TERM INT; }
 # If run in async, sets DDNS_ASYNC_PID with background job PID.
 update_ddns() {
   # skip for this single run if requested
-  if [[ "${DDNS_SKIP:-0}" == "1" || -f "/data/ddns.skip" ]]; then
+  if [[ "${DDNS_SKIP:-0}" == "1" || "${DDNS_SKIP:-false}" == "true" || "${DDNS_SKIP:-false}" == "TRUE" || -f "/data/ddns.skip" ]]; then
     log "DDNS: skip requested (DDNS_SKIP=1 or /data/ddns.skip present)."
     rm -f /data/ddns.skip || true   # remove it so it only applies to this boot
     return 0

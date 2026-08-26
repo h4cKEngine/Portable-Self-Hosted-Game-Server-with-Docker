@@ -31,9 +31,14 @@ fi
 cd "$PROJECT_ROOT"
 
 # --- Load ENV ---
-set -a
-source "$ENV_FILE"
-set +a
+if [[ -f "$ENV_FILE" ]]; then
+  set -a; source "$ENV_FILE"; set +a
+fi
+
+if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
+  echo "[INFO] RCLONE_SKIP=true. Skipping restic operations."
+  exit 0
+fi
 
 # --- Variables & default (override via .env) ---
 RESTIC_HOSTNAME="${RESTIC_HOSTNAME:-Mondo}"

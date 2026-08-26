@@ -262,6 +262,10 @@ derive_mutex_remote_dir() {
 
 # Ensures the mutex exists on the cloud
 cloud_mutex_prepare() {
+  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
+    log "RCLONE_SKIP=true -> Skipping Cloud Mutex Prepare."
+    return 0
+  fi
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
     warn "Mutex script not found or not executable: ${RCLONE_MUTEX_SH}. Proceeding without ensure."
     return 0
@@ -271,15 +275,18 @@ cloud_mutex_prepare() {
   export MUTEX_FILE
   log "Cloud mutex ensure on ${MUTEX_REMOTE_DIR}/${MUTEX_FILE} ..."
   if [[ "${DETACH:-false}" == "true" ]]; then
-      "${RCLONE_MUTEX_SH}" ensure >> "$LOG_FILE" 2>&1
+      "${RCLONE_MUTEX_SH}" ensure >> "$LOG_FILE" 2>&1 || warn "Cloud mutex ensure failed. Continuing anyway."
   else
-      "${RCLONE_MUTEX_SH}" ensure
+      "${RCLONE_MUTEX_SH}" ensure || warn "Cloud mutex ensure failed. Continuing anyway."
   fi
 }
 
 
 # Releases the cloud mutex
 cloud_mutex_release() {
+  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" ]]; then
+    return 0
+  fi
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then
     return 0
   fi
