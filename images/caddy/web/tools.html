@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Tools - Minecraft Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="config.css?v=5">
+    <style>
+        .tool-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .tool-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .tool-icon {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+        .tool-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .tool-desc {
+            color: #94a3b8;
+            margin: 0 0 1rem 0;
+            font-size: 0.95rem;
+        }
+        .tool-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .console-output {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- Navigation Header -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <span class="nav-icon">⛏️</span>
+            <span class="nav-title">MC Server Control</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn">📊 Status Dashboard</a>
+            <a href="config.html" class="nav-btn">⚙️ Server Configurator</a>
+            <a href="tools.html" class="nav-btn active">🛠️ Server Tools</a>
+        </div>
+    </nav>
+
+    <main class="config-container">
+        <header class="config-header">
+            <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%;">
+                <a href="index.html" title="Torna alla Dashboard" style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);" onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
+                <h1 style="margin: 0;">Server Tools & Utilities</h1>
+            </div>
+            <p class="subtitle">Execute maintenance scripts like Restic and Rclone directly from the web UI</p>
+        </header>
+
+        <!-- Restic Tools -->
+        <section class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🛡️</div>
+                <div>
+                    <h2 class="tool-title">Restic Backups (restic-tools.sh)</h2>
+                    <p class="tool-desc">Manage encrypted backups of your world and server data.</p>
+                </div>
+            </div>
+            <div class="tool-actions">
+                <button class="btn btn-secondary" onclick="runTool('restic', 'doctor')">🏥 Doctor (Check Repo)</button>
+                <button class="btn btn-accent" onclick="runTool('restic', 'unlock')">🔓 Unlock Repo</button>
+                <button class="btn btn-primary" onclick="runTool('restic', 'backup')">💾 Backup Offline</button>
+            </div>
+            <div id="restic-console" class="console-output"></div>
+        </section>
+
+        <!-- Rclone Mutex Tools -->
+        <section class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🔒</div>
+                <div>
+                    <h2 class="tool-title">Cloud Mutex (rclone-mutex.sh)</h2>
+                    <p class="tool-desc">Manage the cloud lock to prevent multiple servers from starting simultaneously.</p>
+                </div>
+            </div>
+            <div class="tool-actions">
+                <button class="btn btn-secondary" onclick="runTool('mutex', 'get')">🔍 Get Mutex Status</button>
+                <button class="btn btn-primary" onclick="runTool('mutex', 'set', '1')">🔴 Lock (Set 1)</button>
+                <button class="btn btn-accent" onclick="runTool('mutex', 'set', '0')">🟢 Unlock (Set 0)</button>
+            </div>
+            <div id="mutex-console" class="console-output"></div>
+        </section>
+        
+        <!-- Other Utilities -->
+        <section class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🧹</div>
+                <div>
+                    <h2 class="tool-title">Other Utilities</h2>
+                    <p class="tool-desc">Miscellaneous helpful scripts for maintenance.</p>
+                </div>
+            </div>
+            <div class="tool-actions">
+                <button class="btn btn-secondary" onclick="runTool('utils', 'disablemods')">🚫 Disable Client Mods</button>
+                <button class="btn btn-secondary" onclick="runTool('utils', 'sync')">☁️ Cloud Sync (pull)</button>
+            </div>
+            <div id="utils-console" class="console-output"></div>
+        </section>
+
+    </main>
+
+    <script src="tools.js"></script>
+</body>
+
+</html>

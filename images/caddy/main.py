@@ -1178,3 +1178,57 @@ def swap_modpack(req: SwapRequest):
         return {"status": "success", "message": f"Swap to {modpack_name} initiated."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate swap: {str(e)}")
+
+# ─── Tools Execution Endpoints ──────────────────────────────────────────────
+class ToolRequest(BaseModel):
+    category: str
+    action: str
+    arg: Optional[str] = None
+
+@app.post("/api/tools/execute")
+def execute_tool(req: ToolRequest):
+    """Executes utility scripts like restic-tools.sh and rclone-mutex.sh."""
+    try:
+        script_path = None
+        cmd = []
+        
+        if req.category == "restic":
+            script_path = "/project/utils/restic-tools.sh"
+            cmd = ["bash", script_path, req.action]
+        elif req.category == "mutex":
+            script_path = "/project/utils/rclone-mutex.sh"
+            cmd = ["bash", script_path, req.action]
+        elif req.category == "utils":
+            if req.action == "disablemods":
+                script_path = "/project/utils/disablemods.sh"
+                cmd = ["bash", script_path]
+            elif req.action == "sync":
+                script_path = "/project/utils/cloud-sync.sh"
+                cmd = ["bash", script_path]
+                
+        if not script_path or not os.path.exists(script_path):
+            raise HTTPException(status_code=400, detail="Invalid tool category or action")
+            
+        if req.arg:
+            cmd.append(req.arg)
+
+        # Run the command and capture output
+        # Using timeout to prevent hanging endpoints
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd="/project"
+        )
+        
+        return {
+            "status": "success" if result.returncode == 0 else "error",
+            "message": "Execution finished",
+            "returncode": result.returncode,
+            "output": result.stdout + "\n" + result.stderr
+        }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Tool execution timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
