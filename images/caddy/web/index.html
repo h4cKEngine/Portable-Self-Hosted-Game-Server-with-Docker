@@ -22,10 +22,27 @@
                 <span class="nav-icon">⛏️</span>
                 <span class="nav-title" data-i18n="nav_brand">MC Server Control</span>
             </div>
-            <button type="button" class="lang-toggle-btn" id="lang-toggle-btn" onclick="toggleLanguage()" title="Click to switch to Italian (ITA)">
-                <span class="lang-flag" id="lang-flag">🇬🇧</span>
-                <span class="lang-code" id="lang-code">ENG</span>
-            </button>
+            <div class="lang-dropdown-wrapper" id="lang-dropdown-wrapper">
+                <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn" onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true" title="Select Language">
+                    <span class="lang-flag" id="lang-flag">🇬🇧</span>
+                    <span class="lang-code" id="lang-code">ENG</span>
+                    <span class="lang-arrow">▼</span>
+                </button>
+                <div class="lang-dropdown-menu" id="lang-dropdown-menu">
+                    <button type="button" class="lang-option active" data-lang="en" onclick="selectLanguage('en')">
+                        <span class="lang-option-flag">🇬🇧</span>
+                        <span class="lang-option-label">English</span>
+                        <span class="lang-option-code">ENG</span>
+                        <span class="lang-check">✓</span>
+                    </button>
+                    <button type="button" class="lang-option" data-lang="it" onclick="selectLanguage('it')">
+                        <span class="lang-option-flag">🇮🇹</span>
+                        <span class="lang-option-label">Italiano</span>
+                        <span class="lang-option-code">ITA</span>
+                        <span class="lang-check">✓</span>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="nav-links">
             <a href="index.html" class="nav-btn active" data-i18n="nav_status">📊 Status Dashboard</a>
