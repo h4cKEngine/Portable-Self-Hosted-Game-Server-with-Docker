@@ -26,7 +26,16 @@ A custom Docker image based on [itzg/minecraft-server](https://github.com/itzg/d
 
 ## Installation
 
-### 1. Configuration Wizard
+### Windows Quick Installation (Recommended)
+If you are using Windows with WSL, the easiest way to install the server is via our automated installer:
+1. Go to the [Releases](https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker/releases) page of this project on GitHub.
+2. Download the `Install.bat` file from the assets of the latest release.
+3. Double-click the downloaded file. The script will automatically download the project into the optimized Linux (WSL) environment and create a convenient icon on your Desktop to start the server.
+
+### Manual Installation (Linux or Advanced Users)
+Clone the repository if you haven't already.
+
+#### 1. Configuration Wizard
 Start the automatic configurator in the terminal.
 ```bash
 ./utils/install_and_configure.sh

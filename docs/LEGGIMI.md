@@ -26,7 +26,16 @@ Viene utilizzata un'immagine Docker personalizzata basata su [itzg/minecraft-ser
 
 ## Installazione
 
-### 1. Configurazione Wizard
+### Installazione Rapida per Windows (Consigliata)
+Se utilizzi Windows con WSL, il modo più semplice per installare il server è tramite il nostro installer automatico:
+1. Vai nella pagina [Releases](https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker/releases) di questo progetto su GitHub.
+2. Scarica il file `Install.bat` dagli assets dell'ultima release.
+3. Fai doppio clic sul file scaricato. Lo script si occuperà di scaricare automaticamente il progetto nell'ambiente Linux (WSL) ottimizzato e creerà una comoda icona sul tuo Desktop per avviare il server.
+
+### Installazione Manuale (Linux o Utenti Esperti)
+Clona la repository se non l'hai già fatto.
+
+#### 1. Configurazione Wizard
 Avviare il configuratore automatico da terminale.
 ```bash
 ./utils/install_and_configure.sh

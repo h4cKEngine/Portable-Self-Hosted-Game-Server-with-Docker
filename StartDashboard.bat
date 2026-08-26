@@ -1,41 +1,44 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Abilita il supporto per i percorsi di rete (UNC) come \\wsl.localhost\...
+:: Abilita il supporto per i percorsi di rete (UNC)
 pushd "%~dp0"
 
-set CONFIG_FILE=utils\wsl_path_config.txt
-
-if not exist "%CONFIG_FILE%" (
-    echo ==========================================================
-    echo                 FIRST TIME SETUP
-    echo ==========================================================
-    echo Welcome! To make this dashboard portable, please enter the
-    echo full WSL path to this project folder.
-    echo.
-    echo Example: ~/proj/Portable-Self-Hosted-Game-Server-with-Docker
-    echo Or: /home/username/Portable-Self-Hosted-Game-Server-with-Docker
-    echo.
-    set /p WSL_PATH="Enter WSL Path: "
-    
-    :: Convert backslashes to forward slashes just in case the user types Windows paths
-    set WSL_PATH=!WSL_PATH:\=/!
-    
-    echo !WSL_PATH!> "%CONFIG_FILE%"
-    echo Configuration saved to %CONFIG_FILE%.
-    echo.
-)
-
-:: Read the path from config file
-set /p WSL_PATH=<"%CONFIG_FILE%"
-:: Ensure forward slashes even if read from file
-set WSL_PATH=!WSL_PATH:\=/!
+set CURRENT_DIR=%~dp0
+if "%CURRENT_DIR:~-1%"=="\" set CURRENT_DIR=%CURRENT_DIR:~0,-1%
+set DEFAULT_WSL_DIR=~/Portable-Self-Hosted-Game-Server-with-Docker
 
 echo ==========================================================
 echo       STARTING GAME SERVER DASHBOARD (WSL Bridge)
 echo ==========================================================
-echo Project Path: %WSL_PATH%
+
+:: Verifica se ci troviamo in un disco Windows (es. C:\, D:\)
+echo %CURRENT_DIR% | findstr /i "^[A-Z]:" >nul
+if %errorlevel% equ 0 (
+    echo [INFO] Esecuzione da filesystem Windows rilevata.
+    
+    :: Controlla se il server e' gia' stato copiato in WSL
+    wsl -e bash -c "[ -d %DEFAULT_WSL_DIR% ]"
+    if !errorlevel! neq 0 (
+        echo [INFO] Prima esecuzione: Copio i file nell'ambiente Linux per prestazioni ottimali...
+        for /f "delims=" %%I in ('wsl wslpath -u "%CURRENT_DIR%"') do set LINUX_SRC_DIR=%%I
+        wsl -e bash -c "cp -r '!LINUX_SRC_DIR!' %DEFAULT_WSL_DIR%"
+        echo [INFO] Copia completata in %DEFAULT_WSL_DIR%.
+    ) else (
+        echo [INFO] Utilizzo il server gia' installato in %DEFAULT_WSL_DIR%.
+        echo [INFO] (Nota: se hai modificato dei file qui su Windows, non avranno effetto. E' consigliato usare Install.bat per l'installazione e l'avvio.^)
+    )
+    set RUN_PATH=%DEFAULT_WSL_DIR%
+) else (
+    :: Esecuzione diretta da UNC path di WSL (\\wsl.localhost\...)
+    for /f "delims=" %%I in ('wsl wslpath -u "%CURRENT_DIR%"') do set RUN_PATH=%%I
+    if "!RUN_PATH!"=="" set RUN_PATH=%DEFAULT_WSL_DIR%
+    echo [INFO] Esecuzione diretta da ambiente WSL in: !RUN_PATH!
+)
+
+echo.
 echo Starting web container and host agent...
-wsl -e bash -c "cd %WSL_PATH% && chmod +x *.sh utils/*.sh && ./utils/setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
+wsl -e bash -c "cd !RUN_PATH! && chmod +x *.sh utils/*.sh && ./utils/setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
+
 echo Dashboard closed.
 pause
