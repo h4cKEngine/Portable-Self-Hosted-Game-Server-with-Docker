@@ -60,14 +60,16 @@ function updateConnectAddress() {
     const fullDomain = formatFullDomain(serverInfo.domain, serverInfo.provider);
     let target = '—';
 
+    const notConfigured = (typeof currentLang !== 'undefined' && currentLang === 'it') ? '— (Non configurato)' : '— (Not configured)';
+
     if (currentIpTab === 'normal') {
         target = serverIpsData.ip_server || serverInfo.ip || '127.0.0.1';
     } else if (currentIpTab === 'vpn1') {
-        target = serverIpsData.ip_vpn1 || '— (Non configurato)';
+        target = serverIpsData.ip_vpn1 || notConfigured;
     } else if (currentIpTab === 'vpn2') {
-        target = serverIpsData.ip_vpn2 || '— (Non configurato)';
+        target = serverIpsData.ip_vpn2 || notConfigured;
     } else if (currentIpTab === 'ddns') {
-        target = fullDomain || '— (Non configurato)';
+        target = fullDomain || notConfigured;
     }
 
     const connectEl = document.getElementById('connect-address');
@@ -118,9 +120,10 @@ async function saveServerIps() {
     const sInput = document.getElementById('ip-server-input');
     const v1Input = document.getElementById('ip-vpn1-input');
     const v2Input = document.getElementById('ip-vpn2-input');
+    const isIt = (typeof currentLang !== 'undefined' && currentLang === 'it');
     
     if (statusEl) {
-        statusEl.textContent = '⏳ Salvataggio...';
+        statusEl.textContent = isIt ? '⏳ Salvataggio...' : '⏳ Saving...';
         statusEl.style.color = '#38bdf8';
     }
 
@@ -141,7 +144,7 @@ async function saveServerIps() {
         if (res.ok && data.status === 'success') {
             serverIpsData = data.data;
             if (statusEl) {
-                statusEl.textContent = '✅ Salvato con successo in env/server_ips.env!';
+                statusEl.textContent = isIt ? '✅ Salvato con successo in env/server_ips.env!' : '✅ Saved successfully to env/server_ips.env!';
                 statusEl.style.color = '#4ade80';
                 setTimeout(() => { statusEl.textContent = ''; }, 4000);
             }
@@ -149,13 +152,13 @@ async function saveServerIps() {
             document.getElementById('server-ip').textContent = serverIpsData.ip_server || '—';
         } else {
             if (statusEl) {
-                statusEl.textContent = `❌ Errore: ${data.detail || data.message || 'Salvataggio fallito'}`;
+                statusEl.textContent = isIt ? `❌ Errore: ${data.detail || data.message || 'Salvataggio fallito'}` : `❌ Error: ${data.detail || data.message || 'Save failed'}`;
                 statusEl.style.color = '#ef4444';
             }
         }
     } catch (e) {
         if (statusEl) {
-            statusEl.textContent = `❌ Errore di rete: ${e.message}`;
+            statusEl.textContent = isIt ? `❌ Errore di rete: ${e.message}` : `❌ Network error: ${e.message}`;
             statusEl.style.color = '#ef4444';
         }
     }
@@ -246,6 +249,7 @@ function setOffline(data) {
     const dot = document.getElementById('pulse-dot');
     const text = document.getElementById('status-text');
     const banner = document.getElementById('autostop-banner');
+    const isIt = (typeof currentLang !== 'undefined' && currentLang === 'it');
 
     card.classList.remove('online');
     card.classList.add('offline');
@@ -253,7 +257,7 @@ function setOffline(data) {
     dot.classList.add('offline');
 
     if (data && data.stopped_reason === 'autostop') {
-        text.textContent = '💤 Standby (Inattività)';
+        text.textContent = isIt ? '💤 Standby (Inattività)' : '💤 Standby (Inactivity)';
         if (banner) {
             banner.style.display = 'flex';
         }
@@ -271,18 +275,25 @@ function setOffline(data) {
 
 function copyAddress() {
     const addr = document.getElementById('connect-address').textContent;
+    const isIt = (typeof currentLang !== 'undefined' && currentLang === 'it');
     navigator.clipboard.writeText(addr).then(() => {
         const btn = document.getElementById('copy-btn');
-        btn.textContent = '✅ Copied!';
-        setTimeout(() => btn.textContent = '📋 Copy', 1500);
+        btn.textContent = isIt ? '✅ Copiato!' : '✅ Copied!';
+        setTimeout(() => btn.textContent = isIt ? '📋 Copia' : '📋 Copy', 1500);
     });
 }
 
 async function refresh() {
-    document.getElementById('status-text').textContent = 'Checking...';
+    const isIt = (typeof currentLang !== 'undefined' && currentLang === 'it');
+    document.getElementById('status-text').textContent = isIt ? 'Controllo in corso...' : 'Checking...';
     document.getElementById('pulse-dot').classList.remove('online', 'offline');
     await checkStatus();
 }
+
+// Language change listener
+document.addEventListener('languageChanged', () => {
+    updateConnectAddress();
+});
 
 // Init
 (async () => {

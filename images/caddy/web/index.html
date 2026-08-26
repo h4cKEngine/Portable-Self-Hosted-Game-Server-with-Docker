@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=11">
-    <link rel="stylesheet" href="css/config.css?v=11">
+    <link rel="stylesheet" href="css/style.css?v=12">
+    <link rel="stylesheet" href="css/config.css?v=12">
 </head>
 
 <body>
@@ -17,22 +17,28 @@
 
     <!-- Navigation Header -->
     <nav class="top-nav">
-        <div class="nav-brand">
-            <span class="nav-icon">⛏️</span>
-            <span class="nav-title">MC Server Control</span>
+        <div class="nav-left">
+            <div class="nav-brand">
+                <span class="nav-icon">⛏️</span>
+                <span class="nav-title" data-i18n="nav_brand">MC Server Control</span>
+            </div>
+            <button type="button" class="lang-toggle-btn" id="lang-toggle-btn" onclick="toggleLanguage()" title="Click to switch to Italian (ITA)">
+                <span class="lang-flag" id="lang-flag">🇬🇧</span>
+                <span class="lang-code" id="lang-code">ENG</span>
+            </button>
         </div>
         <div class="nav-links">
-            <a href="index.html" class="nav-btn active">📊 Status Dashboard</a>
-            <a href="config.html" class="nav-btn">⚙️ Server Configurator</a>
-            <a href="tools.html" class="nav-btn">🛠️ Server Tools</a>
+            <a href="index.html" class="nav-btn active" data-i18n="nav_status">📊 Status Dashboard</a>
+            <a href="config.html" class="nav-btn" data-i18n="nav_config">⚙️ Server Configurator</a>
+            <a href="tools.html" class="nav-btn" data-i18n="nav_tools">🛠️ Server Tools</a>
         </div>
     </nav>
 
     <main class="container">
         <header>
             <div class="logo">⛏️</div>
-            <h1 id="server-name">Minecraft Server</h1>
-            <p class="subtitle" id="server-desc">Server Status Dashboard</p>
+            <h1 id="server-name" data-i18n="dash_title">Minecraft Server</h1>
+            <p class="subtitle" id="server-desc" data-i18n="dash_subtitle">Server Status Dashboard</p>
             <p class="visitor-greeting" id="visitor-greeting" style="display:none"></p>
         </header>
 
@@ -41,34 +47,34 @@
             <div class="banner-content">
                 <span class="banner-icon">💤</span>
                 <div class="banner-text">
-                    <strong>Server in Standby per Inattività (Auto-Stop)</strong>
-                    <p>Il server è stato spento automaticamente per risparmiare risorse. Clicca su <strong>▶ Start Server</strong> per riaccenderlo.</p>
+                    <strong data-i18n="dash_autostop_title">Server in Standby per Inattività (Auto-Stop)</strong>
+                    <p data-i18n="dash_autostop_desc">Il server è stato spento automaticamente per risparmiare risorse. Clicca su <strong>▶ Start Server</strong> per riaccenderlo.</p>
                 </div>
             </div>
-            <button class="control-btn start-btn btn-sm" id="banner-start-btn" onclick="startServer()" style="white-space: nowrap;">▶ Riattiva Server</button>
+            <button class="control-btn start-btn btn-sm" id="banner-start-btn" onclick="startServer()" style="white-space: nowrap;" data-i18n="dash_btn_restart_standby">▶ Riattiva Server</button>
         </div>
 
         <section class="status-card" id="status-card">
             <div class="status-badge" id="status-badge">
                 <span class="pulse-dot" id="pulse-dot"></span>
-                <span id="status-text">Checking...</span>
+                <span id="status-text" data-i18n="dash_checking">Checking...</span>
             </div>
 
             <div class="info-grid">
                 <div class="info-item">
-                    <div class="info-label">🌐 Address</div>
+                    <div class="info-label" data-i18n="dash_address">🌐 Address</div>
                     <div class="info-value" id="server-address">Loading...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">📡 IP</div>
+                    <div class="info-label" data-i18n="dash_ip">📡 IP</div>
                     <div class="info-value" id="server-ip">Loading...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">👥 Players</div>
+                    <div class="info-label" data-i18n="dash_players">👥 Players</div>
                     <div class="info-value" id="player-count">—</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">🗺️ Version</div>
+                    <div class="info-label" data-i18n="dash_version">🗺️ Version</div>
                     <div class="info-value" id="server-version">—</div>
                 </div>
             </div>
@@ -78,30 +84,30 @@
             </div>
 
             <div class="connect-section">
-                <p class="connect-label">Connect with:</p>
+                <p class="connect-label" data-i18n="dash_connect_with">Connect with:</p>
                 <div class="ip-selector-tabs" id="ip-selector-tabs">
-                    <button class="ip-tab active" id="tab-normal" onclick="selectConnectIp('normal')">🌐 IP Normale</button>
-                    <button class="ip-tab" id="tab-vpn1" onclick="selectConnectIp('vpn1')">🔒 VPN 1</button>
-                    <button class="ip-tab" id="tab-vpn2" onclick="selectConnectIp('vpn2')">🛡️ VPN 2</button>
-                    <button class="ip-tab" id="tab-ddns" onclick="selectConnectIp('ddns')">⚡ Dominio</button>
+                    <button class="ip-tab active" id="tab-normal" onclick="selectConnectIp('normal')" data-i18n="dash_tab_normal">🌐 Standard IP</button>
+                    <button class="ip-tab" id="tab-vpn1" onclick="selectConnectIp('vpn1')" data-i18n="dash_tab_vpn1">🔒 VPN 1</button>
+                    <button class="ip-tab" id="tab-vpn2" onclick="selectConnectIp('vpn2')" data-i18n="dash_tab_vpn2">🛡️ VPN 2</button>
+                    <button class="ip-tab" id="tab-ddns" onclick="selectConnectIp('ddns')" data-i18n="dash_tab_ddns">⚡ Domain</button>
                 </div>
                 <div class="connect-address" id="connect-address">—</div>
-                <button class="copy-btn" id="copy-btn" onclick="copyAddress()">📋 Copy</button>
+                <button class="copy-btn" id="copy-btn" onclick="copyAddress()" data-i18n="dash_btn_copy">📋 Copy</button>
             </div>
 
             <div class="server-controls">
-                <button class="control-btn start-btn" id="start-btn" onclick="startServer()">▶ Start Server</button>
-                <button class="control-btn stop-btn" id="stop-btn" onclick="stopServer()">⏹ Stop Server</button>
-                <button class="control-btn log-btn" id="toggle-log-btn" onclick="toggleLogs()">📜 View Logs</button>
-                <a href="config.html" class="control-btn config-btn" id="config-btn">⚙️ Configurator</a>
+                <button class="control-btn start-btn" id="start-btn" onclick="startServer()" data-i18n="dash_btn_start">▶ Start Server</button>
+                <button class="control-btn stop-btn" id="stop-btn" onclick="stopServer()" data-i18n="dash_btn_stop">⏹ Stop Server</button>
+                <button class="control-btn log-btn" id="toggle-log-btn" onclick="toggleLogs()" data-i18n="dash_btn_logs">📜 View Logs</button>
+                <a href="config.html" class="control-btn config-btn" id="config-btn" data-i18n="dash_btn_config">⚙️ Configurator</a>
             </div>
 
             <div class="log-viewer" id="log-viewer" style="display: none;">
                 <div class="log-header">
-                    <span>Server Logs</span>
+                    <span data-i18n="dash_logs_title">Server Logs</span>
                     <button class="log-refresh-btn" onclick="fetchLogs()">↻</button>
                 </div>
-                <pre class="log-content" id="log-content">Loading logs...</pre>
+                <pre class="log-content" id="log-content" data-i18n="dash_logs_loading">Loading logs...</pre>
             </div>
         </section>
 
@@ -109,48 +115,49 @@
         <section class="ip-manager-card" id="ip-manager-card">
             <div class="card-header" onclick="toggleIpManager()">
                 <div class="card-header-left">
-                    <h2 class="card-title">🌐 Configurazione Indirizzi IP (server_ips.env)</h2>
-                    <span class="card-subtitle">Gestisci IP Normale, VPN 1 e VPN 2</span>
+                    <h2 class="card-title" data-i18n="dash_ip_manager_title">🌐 Server IP Configuration (server_ips.env)</h2>
+                    <span class="card-subtitle" data-i18n="dash_ip_manager_sub">Manage Standard IP, VPN 1 and VPN 2</span>
                 </div>
                 <button class="toggle-btn" id="ip-toggle-btn" type="button">▼</button>
             </div>
             <div class="ip-manager-body" id="ip-manager-body">
-                <p class="section-desc">Specifica fino a 3 indirizzi IP per il server (IP Normale/LAN, VPN 1 ZeroTier, VPN 2 Radmin/Hamachi/WireGuard). Vengono salvati in <code>env/server_ips.env</code>.</p>
+                <p class="section-desc" data-i18n="dash_ip_manager_desc">Specify up to 3 IP addresses for the server (Standard/LAN IP, ZeroTier VPN 1, Radmin/Hamachi/WireGuard VPN 2). Saved in env/server_ips.env.</p>
                 <div class="ip-inputs-grid">
                     <div class="ip-field">
-                        <label for="ip-server-input">🌐 IP Normale / LAN</label>
-                        <input type="text" id="ip-server-input" placeholder="es. 127.0.0.1 o 192.168.1.100">
+                        <label for="ip-server-input" data-i18n="dash_ip_normal_label">🌐 Standard / LAN IP</label>
+                        <input type="text" id="ip-server-input" placeholder="e.g. 127.0.0.1 or 192.168.1.100" data-i18n-placeholder="dash_ip_normal_ph">
                     </div>
                     <div class="ip-field">
-                        <label for="ip-vpn1-input">🔒 IP VPN 1 (es. ZeroTier)</label>
-                        <input type="text" id="ip-vpn1-input" placeholder="es. 10.147.19.45">
+                        <label for="ip-vpn1-input" data-i18n="dash_ip_vpn1_label">🔒 VPN 1 IP (e.g. ZeroTier)</label>
+                        <input type="text" id="ip-vpn1-input" placeholder="e.g. 10.147.19.45" data-i18n-placeholder="dash_ip_vpn1_ph">
                     </div>
                     <div class="ip-field">
-                        <label for="ip-vpn2-input">🛡️ IP VPN 2 (es. Radmin / Hamachi)</label>
-                        <input type="text" id="ip-vpn2-input" placeholder="es. 26.15.20.10">
+                        <label for="ip-vpn2-input" data-i18n="dash_ip_vpn2_label">🛡️ VPN 2 IP (e.g. Radmin / Hamachi)</label>
+                        <input type="text" id="ip-vpn2-input" placeholder="e.g. 26.15.20.10" data-i18n-placeholder="dash_ip_vpn2_ph">
                     </div>
                 </div>
                 <div class="ip-actions">
-                    <button class="control-btn save-ips-btn" onclick="saveServerIps()">💾 Salva in server_ips.env</button>
+                    <button class="control-btn save-ips-btn" onclick="saveServerIps()" data-i18n="dash_btn_save_ips">💾 Save to server_ips.env</button>
                     <span class="save-status" id="ip-save-status"></span>
                 </div>
             </div>
         </section>
 
         <section class="members-card">
-            <h2 class="members-title">🌐 ZeroTier Members</h2>
+            <h2 class="members-title" data-i18n="dash_members_title">🌐 ZeroTier Members</h2>
             <ul class="members-list" id="members-list">
                 <li class="member-placeholder">Loading...</li>
             </ul>
         </section>
 
         <footer>
-            <p>Last updated: <span id="last-updated">—</span></p>
-            <button class="refresh-btn" onclick="refresh()">↻ Refresh</button>
+            <p><span data-i18n="dash_last_updated">Last updated:</span> <span id="last-updated">—</span></p>
+            <button class="refresh-btn" onclick="refresh()" data-i18n="dash_btn_refresh">↻ Refresh</button>
         </footer>
     </main>
 
-    <script src="js/script.js?v=11"></script>
+    <script src="js/i18n.js?v=12"></script>
+    <script src="js/script.js?v=12"></script>
 </body>
 
 </html>

@@ -23,13 +23,24 @@ const MINECRAFT_COLORS = {
 };
 
 const DDNS_HINTS = {
-    'duckdns': 'DuckDNS: Domain is usually "name.duckdns.org". Token is your DuckDNS Token.',
-    'desec': 'DeSEC.io: Domain is your desec domain. Token is your API token.',
-    'dynu': 'Dynu: Domain is your dynu domain. Token is your API Password/Hash.',
-    'ydns': 'YDNS: Domain is your ydns domain. Token is "username:password" or API key.',
-    'afraid': 'FreeDNS (afraid.org): Domain is chosen domain. Token is your Direct URL hash.',
-    'noip': 'No-IP: Domain is your no-ip domain. Token is "username:password" or auth token.',
-    '': 'DDNS is disabled. The server will rely only on direct IP addresses.',
+    en: {
+        'duckdns': 'DuckDNS: Domain is usually "name.duckdns.org". Token is your DuckDNS Token.',
+        'desec': 'DeSEC.io: Domain is your desec domain. Token is your API token.',
+        'dynu': 'Dynu: Domain is your dynu domain. Token is your API Password/Hash.',
+        'ydns': 'YDNS: Domain is your ydns domain. Token is "username:password" or API key.',
+        'afraid': 'FreeDNS (afraid.org): Domain is chosen domain. Token is your Direct URL hash.',
+        'noip': 'No-IP: Domain is your no-ip domain. Token is "username:password" or auth token.',
+        '': 'DDNS is disabled. The server will rely only on direct IP addresses.',
+    },
+    it: {
+        'duckdns': 'DuckDNS: Il dominio è solitamente "nome.duckdns.org". Il token si trova su duckdns.org.',
+        'desec': 'DeSEC.io: Il dominio è il tuo dominio desec. Il token è la tua API token.',
+        'dynu': 'Dynu: Il dominio è il tuo dominio dynu. Il token è la password API.',
+        'ydns': 'YDNS: Il dominio è il tuo dominio ydns. Il token è "username:password" o API key.',
+        'afraid': 'FreeDNS (afraid.org): Il dominio è il dominio scelto. Il token è l\'hash Direct URL.',
+        'noip': 'No-IP: Il dominio è il tuo dominio no-ip. Il token è "username:password" o token auth.',
+        '': 'DDNS disabilitato. Il server utilizzerà esclusivamente gli indirizzi IP diretti.',
+    }
 };
 
 // ─── Initialization ──────────────────────────────────────────────────────────
@@ -593,11 +604,19 @@ function selectDDNSProvider(provider) {
     });
 
     const hintText = document.getElementById('ddns-hint-text');
+    const lang = (typeof currentLang !== 'undefined' && currentLang === 'it') ? 'it' : 'en';
+    const dict = DDNS_HINTS[lang] || DDNS_HINTS.en;
     const firstPart = currentDDNSProvider.split('.')[0];
-    hintText.textContent = DDNS_HINTS[firstPart] || DDNS_HINTS[''] || 'Enter provider domain and authentication token.';
+    if (hintText) {
+        hintText.textContent = dict[firstPart] || dict[''] || (lang === 'it' ? 'Inserisci dominio e token del provider.' : 'Enter provider domain and authentication token.');
+    }
 
     updateDDNSPluginPreview(currentDDNSProvider);
 }
+
+document.addEventListener('languageChanged', () => {
+    selectDDNSProvider(currentDDNSProvider);
+});
 
 function formatFullDomain(domain, provider) {
     if (!domain || !domain.trim()) return '';
@@ -832,15 +851,16 @@ function openConfirmModal() {
     const list = document.getElementById('confirm-summary-list');
     list.replaceChildren();
 
+    const isEn = (typeof currentLang !== 'undefined' ? currentLang === 'en' : true);
     const summaryItems = [
-        { label: 'Container / Modpack Name', val: payload.name },
-        { label: 'Minecraft Engine & Version', val: `${payload.server_type} ${payload.version}` },
-        { label: 'IP Normale (server_ips.env)', val: payload.ip_server },
-        { label: 'IP VPN 1 (server_ips.env)', val: payload.ip_vpn1 || '(nessuno)' },
-        { label: 'IP VPN 2 (server_ips.env)', val: payload.ip_vpn2 || '(nessuno)' },
-        { label: 'Rclone Remote', val: payload.rclone_service },
-        { label: 'DDNS Domain', val: payload.ddns_domain ? formatFullDomain(payload.ddns_domain, payload.ddns_provider) : '(disabilitato)' },
-        { label: 'RAM Allocata', val: `${payload.init_memory} - ${payload.memory}` },
+        { label: isEn ? 'Container / Modpack Name' : 'Nome Container / Modpack', val: payload.name },
+        { label: isEn ? 'Minecraft Engine & Version' : 'Motore & Versione Minecraft', val: `${payload.server_type} ${payload.version}` },
+        { label: isEn ? 'Standard IP (server_ips.env)' : 'IP Normale (server_ips.env)', val: payload.ip_server },
+        { label: isEn ? 'VPN 1 IP (server_ips.env)' : 'IP VPN 1 (server_ips.env)', val: payload.ip_vpn1 || (isEn ? '(none)' : '(nessuno)') },
+        { label: isEn ? 'VPN 2 IP (server_ips.env)' : 'IP VPN 2 (server_ips.env)', val: payload.ip_vpn2 || (isEn ? '(none)' : '(nessuno)') },
+        { label: isEn ? 'Rclone Remote' : 'Remoto Rclone', val: payload.rclone_service },
+        { label: isEn ? 'DDNS Domain' : 'Dominio DDNS', val: payload.ddns_domain ? formatFullDomain(payload.ddns_domain, payload.ddns_provider) : (isEn ? '(disabled)' : '(disabilitato)') },
+        { label: isEn ? 'Allocated RAM' : 'RAM Allocata', val: `${payload.init_memory} - ${payload.memory}` },
     ];
 
     summaryItems.forEach(item => {
