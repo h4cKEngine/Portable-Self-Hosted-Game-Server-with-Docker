@@ -1107,6 +1107,7 @@ def activate_modpack(req: CurseForgeActivateRequest):
 def start_server():
     """Tells the host agent to start the game server."""
     try:
+        os.makedirs("/project/logs", exist_ok=True)
         with open("/project/logs/action.log", "w") as f:
             f.write("start")
         return {"status": "success", "message": "Server start initiated."}
@@ -1117,6 +1118,7 @@ def start_server():
 def stop_server():
     """Tells the host agent to stop the game server."""
     try:
+        os.makedirs("/project/logs", exist_ok=True)
         with open("/project/logs/action.log", "w") as f:
             f.write("stop")
         return {"status": "success", "message": "Server stop initiated."}
@@ -1173,6 +1175,7 @@ def swap_modpack(req: SwapRequest):
         if not modpack_name or "/" in modpack_name or "\\" in modpack_name:
              raise HTTPException(status_code=400, detail="Invalid modpack name")
              
+        os.makedirs("/project/logs", exist_ok=True)
         with open("/project/logs/action.log", "w") as f:
             f.write(f"swap {modpack_name}")
         return {"status": "success", "message": f"Swap to {modpack_name} initiated."}
