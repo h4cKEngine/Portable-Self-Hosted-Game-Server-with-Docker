@@ -80,5 +80,14 @@ You can use `utils/restic-tools.sh` to manually interact with the repo:
 - **/images**: Custom Dockerfiles.
   - `minecraft-server`: Custom base itzg image with our startup scripts.
   - `restic-rclone`: Helper image for backups.
-- **/utils**: Service scripts (mutex, installation, restic management, mod disabling).
-  - `disablemods.sh`: Utility to temporarily disable specific mods.
+- **/utils**: Service scripts (installation, management, maintenance).
+  - `install_and_configure.sh`: Main guided configuration wizard.
+  - `rclone-manager.sh` / `rclone-mutex.sh`: Cloud storage management and startup semaphore (Mutex).
+  - `restic-tools.sh`: Wrapper for backup and restore commands.
+  - `cloud-sync.sh`: Synchronization of `data/` folder files with the cloud.
+  - `swap-server.sh`: Utility to change the running server instance (modpack swapping).
+  - `curseforge_modpack_installer.py`: Script to download and install CurseForge modpacks.
+  - `disablemods.sh` / `mods_options.sh`: Tools for managing and disabling specific mods.
+  - `setup-web.sh`: Script for configuring the Web Dashboard.
+  - `requirements.sh`: Installation of necessary system dependencies (unzip, curl, etc.).
+  - Minor files (`backup_config_mc_client.*`, `host-agent.sh`, WSL utilities).

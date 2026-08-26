@@ -27,7 +27,7 @@ Viene utilizzata un'immagine Docker personalizzata basata su [itzg/minecraft-ser
 ## Installazione
 
 ### 1. Configurazione Wizard
-Avviare il configuratore automatico.
+Avviare il configuratore automatico da terminale.
 ```bash
 ./utils/install_and_configure.sh
 ```
@@ -36,6 +36,11 @@ Avviare il configuratore automatico.
 # Oppure con il flag --full per opzioni avanzate (RAM, Versioni Forge/Fabric, View Distance, DuckDNS, ecc.)
 ./utils/install_and_configure.sh --full
 ```
+
+#### Web Dashboard di Configurazione (Alternativa)
+Puoi anche usare l'interfaccia grafica Web per configurare e gestire il tuo server in modo semplice.
+Basta fare doppio clic su `StartDashboard.bat` (Windows) oppure eseguire `./StartDashboard.bash` (Linux/Mac).
+Questo aprirà un pannello nel tuo browser dal quale potrai impostare i parametri e avviare il server.
 
 ### 2. Autenticazione Cloud Storage
 Collegare l'account (o altro cloud supportato da [RCLONE](https://rclone.org/overview/)).
@@ -50,6 +55,15 @@ Collegare l'account (o altro cloud supportato da [RCLONE](https://rclone.org/ove
 ```
 > **Nota**: Al primo avvio, il server eseguirà il **RESTORE** (in automatico) dell'ultimo backup prima di avviarsi.
 > **Nota**: `run-server.sh` esegue anche un **Pre-Restore Sync** della cartella `./data` dal cloud (escluso `world/`) per garantire che i file di configurazione siano aggiornati.
+
+### 4. Accesso alla Web Dashboard
+Una volta che il server è avviato, è disponibile una Web Dashboard per monitorare e gestire il tuo server.
+Puoi accedervi aprendo il browser all'indirizzo:
+- `http://localhost` (se eseguito localmente)
+- `http://<ip-del-server>` (se eseguito su una macchina remota)
+- `https://<tuo-dominio-ddns>` (se DDNS e HTTPS sono configurati)
+
+La dashboard è servita da **Caddy**, che funge sia da web server per l'interfaccia utente, sia da reverse proxy per le API backend in Python (accessibili su `/api/`).
 
 ---
 

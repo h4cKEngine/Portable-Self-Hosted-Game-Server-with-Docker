@@ -27,7 +27,7 @@ A custom Docker image based on [itzg/minecraft-server](https://github.com/itzg/d
 ## Installation
 
 ### 1. Configuration Wizard
-Start the automatic configurator.
+Start the automatic configurator in the terminal.
 ```bash
 ./utils/install_and_configure.sh
 ```
@@ -36,6 +36,11 @@ Start the automatic configurator.
 # Or with the --full flag for advanced options (RAM, Forge/Fabric Versions, View Distance, DuckDNS, etc.)
 ./utils/install_and_configure.sh --full
 ```
+
+#### Web Configuration Dashboard (Alternative)
+You can also use the graphical Web Dashboard to configure and manage your server.
+Just double click on `StartDashboard.bat` (Windows) or run `./StartDashboard.bash` (Linux).
+This will open a web interface in your browser where you can configure settings and manage the server easily.
 
 ### 2. Cloud Storage Authentication
 Link the account (or other cloud supported by [RCLONE](https://rclone.org/overview/)).
@@ -50,6 +55,15 @@ Link the account (or other cloud supported by [RCLONE](https://rclone.org/overvi
 ```
 > **Note**: On first launch, the server will perform a **RESTORE** (automatically) of the latest backup before starting.
 > **Note**: `run-server.sh` also performs a **Pre-Restore Sync** of the `./data` folder from the cloud (excluding `world/`) to ensure configuration files are up to date.
+
+### 4. Access the Web Dashboard
+Once the server is running, a Web Dashboard is available to monitor and manage your server.
+You can access it by opening your browser to:
+- `http://localhost` (if running locally)
+- `http://<server-ip>` (if running on a remote machine)
+- `https://<your-ddns-domain>` (if DDNS and HTTPS are configured)
+
+The dashboard is served by **Caddy**, which acts as both a web server for the UI and a reverse proxy for the Python backend API (accessible at `/api/`).
 
 ---
 
