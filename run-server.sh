@@ -12,6 +12,9 @@ fi
 #   ./run-server.sh restoreoff # start without restore
 #   ./run-server.sh -d         # detach mode
 
+# Ensure external network exists for dashboard to talk to MC server
+docker network create mc_network 2>/dev/null || true
+
 # ========= Helpers =========
 # Helper functions for logging
 mkdir -p ./logs

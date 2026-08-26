@@ -22,7 +22,7 @@ cleanup() {
     echo "=========================================================="
     source env/.env 2>/dev/null || true
     PROJ_NAME="${MC_CONTAINER_NAME:-minecraft-server}"
-    docker compose -p "$PROJ_NAME" --env-file env/.env stop web
+    docker compose -p mc-dashboard -f docker-compose.dashboard.yml --env-file env/.env stop web
     exit 0
 }
 trap cleanup SIGINT SIGTERM SIGHUP EXIT

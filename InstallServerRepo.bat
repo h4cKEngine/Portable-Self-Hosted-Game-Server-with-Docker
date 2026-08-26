@@ -46,6 +46,11 @@ if ($dirExists -eq "1") {
     Write-Host "[INFO] The directory $WslDir already exists in WSL."
     Write-Host "[INFO] Updating the project to the latest version (git pull)..."
     wsl -e bash -c "cd $WslDir && git pull"
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] Failed to update the repository. Please resolve the git errors above." -ForegroundColor Red
+        exit 1
+    }
 
     if (Test-Path $ShortcutPath) {
         Write-Host "=========================================================="

@@ -32,7 +32,10 @@ export COMPOSE_PROJECT_NAME="${MC_CONTAINER_NAME}"
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "127.0.0.1")
 [ -z "$SERVER_IP" ] && SERVER_IP="127.0.0.1"
 
-COMPOSE_CMD="docker compose --env-file ./env/.env"
+# Ensure external network exists for dashboard to talk to MC server
+docker network create mc_network 2>/dev/null || true
+
+COMPOSE_CMD="docker compose -p mc-dashboard -f docker-compose.dashboard.yml --env-file ./env/.env"
 
 case "${1:-start}" in
   stop|--stop|-s|down|--down)

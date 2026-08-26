@@ -15,7 +15,6 @@ try {
 } catch {
     Write-Host "[ERROR] WSL does not seem to be installed or an error occurred." -ForegroundColor Red
     Write-Host "Make sure you have WSL2 and Docker Desktop installed before continuing."
-    Read-Host -Prompt "Press Enter to exit"
     exit 1
 }
 
@@ -44,7 +43,6 @@ if ($dirExists -eq "1") {
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to update the repository. Please resolve the git errors above." -ForegroundColor Red
-        Read-Host -Prompt "Press Enter to exit"
         exit 1
     }
 
@@ -54,7 +52,6 @@ if ($dirExists -eq "1") {
         Write-Host "[INFO] You can start the server using the Desktop shortcut!" -ForegroundColor Green
         Write-Host "=========================================================="
         Write-Host ""
-        Read-Host -Prompt "Press Enter to exit"
         exit 0
     }
 } else {
@@ -62,7 +59,6 @@ if ($dirExists -eq "1") {
     wsl -e bash -c "git clone $RepoUrl $WslDir"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to download the repository. Please check your internet connection." -ForegroundColor Red
-        Read-Host -Prompt "Press Enter to exit"
         exit 1
     }
 }
@@ -91,4 +87,3 @@ Write-Host "You will find a '$ShortcutName' file on your Desktop."
 Write-Host "Double click that file whenever you want to "
 Write-Host "start the server and the web dashboard."
 Write-Host ""
-Read-Host -Prompt "Press Enter to exit"

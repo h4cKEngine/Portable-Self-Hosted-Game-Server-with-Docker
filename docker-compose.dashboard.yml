@@ -1,0 +1,40 @@
+services:
+  web:
+    build:
+      context: ./images/caddy
+      dockerfile: ${CADDY_DOCKERFILE:-web.Dockerfile}
+      args:
+        CADDY_DNS_PROVIDER: ${DDNS_PROVIDER_NAME:-duckdns}
+    container_name: mc-web-dashboard
+    environment:
+      DUCKDNS_TOKEN: ${DDNS_TOKEN:-}
+      DDNS_DOMAIN: ${DDNS_DOMAIN:-}
+      DDNS_PROVIDER: ${DDNS_PROVIDER:-}
+      DDNS_PROVIDER_NAME: ${DDNS_PROVIDER_NAME:-duckdns}
+      IP_SERVER: ${IP_SERVER:-127.0.0.1}
+      MC_CONTAINER_NAME: ${MC_CONTAINER_NAME:-minecraft-server}
+      MC_HOST: "mc"
+      MC_PORT: "25565"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./images/caddy/web:/usr/share/caddy:ro
+      - ./images/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./images/caddy/caddy_data:/data
+      - ./images/caddy/caddy_config:/config
+      - ./images/caddy/main.py:/app/main.py
+      - ./env:/app/env
+      - ./server_modpacks:/app/server_modpacks
+      - ./data:/app/data
+      - ./utils:/app/utils:ro
+      - ./:/project
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    name: mc_network
+    external: true
