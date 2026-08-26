@@ -17,11 +17,12 @@ async function runTool(category, action, arg = null) {
 
         const data = await response.json();
         
-        if (data.status === 'success') {
+        if (response.ok && data.status === 'success') {
             consoleDiv.textContent += `\n✅ Process finished with exit code ${data.returncode}\n\n`;
             consoleDiv.textContent += data.output || "No output returned.";
         } else {
-            consoleDiv.textContent += `\n❌ Error: ${data.message}\n`;
+            const msg = data.detail || data.message || `HTTP ${response.status}`;
+            consoleDiv.textContent += `\n❌ Error: ${msg}\n`;
             if (data.output) {
                 consoleDiv.textContent += `\nOutput:\n${data.output}`;
             }

@@ -1277,20 +1277,21 @@ def execute_tool(req: ToolRequest):
     try:
         script_path = None
         cmd = []
-        
+        shell_bin = shutil.which("bash") or "sh"
+
         if req.category == "restic":
             script_path = "/project/utils/restic-tools.sh"
-            cmd = ["bash", script_path, req.action]
+            cmd = [shell_bin, script_path, req.action]
         elif req.category == "mutex":
             script_path = "/project/utils/rclone-mutex.sh"
-            cmd = ["bash", script_path, req.action]
+            cmd = [shell_bin, script_path, req.action]
         elif req.category == "utils":
             if req.action == "disablemods":
                 script_path = "/project/utils/disablemods.sh"
-                cmd = ["bash", script_path]
+                cmd = [shell_bin, script_path]
             elif req.action == "sync":
                 script_path = "/project/utils/cloud-sync.sh"
-                cmd = ["bash", script_path]
+                cmd = [shell_bin, script_path]
                 
         if not script_path or not os.path.exists(script_path):
             raise HTTPException(status_code=400, detail="Invalid tool category or action")
