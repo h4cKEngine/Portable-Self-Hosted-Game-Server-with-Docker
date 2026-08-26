@@ -1,6 +1,15 @@
 #!/bin/sh
 set -eu
 
+is_rclone_skip() {
+  [ "${RCLONE_SKIP:-false}" = "true" ] || [ "${RCLONE_SKIP:-false}" = "TRUE" ] || [ "${RCLONE_SKIP:-0}" = "1" ]
+}
+
+if is_rclone_skip; then
+  echo "[INFO] RCLONE_SKIP=true -> Skipping cloud restore and cloud mutex."
+  exit 0
+fi
+
 # ========== ENV base (Restic) ==========
 : "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set (e.g. rclone:mega:/modpack)}"
 : "${RESTIC_PASSWORD:?RESTIC_PASSWORD not set}"

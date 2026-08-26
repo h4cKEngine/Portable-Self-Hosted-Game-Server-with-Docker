@@ -82,7 +82,14 @@ case "${1:-start}" in
     echo "[OK] Web Configurator container is running!"
     echo ""
     echo "  👉 Local Access:   http://localhost/config.html (or https://localhost/config.html)"
-    echo "  👉 LAN/VPN Access: http://${SERVER_IP}/config.html"
+    if [ -n "${IP_SERVER:-}" ] && [ "$IP_SERVER" != "127.0.0.1" ]; then
+      echo "  👉 Configured IP:  http://${IP_SERVER}/config.html"
+    fi
+    for ip in $(hostname -I 2>/dev/null || true); do
+      if [ "$ip" != "127.0.0.1" ] && [ "$ip" != "${IP_SERVER:-}" ]; then
+        echo "  👉 Network IP:     http://${ip}/config.html"
+      fi
+    done
     echo "  👉 Status Page:    http://localhost/index.html (or https://localhost/index.html)"
     echo ""
     echo "Configure your server in the browser and click 'Save Configuration'."

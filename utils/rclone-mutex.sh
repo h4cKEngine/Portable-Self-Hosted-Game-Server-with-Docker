@@ -11,6 +11,11 @@ if [ -z "${_DMS_ENV_LOADED:-}" ]; then
   fi
 fi
 
+if [ "${RCLONE_SKIP:-false}" = "true" ] || [ "${RCLONE_SKIP:-false}" = "TRUE" ] || [ "${RCLONE_SKIP:-0}" = "1" ]; then
+  echo "[INFO] RCLONE_SKIP=true -> Cloud Mutex is disabled. Command '$*' skipped."
+  exit 0
+fi
+
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
