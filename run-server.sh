@@ -268,8 +268,8 @@ derive_mutex_remote_dir() {
 
 # Ensures the mutex exists on the cloud
 cloud_mutex_prepare() {
-e}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
-    log "RCLONE_SKIP=true -> Skipping Cloud Mutex Prepare."  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-fals
+  if [[ "${RCLONE_SKIP:-false}" == "true" || "${RCLONE_SKIP:-false}" == "TRUE" || "${RCLONE_SKIP:-0}" == "1" ]]; then
+    log "RCLONE_SKIP=true -> Skipping Cloud Mutex Prepare."
     return 0
   fi
   if [[ ! -x "${RCLONE_MUTEX_SH}" ]]; then

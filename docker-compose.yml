@@ -89,6 +89,7 @@ services:
     volumes:
       - ./data:/data
       - ./env/rclone.conf:${RCLONE_CONFIG:-/etc/rclone/rclone.conf}:ro
+      - ./images/minecraft-server/java-start.sh:/java-start.sh:ro
       - ./overrides:/overrides:ro
       - ./backups:/backups
 
