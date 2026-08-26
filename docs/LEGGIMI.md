@@ -29,11 +29,11 @@ Viene utilizzata un'immagine Docker personalizzata basata su [itzg/minecraft-ser
 ### Installazione Rapida per Windows (Consigliata)
 Se utilizzi Windows con WSL, il modo più semplice per installare il server è tramite il nostro installer automatico:
 1. Vai nella pagina [Releases](https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker/releases) di questo progetto su GitHub.
-2. Scarica il file `InstallServerRepo.bat` dagli assets dell'ultima release.
-3. Fai doppio clic su `InstallServerRepo.bat` e segui le istruzioni.
+2. Scarica il file `InstallServer.bat` dagli assets dell'ultima release.
+3. Fai doppio clic su `InstallServer.bat` e segui le istruzioni.
 4. Un file `Start Game Server.bat` verra' creato sul tuo Desktop. Fai doppio clic per avviare il server!
 
-> **Nota Aggiornamento**: Se esegui di nuovo `InstallServerRepo.bat` in futuro, scarichera' automaticamente l'ultima versione del server da GitHub prima di controllare l'icona sul Desktop, funzionando cosi' come un comodo tasto per aggiornare la repository!
+> **Nota Aggiornamento**: Se esegui di nuovo `InstallServer.bat` in futuro, scarichera' automaticamente l'ultima versione del server da GitHub prima di controllare l'icona sul Desktop, funzionando cosi' come un comodo tasto per aggiornare la repository!
 
 ### Installazione Manuale (Linux o Utenti Esperti)
 Clona la repository se non l'hai già fatto.
