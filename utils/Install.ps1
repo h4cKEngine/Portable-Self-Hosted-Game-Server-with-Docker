@@ -22,7 +22,7 @@ try {
 $RepoUrl = "https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker.git"
 $WslDir = "~/Portable-Self-Hosted-Game-Server-with-Docker"
 $DesktopDir = [Environment]::GetFolderPath("Desktop")
-$ShortcutName = "Start Game Server.bat"
+$ShortcutName = "StartMcServer.bat"
 
 if (-not (Test-Path $DesktopDir)) {
     $OneDriveDesktop = Join-Path $env:USERPROFILE "OneDrive\Desktop"
