@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fix for common Docker Desktop in WSL error ("docker-credential-desktop.exe not found")
+if [ -f ~/.docker/config.json ]; then
+    sed -i 's/"credStore"/"credStore"/g' ~/.docker/config.json 2>/dev/null || true
+fi
+
 # Usage:
 #   ./run-server.sh            # auto mode: restore profile
 #   ./run-server.sh            # auto mode: restore profile
