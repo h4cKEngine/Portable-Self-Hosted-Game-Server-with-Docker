@@ -36,6 +36,18 @@
             <p class="visitor-greeting" id="visitor-greeting" style="display:none"></p>
         </header>
 
+        <!-- Auto-Stop Inactivity Warning Banner -->
+        <div id="autostop-banner" class="autostop-banner" style="display: none;">
+            <div class="banner-content">
+                <span class="banner-icon">💤</span>
+                <div class="banner-text">
+                    <strong>Server in Standby per Inattività (Auto-Stop)</strong>
+                    <p>Il server è stato spento automaticamente per risparmiare risorse. Clicca su <strong>▶ Start Server</strong> per riaccenderlo.</p>
+                </div>
+            </div>
+            <button class="control-btn start-btn btn-sm" id="banner-start-btn" onclick="startServer()" style="white-space: nowrap;">▶ Riattiva Server</button>
+        </div>
+
         <section class="status-card" id="status-card">
             <div class="status-badge" id="status-badge">
                 <span class="pulse-dot" id="pulse-dot"></span>
@@ -100,7 +112,7 @@
         </footer>
     </main>
 
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 </body>
 
 </html>

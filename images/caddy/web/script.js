@@ -89,7 +89,7 @@ async function checkStatus() {
         if (data && data.online) {
             setOnline(data);
         } else {
-            setOffline();
+            setOffline(data);
         }
     } catch (e) {
         setOffline();
@@ -104,6 +104,11 @@ function setOnline(data) {
     const badge = document.getElementById('status-badge');
     const dot = document.getElementById('pulse-dot');
     const text = document.getElementById('status-text');
+    const banner = document.getElementById('autostop-banner');
+
+    if (banner) {
+        banner.style.display = 'none';
+    }
 
     card.classList.remove('offline');
     card.classList.add('online');
@@ -125,16 +130,28 @@ function setOnline(data) {
     }
 }
 
-function setOffline() {
+function setOffline(data) {
     const card = document.getElementById('status-card');
     const dot = document.getElementById('pulse-dot');
     const text = document.getElementById('status-text');
+    const banner = document.getElementById('autostop-banner');
 
     card.classList.remove('online');
     card.classList.add('offline');
     dot.classList.remove('online');
     dot.classList.add('offline');
-    text.textContent = '🔴 Offline';
+
+    if (data && data.stopped_reason === 'autostop') {
+        text.textContent = '💤 Standby (Inattività)';
+        if (banner) {
+            banner.style.display = 'flex';
+        }
+    } else {
+        text.textContent = '🔴 Offline';
+        if (banner) {
+            banner.style.display = 'none';
+        }
+    }
 
     document.getElementById('player-count').textContent = '—';
     document.getElementById('server-version').textContent = '—';

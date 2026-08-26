@@ -470,6 +470,61 @@ footer {
     color: white;
 }
 
+/* ── autostop banner ──────────────────────── */
+.autostop-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.22) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.15);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    animation: fadeIn 0.4s ease;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.banner-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+.banner-text strong {
+    display: block;
+    font-size: 1rem;
+    color: #fef3c7;
+    margin-bottom: 2px;
+}
+
+.banner-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #fde68a;
+}
+
+.btn-sm {
+    padding: 8px 16px !important;
+    font-size: 0.88rem !important;
+}
+
+@media (max-width: 680px) {
+    .autostop-banner {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
 /* ── log viewer ───────────────────────────── */
 .log-viewer {
     margin-top: 16px;

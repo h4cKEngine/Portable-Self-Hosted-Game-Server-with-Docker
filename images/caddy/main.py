@@ -507,7 +507,7 @@ def get_server_info():
 
 @app.get("/api/status")
 async def get_status():
-    """Returns server status via JavaServer lookup (mimics mcsrvstat.us response)."""
+    """Returns server status via JavaServer lookup and container state."""
     try:
         server = await JavaServer.async_lookup(f"{MC_HOST}:{MC_PORT}", timeout=3.0)
         status = await server.async_status()
@@ -523,9 +523,43 @@ async def get_status():
             }
         }
     except Exception as e:
+        container_name = "minecraft-server"
+        if ENV_FILE_PATH.is_file():
+            try:
+                parsed = parse_env_file(ENV_FILE_PATH)
+                container_name = parsed.get("MC_CONTAINER_NAME", container_name)
+            except Exception:
+                pass
+
+        stopped_reason = None
+        container_status = "offline"
+        try:
+            out = subprocess.check_output(
+                ["docker", "inspect", container_name, "--format", "{{.State.Status}}|{{.State.ExitCode}}"],
+                text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            c_status, exit_code = out.split("|", 1)
+            container_status = c_status
+
+            if c_status == "exited":
+                logs_out = subprocess.check_output(
+                    ["docker", "logs", "--tail", "50", container_name],
+                    text=True, stderr=subprocess.STDOUT
+                )
+                if "Stopping with rcon-cli" in logs_out or "gracefully stopping server" in logs_out or "[Rcon: Stopping the server]" in logs_out:
+                    stopped_reason = "autostop"
+                elif exit_code == "0":
+                    stopped_reason = "stopped"
+                else:
+                    stopped_reason = "crashed"
+        except Exception:
+            pass
+
         return {
             "online": False,
-            "error": str(e)
+            "error": str(e),
+            "container_status": container_status,
+            "stopped_reason": stopped_reason
         }
 
 
