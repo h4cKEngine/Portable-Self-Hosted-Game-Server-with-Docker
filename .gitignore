@@ -36,3 +36,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.Identifier
+
+# === python cache ===
+__pycache__/

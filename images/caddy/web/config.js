@@ -39,7 +39,37 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchConfig();
     loadInstalledModpacks();
     loadAvailableModpacks();
+
+    try {
+        const savedTab = localStorage.getItem('active_config_tab');
+        if (savedTab && document.getElementById(savedTab)) {
+            switchConfigTab(savedTab);
+        }
+    } catch (e) {}
 });
+
+// ─── Tab Switching ─────────────────────────────────────────────────────────
+
+function switchConfigTab(tabId) {
+    const validTabs = ['tab-server', 'tab-modpacks', 'tab-cloud', 'tab-advanced'];
+    if (!validTabs.includes(tabId)) {
+        tabId = 'tab-server';
+    }
+
+    document.querySelectorAll('.config-tabs-nav .tab-btn').forEach(btn => {
+        const isMatch = btn.getAttribute('data-tab') === tabId;
+        btn.classList.toggle('active', isMatch);
+    });
+
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        const isMatch = pane.id === tabId;
+        pane.style.display = isMatch ? 'flex' : 'none';
+    });
+
+    try {
+        localStorage.setItem('active_config_tab', tabId);
+    } catch (e) {}
+}
 
 function initEventListeners() {
     // CurseForge Enter key
@@ -1090,6 +1120,7 @@ function applyModpackToConfig(modpack) {
     }
 
     updateDerivedPreviews();
+    switchConfigTab('tab-server');
     showToast(`Configurazione aggiornata per ${modpack.name || cleanSlug}!`, 'success');
 }
 

@@ -137,6 +137,120 @@
     color: var(--muted);
 }
 
+/* ── Secondary Navigation / Tab Bar ────────────────────────────── */
+.config-tabs-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 8px;
+    border-radius: 18px;
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+    font-family: inherit;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.18), rgba(56, 189, 248, 0.18));
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(74, 222, 128, 0.15);
+}
+
+.tab-btn.active .tab-btn-icon {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
+}
+
+.tab-btn.active .tab-btn-sub {
+    color: #cbd5e1;
+}
+
+.tab-btn-icon {
+    font-size: 1.4rem;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.tab-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.tab-btn-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tab-btn-sub {
+    font-size: 0.73rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.25s ease;
+}
+
+/* ── Tab Panes ─────────────────────────────────────────────────── */
+.tab-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: tabFadeIn 0.25s ease-out;
+}
+
+@keyframes tabFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 860px) {
+    .config-tabs-nav {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .config-tabs-nav {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ── Form Cards ─────────────────────────────────────────────────── */
 .form-card {
     background: var(--card-bg);
@@ -177,6 +291,17 @@
     font-size: 0.84rem;
     color: var(--muted);
     margin-top: 2px;
+}
+
+.card-desc a {
+    color: var(--green);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+}
+
+.card-desc a:hover {
+    color: #86efac;
 }
 
 /* ── Form Elements & Grids ──────────────────────────────────────── */
