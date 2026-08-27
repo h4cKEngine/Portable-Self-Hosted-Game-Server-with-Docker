@@ -242,6 +242,10 @@ function setOnline(data) {
         document.getElementById('motd-text').textContent = data.motd.clean.join(' ');
         motdEl.style.display = '';
     }
+
+    if (typeof setFaviconStatus === 'function') {
+        setFaviconStatus('online');
+    }
 }
 
 function setOffline(data) {
@@ -261,10 +265,16 @@ function setOffline(data) {
         if (banner) {
             banner.style.display = 'flex';
         }
+        if (typeof setFaviconStatus === 'function') {
+            setFaviconStatus('standby');
+        }
     } else {
         text.textContent = '🔴 Offline';
         if (banner) {
             banner.style.display = 'none';
+        }
+        if (typeof setFaviconStatus === 'function') {
+            setFaviconStatus('offline');
         }
     }
 
@@ -287,6 +297,9 @@ async function refresh() {
     const isIt = (typeof currentLang !== 'undefined' && currentLang === 'it');
     document.getElementById('status-text').textContent = isIt ? 'Controllo in corso...' : 'Checking...';
     document.getElementById('pulse-dot').classList.remove('online', 'offline');
+    if (typeof setFaviconStatus === 'function') {
+        setFaviconStatus('checking');
+    }
     await checkStatus();
 }
 
