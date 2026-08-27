@@ -1,10 +1,11 @@
 /**
- * Dynamic Favicon Manager for Minecraft Server Dashboard
- * Updates tab favicon based on server status: online (🟢), offline (🔴), standby (🟡), checking (🔵).
+ * Universal Dynamic Favicon Manager for Minecraft Server Dashboard
+ * Overlays live status badges (🟢 Online, 🔴 Offline, 🟡 Standby, 🔵 Checking)
+ * directly on any custom favicon icon image.
  */
 
 (function () {
-    const STATUS_BADGES = {
+    const STATUS_CONFIG = {
         online: {
             main: '#22c55e',
             high: '#4ade80'
@@ -23,172 +24,113 @@
         }
     };
 
-    const BASE_SVG_BODY = `<rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bgGrad)" stroke="#334155" stroke-width="2"/>
-  <g filter="url(#pickaxe-glow)">
-  <rect x="29" y="8" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="32" y="8" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="35" y="8" width="3" height="3" fill="#228a9e"/>
-  <rect x="38" y="8" width="3" height="3" fill="#228a9e"/>
-  <rect x="23" y="11" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="26" y="11" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="29" y="11" width="3" height="3" fill="#228a9e"/>
-  <rect x="32" y="11" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="35" y="11" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="38" y="11" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="41" y="11" width="3" height="3" fill="#228a9e"/>
-  <rect x="20" y="14" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="23" y="14" width="3" height="3" fill="#228a9e"/>
-  <rect x="26" y="14" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="29" y="14" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="32" y="14" width="3" height="3" fill="#dcffff"/>
-  <rect x="35" y="14" width="3" height="3" fill="#dcffff"/>
-  <rect x="38" y="14" width="3" height="3" fill="#228a9e"/>
-  <rect x="41" y="14" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="44" y="14" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="17" y="17" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="20" y="17" width="3" height="3" fill="#228a9e"/>
-  <rect x="23" y="17" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="26" y="17" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="29" y="17" width="3" height="3" fill="#dcffff"/>
-  <rect x="41" y="17" width="3" height="3" fill="#228a9e"/>
-  <rect x="44" y="17" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="47" y="17" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="14" y="20" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="17" y="20" width="3" height="3" fill="#228a9e"/>
-  <rect x="20" y="20" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="23" y="20" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="38" y="20" width="3" height="3" fill="#8e5526"/>
-  <rect x="41" y="20" width="3" height="3" fill="#663918"/>
-  <rect x="44" y="20" width="3" height="3" fill="#228a9e"/>
-  <rect x="47" y="20" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="50" y="20" width="3" height="3" fill="#228a9e"/>
-  <rect x="11" y="23" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="14" y="23" width="3" height="3" fill="#228a9e"/>
-  <rect x="17" y="23" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="20" y="23" width="3" height="3" fill="#228a9e"/>
-  <rect x="35" y="23" width="3" height="3" fill="#8e5526"/>
-  <rect x="38" y="23" width="3" height="3" fill="#2d190a"/>
-  <rect x="47" y="23" width="3" height="3" fill="#228a9e"/>
-  <rect x="50" y="23" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="53" y="23" width="3" height="3" fill="#228a9e"/>
-  <rect x="11" y="26" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="14" y="26" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="17" y="26" width="3" height="3" fill="#228a9e"/>
-  <rect x="32" y="26" width="3" height="3" fill="#8e5526"/>
-  <rect x="35" y="26" width="3" height="3" fill="#2d190a"/>
-  <rect x="47" y="26" width="3" height="3" fill="#dcffff"/>
-  <rect x="50" y="26" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="53" y="26" width="3" height="3" fill="#228a9e"/>
-  <rect x="11" y="29" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="14" y="29" width="3" height="3" fill="#228a9e"/>
-  <rect x="29" y="29" width="3" height="3" fill="#8e5526"/>
-  <rect x="32" y="29" width="3" height="3" fill="#2d190a"/>
-  <rect x="47" y="29" width="3" height="3" fill="#dcffff"/>
-  <rect x="50" y="29" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="53" y="29" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="11" y="32" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="26" y="32" width="3" height="3" fill="#8e5526"/>
-  <rect x="29" y="32" width="3" height="3" fill="#2d190a"/>
-  <rect x="44" y="32" width="3" height="3" fill="#dcffff"/>
-  <rect x="47" y="32" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="50" y="32" width="3" height="3" fill="#228a9e"/>
-  <rect x="53" y="32" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="23" y="35" width="3" height="3" fill="#8e5526"/>
-  <rect x="26" y="35" width="3" height="3" fill="#2d190a"/>
-  <rect x="44" y="35" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="47" y="35" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="50" y="35" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="20" y="38" width="3" height="3" fill="#8e5526"/>
-  <rect x="23" y="38" width="3" height="3" fill="#2d190a"/>
-  <rect x="41" y="38" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="44" y="38" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="47" y="38" width="3" height="3" fill="#228a9e"/>
-  <rect x="50" y="38" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="17" y="41" width="3" height="3" fill="#8e5526"/>
-  <rect x="20" y="41" width="3" height="3" fill="#2d190a"/>
-  <rect x="38" y="41" width="3" height="3" fill="#228a9e"/>
-  <rect x="41" y="41" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="44" y="41" width="3" height="3" fill="#228a9e"/>
-  <rect x="47" y="41" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="14" y="44" width="3" height="3" fill="#8e5526"/>
-  <rect x="17" y="44" width="3" height="3" fill="#2d190a"/>
-  <rect x="35" y="44" width="3" height="3" fill="#228a9e"/>
-  <rect x="38" y="44" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="41" y="44" width="3" height="3" fill="#228a9e"/>
-  <rect x="44" y="44" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="11" y="47" width="3" height="3" fill="#8e5526"/>
-  <rect x="14" y="47" width="3" height="3" fill="#2d190a"/>
-  <rect x="32" y="47" width="3" height="3" fill="#228a9e"/>
-  <rect x="35" y="47" width="3" height="3" fill="#8cf0ff"/>
-  <rect x="38" y="47" width="3" height="3" fill="#228a9e"/>
-  <rect x="41" y="47" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="8" y="50" width="3" height="3" fill="#8e5526"/>
-  <rect x="11" y="50" width="3" height="3" fill="#2d190a"/>
-  <rect x="29" y="50" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="32" y="50" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="35" y="50" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="38" y="50" width="3" height="3" fill="#0f3c4b"/>
-  <rect x="8" y="53" width="3" height="3" fill="#2d190a"/>
-  </g>`;
+    const BASE_SRC = 'img/favicon-96x96.png';
+    const FALLBACK_SRC = 'img/favicon.svg';
 
     let currentStatus = null;
+    let baseImage = null;
+    let imageLoaded = false;
+    let offscreenCanvas = null;
 
-    function buildSvg(status) {
-        let badge = '';
-        if (status && STATUS_BADGES[status]) {
-            const b = STATUS_BADGES[status];
-            badge = `
-  <circle cx="52" cy="52" r="9" fill="#0a0f1a" stroke="#1e293b" stroke-width="1.5"/>
-  <circle cx="52" cy="52" r="6.5" fill="${b.main}"/>
-  <circle cx="50" cy="50" r="2" fill="${b.high}"/>`;
+    function initImage() {
+        if (!offscreenCanvas) {
+            offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = 96;
+            offscreenCanvas.height = 96;
         }
 
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0a0f1d"/>
-    </linearGradient>
-    <filter id="pickaxe-glow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.5"/>
-    </filter>
-  </defs>
-  ${BASE_SVG_BODY}
-  ${badge}
-</svg>`;
+        if (!baseImage) {
+            baseImage = new Image();
+            baseImage.crossOrigin = 'anonymous';
+            baseImage.onload = function () {
+                imageLoaded = true;
+                if (currentStatus) {
+                    renderFavicon(currentStatus);
+                }
+            };
+            baseImage.onerror = function () {
+                if (baseImage.src.indexOf('favicon-96x96.png') !== -1) {
+                    baseImage.src = FALLBACK_SRC;
+                }
+            };
+            baseImage.src = BASE_SRC;
+        }
+    }
+
+    function renderFavicon(status) {
+        if (!imageLoaded || !baseImage || !offscreenCanvas) {
+            return;
+        }
+
+        const ctx = offscreenCanvas.getContext('2d');
+        ctx.clearRect(0, 0, 96, 96);
+        ctx.drawImage(baseImage, 0, 0, 96, 96);
+
+        if (status && STATUS_CONFIG[status]) {
+            const colors = STATUS_CONFIG[status];
+            const cx = 78;
+            const cy = 78;
+            const radius = 13;
+
+            // Outer dark border circle
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius + 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a0f1a';
+            ctx.fill();
+
+            // Main status colored circle
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = colors.main;
+            ctx.fill();
+
+            // Highlight dot
+            ctx.beginPath();
+            ctx.arc(cx - 3, cy - 3, 4, 0, Math.PI * 2);
+            ctx.fillStyle = colors.high;
+            ctx.fill();
+        }
+
+        const dataUrl = offscreenCanvas.toDataURL('image/png');
+        applyFaviconUrl(dataUrl);
+    }
+
+    function applyFaviconUrl(url) {
+        let dynamicLink = document.getElementById('dynamic-favicon');
+        if (!dynamicLink) {
+            dynamicLink = document.querySelector('link[rel="icon"]');
+            if (dynamicLink) dynamicLink.id = 'dynamic-favicon';
+        }
+
+        if (dynamicLink) {
+            dynamicLink.type = 'image/png';
+            dynamicLink.href = url;
+        }
+
+        // Also update standard icon links so all browsers refresh tab icon
+        const iconLinks = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+        iconLinks.forEach(link => {
+            link.href = url;
+        });
     }
 
     function setFaviconStatus(status) {
         if (currentStatus === status) return;
         currentStatus = status;
 
-        const svgCode = buildSvg(status);
-        const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgCode);
-
-        // Update favicon elements in document head
-        let iconLink = document.getElementById('dynamic-favicon');
-        if (!iconLink) {
-            iconLink = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
-            if (iconLink) iconLink.id = 'dynamic-favicon';
-        }
-
-        if (iconLink) {
-            iconLink.href = dataUrl;
+        if (imageLoaded) {
+            renderFavicon(status);
         } else {
-            const newLink = document.createElement('link');
-            newLink.id = 'dynamic-favicon';
-            newLink.rel = 'icon';
-            newLink.type = 'image/svg+xml';
-            newLink.href = dataUrl;
-            document.head.appendChild(newLink);
+            initImage();
         }
     }
 
     // Expose globally
     window.setFaviconStatus = setFaviconStatus;
 
-    // Optional background check for pages without continuous status updater
+    // Optional background check for pages without continuous status poller
     async function checkInitialStatus() {
+        initImage();
         if (!document.getElementById('status-card')) {
             try {
                 const res = await fetch('/api/status');
