@@ -31,9 +31,12 @@ Se utilizzi Windows con WSL, il modo più semplice per installare il server è t
 1. Vai nella pagina [Releases](https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker/releases) di questo progetto su GitHub.
 2. Scarica il file `InstallServer.bat` dagli assets dell'ultima release.
 3. Fai doppio clic su `InstallServer.bat` e segui le istruzioni.
-4. Un collegamento `StartMcServer.lnk` con icona personalizzata verrà creato sul tuo Desktop. Fai doppio clic per avviare il server!
+4. Verranno creati sul tuo Desktop i collegamenti con le rispettive icone:
+   - `StartMcServer.lnk` (icona Minecraft 2D logo) per avviare il server e la dashboard.
+   - `InstallServer.lnk` (icona Minecraft cartella) per aggiornare la repository o reinstallare.
+   Il file `.bat` iniziale scaricato sul Desktop viene sostituito automaticamente dai collegamenti con icona!
 
-> **Nota Aggiornamento**: Se esegui di nuovo `InstallServer.bat` in futuro, scarichera' automaticamente l'ultima versione del server da GitHub prima di controllare l'icona sul Desktop, funzionando cosi' come un comodo tasto per aggiornare la repository!
+> **Nota Aggiornamento**: Facendo doppio clic su `InstallServer.lnk`, scarichera' automaticamente l'ultima versione del server da GitHub, funzionando cosi' come un comodo tasto per aggiornare la repository!
 
 ### Installazione Manuale (Linux o Utenti Esperti)
 Clona la repository se non l'hai già fatto.
