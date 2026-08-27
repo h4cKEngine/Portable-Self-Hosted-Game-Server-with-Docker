@@ -2,6 +2,9 @@
 @echo off
 title Installer - Portable Self-Hosted Game Server
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$ScriptFile='%~f0'; Invoke-Expression (Get-Content '%~f0' -Raw)"
+if /i not "%~dp0"=="%LOCALAPPDATA%\PortableMcServer\" (
+    start "" /b cmd /c "ping 127.0.0.1 -n 2 >nul & del /f /q "%~f0" 2>nul"
+)
 pause
 exit /b
 #>
@@ -28,9 +31,9 @@ try {
 $RepoUrl = "https://github.com/h4cKEngine/Portable-Self-Hosted-Game-Server-with-Docker.git"
 $WslDir = "~/Portable-Self-Hosted-Game-Server-with-Docker"
 $DesktopDir = [Environment]::GetFolderPath("Desktop")
+$OneDriveDesktop = Join-Path $env:USERPROFILE "OneDrive\Desktop"
 
 if (-not (Test-Path $DesktopDir)) {
-    $OneDriveDesktop = Join-Path $env:USERPROFILE "OneDrive\Desktop"
     if (Test-Path $OneDriveDesktop) {
         $DesktopDir = $OneDriveDesktop
     }
@@ -127,30 +130,39 @@ function Update-DesktopShortcut {
 }
 
 function Setup-All-Shortcuts {
-    # Save a clean copy of InstallServer.bat to AppData if available
+    # Save a clean copy of InstallServer.bat to AppData
     if ($ScriptFile -and (Test-Path $ScriptFile)) {
         if ($ScriptFile -ne $InstallerBatPath) {
             Copy-Item -Path $ScriptFile -Destination $InstallerBatPath -Force
         }
     }
 
-    # Remove legacy .bat files from Desktop
+    # Remove legacy StartMcServer.bat from Desktop if present
     $LegacyStartBat = Join-Path $DesktopDir "StartMcServer.bat"
     if (Test-Path $LegacyStartBat) {
         Remove-Item -Path $LegacyStartBat -Force -ErrorAction SilentlyContinue
     }
 
-    # 1. StartMcServer.lnk with mc-2d-logo.ico
+    # 1. Create StartMcServer.lnk with mc-2d-logo.ico
     Update-DesktopShortcut -TargetBat $LauncherBatPath -LnkPath $StartShortcutPath -IconFile $LogoIconPath -Description "Start Portable Minecraft Server" -ScriptContent $LauncherScript
 
-    # 2. InstallServer.lnk with mc-folder.ico
+    # 2. Create InstallServer.lnk with mc-folder.ico
     Update-DesktopShortcut -TargetBat $InstallerBatPath -LnkPath $InstallShortcutPath -IconFile $FolderIconPath -Description "Update or Reinstall Portable Minecraft Server"
 
-    # If the original downloaded .bat was on Desktop, remove the un-iconed file
-    if ($ScriptFile -and (Test-Path $ScriptFile) -and ($ScriptFile -ne $InstallerBatPath)) {
-        $ScriptDir = Split-Path -Parent $ScriptFile
-        if ($ScriptDir -eq $DesktopDir) {
-            Remove-Item -Path $ScriptFile -Force -ErrorAction SilentlyContinue
+    # Schedule removal of the original un-iconed InstallServer.bat if run from Desktop
+    $DesktopCandidates = @(
+        (Join-Path $DesktopDir "InstallServer.bat"),
+        (Join-Path $OneDriveDesktop "InstallServer.bat"),
+        $ScriptFile
+    )
+
+    foreach ($file in $DesktopCandidates) {
+        if ($file -and (Test-Path $file) -and ($file -ne $InstallerBatPath)) {
+            $parent = Split-Path -Parent $file
+            if (($parent -eq $DesktopDir) -or ($parent -eq $OneDriveDesktop) -or ($file -eq $ScriptFile)) {
+                # Launch background PowerShell process to delete the file once cmd exits
+                Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"Start-Sleep -Milliseconds 600; Remove-Item -LiteralPath '$file' -Force -ErrorAction SilentlyContinue`"" -WindowStyle Hidden
+            }
         }
     }
 }
