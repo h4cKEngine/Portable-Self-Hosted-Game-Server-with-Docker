@@ -90,4 +90,16 @@ Puoi usare `utils/restic-tools.sh` per interagire manualmente col repo:
   - `disablemods.sh` / `mods_options.sh`: Strumenti per la gestione e disabilitazione di mod specifiche.
   - `setup-web.sh`: Script per la configurazione della Web Dashboard.
   - `requirements.sh`: Installazione delle dipendenze di sistema necessarie (unzip, curl, ecc.).
-  - File minori (`backup_config_mc_client.*`, `host-agent.sh`, utilità WSL).
+  - Minor files (`backup_config_mc_client.*`, `host-agent.sh`, utilità WSL).
+  - Icone grafiche (`mc-folder.png`, `mc-folder.ico`, `mc-2d-logo.png`, `mc-2d-logo.ico`).
+
+---
+
+## 5. Installatore Standalone e Integrazione Windows (WSL Bridge)
+Il file `InstallServer.bat` nella root del progetto permette l'installazione e l'aggiornamento automatico per gli utenti Windows con WSL:
+- **Zero dipendenze esterne (Standalone)**: Incorpora i dati binari Base64 delle icone `mc-folder.ico` (cartella Minecraft) e `mc-2d-logo.ico` (logo 2D Minecraft).
+- **Architettura LocalAppData**: All'esecuzione, i file di supporto persistenti vengono estratti e salvati in `%LOCALAPPDATA%\PortableMcServer\`.
+- **Creazione Collegamenti sul Desktop**:
+  - `StartMcServer.lnk` (Icona: `mc-2d-logo.ico`): Avvia il container web configuratore, apre il browser e avvia l'agente host.
+  - `InstallServer.lnk` (Icona: `mc-folder.ico`): Esegue `git pull` per aggiornare il server o reinstallare l'ambiente WSL con un clic.
+- **Auto-Pulizia**: Il file `.bat` iniziale scaricato sul Desktop viene automaticamente sostituito dai collegamenti provvisti di icone al termine della configurazione.

@@ -91,3 +91,15 @@ You can use `utils/restic-tools.sh` to manually interact with the repo:
   - `setup-web.sh`: Script for configuring the Web Dashboard.
   - `requirements.sh`: Installation of necessary system dependencies (unzip, curl, etc.).
   - Minor files (`backup_config_mc_client.*`, `host-agent.sh`, WSL utilities).
+  - Graphic icons (`mc-folder.png`, `mc-folder.ico`, `mc-2d-logo.png`, `mc-2d-logo.ico`).
+
+---
+
+## 5. Standalone Installer & Windows Integration (WSL Bridge)
+The `InstallServer.bat` file in the project root enables automatic installation and updates for Windows WSL users:
+- **Zero External Dependencies (Standalone)**: Embeds Base64 binary data of `mc-folder.ico` (Minecraft folder) and `mc-2d-logo.ico` (Minecraft 2D logo).
+- **LocalAppData Architecture**: On execution, persistent support files are extracted and saved to `%LOCALAPPDATA%\PortableMcServer\`.
+- **Desktop Shortcuts Creation**:
+  - `StartMcServer.lnk` (Icon: `mc-2d-logo.ico`): Starts the web configurator container, opens the browser, and starts the host agent.
+  - `InstallServer.lnk` (Icon: `mc-folder.ico`): Runs `git pull` to update the server or reinstall the WSL environment with a single click.
+- **Self-Cleaning**: The initially downloaded un-iconed `.bat` file on the Desktop is automatically replaced by the icon shortcuts upon completion.
