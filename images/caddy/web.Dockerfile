@@ -14,11 +14,13 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
 
-# Setup directory for persistent environment files
-RUN mkdir -p /app/env
+# Setup directory for persistent environment files and Caddy assets
+RUN mkdir -p /app/env /etc/caddy /usr/share/caddy
 
 # Copy Caddy and Python API scripts
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY web /usr/share/caddy
 COPY main.py .
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

@@ -78,8 +78,8 @@ case "${1:-start}" in
     # Fix for common Docker Desktop in WSL error ("docker-credential-desktop.exe not found")
     ./utils/fix-docker-creds.sh 2>/dev/null || true
 
-    # Build and start only the web service
-    $COMPOSE_CMD up -d web --build
+    # Build and start only the web service with forced clean recreation
+    $COMPOSE_CMD up -d --force-recreate --build web
     
     echo ""
     echo "[OK] Web Configurator container is running!"
