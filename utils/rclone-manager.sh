@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Fix for common Docker Desktop in WSL error ("docker-credential-desktop.exe not found")
+"$(dirname "$0")/fix-docker-creds.sh" 2>/dev/null || true
+
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================

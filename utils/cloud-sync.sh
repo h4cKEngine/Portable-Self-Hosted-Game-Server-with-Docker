@@ -17,6 +17,9 @@ else
 fi
 cd "$PROJECT_ROOT"
 
+# Fix for common Docker Desktop in WSL error ("docker-credential-desktop.exe not found")
+./utils/fix-docker-creds.sh 2>/dev/null || true
+
 # --- Load ENV ---
 set -a
 source "$ENV_FILE"

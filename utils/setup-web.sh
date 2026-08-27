@@ -76,9 +76,7 @@ case "${1:-start}" in
     echo "=========================================================="
     
     # Fix for common Docker Desktop in WSL error ("docker-credential-desktop.exe not found")
-    if [ -f ~/.docker/config.json ]; then
-      sed -i 's/"credStore"/"credStore"/g' ~/.docker/config.json 2>/dev/null || true
-    fi
+    ./utils/fix-docker-creds.sh 2>/dev/null || true
 
     # Build and start only the web service
     $COMPOSE_CMD up -d web --build

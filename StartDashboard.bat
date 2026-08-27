@@ -38,7 +38,7 @@ if %errorlevel% equ 0 (
 
 echo.
 echo Starting web container and host agent...
-wsl -e bash -c "cd !RUN_PATH! && chmod +x *.sh utils/*.sh && ./utils/setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
+wsl -e bash -c "cd !RUN_PATH! && chmod +x *.sh utils/*.sh && ./utils/fix-docker-creds.sh 2>/dev/null || true; ./utils/setup-web.sh && (explorer.exe http://localhost/index.html || true) && ./utils/host-agent.sh"
 
 echo Dashboard closed.
 pause

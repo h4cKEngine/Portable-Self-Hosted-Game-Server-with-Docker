@@ -637,6 +637,11 @@ def install_loader(session, manifest, server_dir, workdir, log_fn=None):
         installed = False
 
         if docker_bin:
+            # Ensure Docker credentials config is sanitized in WSL
+            try:
+                subprocess.run([str(Path(__file__).parent / "fix-docker-creds.sh")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
             _log(f"Esecuzione installer server {loader_name} tramite Docker ({docker_img})...")
             abs_server = str(Path(server_dir).resolve())
             docker_cmd = [

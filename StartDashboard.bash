@@ -9,6 +9,9 @@ echo "Starting web container and host agent..."
 # Ensure execution permissions
 chmod +x *.sh utils/*.sh
 
+# Sanitize Docker credentials config in WSL
+./utils/fix-docker-creds.sh 2>/dev/null || true
+
 # Start the web interface
 ./utils/setup-web.sh
 
