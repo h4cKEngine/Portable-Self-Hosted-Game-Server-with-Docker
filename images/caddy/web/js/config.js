@@ -1363,10 +1363,10 @@ async function loadInstalledModpacks() {
         });
     } catch (err) {
         listContainer.replaceChildren();
-        const errDiv = document.createElement('div');
-        errDiv.className = 'cf-empty-notice error';
-        errDiv.textContent = `Errore nel caricamento: ${err.message}`;
-        listContainer.appendChild(errDiv);
+        const empty = document.createElement('div');
+        empty.className = 'cf-empty-notice';
+        empty.textContent = '0 Modpack installati (Nessun modpack attualmente presente in server_modpacks/). Inserisci un link o carica uno zip per aggiungerne uno.';
+        listContainer.appendChild(empty);
     }
 }
 
