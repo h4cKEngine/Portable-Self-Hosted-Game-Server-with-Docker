@@ -409,15 +409,20 @@ main() {
   # --- Copy Overrides ---
   # If mounted folder /overrides exists, copy (overwrite) files to /data
   if [ -d "/overrides" ]; then
-    log "Applying overrides from /overrides to /data..."
-    # cp -r -f (recursive, force)
-    # WARNING: if /overrides is empty, * might fail if not handled, but cp -r /overrides/. /data/ is safer
-    # or simply check if not empty.
-    if [ "$(ls -A /overrides)" ]; then
-       cp -rf /overrides/. /data/
-       log "Overrides applied."
+    if [ ! -f "/data/.overrides_applied" ]; then
+      log "Applying overrides from /overrides to /data..."
+      # cp -r -f (recursive, force)
+      # WARNING: if /overrides is empty, * might fail if not handled, but cp -r /overrides/. /data/ is safer
+      # or simply check if not empty.
+      if [ "$(ls -A /overrides)" ]; then
+         cp -rf /overrides/. /data/
+         touch "/data/.overrides_applied"
+         log "Overrides applied."
+      else
+         log "Overrides dir is empty."
+      fi
     else
-       log "Overrides dir is empty."
+      log "Overrides already applied (/data/.overrides_applied exists). Skipping."
     fi
   fi
 

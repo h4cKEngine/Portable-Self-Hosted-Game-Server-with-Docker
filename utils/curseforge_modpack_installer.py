@@ -1055,7 +1055,6 @@ def install_modpack_task(target, server_dir=None, log_callback=None, progress_ca
         cleanup(zip_path, workdir)
         raise
 
-
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description=(

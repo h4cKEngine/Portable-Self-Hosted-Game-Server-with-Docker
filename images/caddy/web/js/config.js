@@ -1418,6 +1418,92 @@ async function deleteInstalledModpack(slug) {
 }
 
 
+// ─── Custom Modpack Upload ───────────────────────────────────────────────────
+
+function uploadCustomModpack() {
+    const slugInput = document.getElementById('input-custom-slug');
+    const fileInput = document.getElementById('input-custom-zip');
+    
+    const slug = slugInput.value.trim();
+    const file = fileInput.files[0];
+    
+    if (!slug) {
+        showToast('Devi specificare un nome (slug) per il modpack.', 'warning');
+        return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug)) {
+        showToast('Lo slug può contenere solo lettere, numeri, trattini e underscore.', 'warning');
+        return;
+    }
+    if (!file) {
+        showToast('Devi selezionare un file .zip da caricare.', 'warning');
+        return;
+    }
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+        showToast('Il file deve essere un archivio .zip', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btn-custom-upload');
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressPct = document.getElementById('upload-progress-pct');
+    const progressStep = document.getElementById('upload-progress-step');
+
+    btn.disabled = true;
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressPct.innerText = '0%';
+    progressStep.innerText = 'Uploading...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('slug', slug);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/curseforge/upload', true);
+
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressPct.innerText = percentComplete + '%';
+            if (percentComplete === 100) {
+                progressStep.innerText = 'Processing server files... Please wait.';
+            }
+        }
+    };
+
+    xhr.onload = function() {
+        btn.disabled = false;
+        try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status === 200 && data.status === 'success') {
+                showToast(`Modpack '${slug}' caricato e installato con successo!`, 'success');
+                progressStep.innerText = 'Upload complete.';
+                loadInstalledModpacks();
+                fileInput.value = '';
+                slugInput.value = '';
+                setTimeout(() => { progressContainer.style.display = 'none'; }, 3000);
+            } else {
+                throw new Error(data.detail || 'Errore sconosciuto durante l\'upload');
+            }
+        } catch (e) {
+            showToast(`Errore: ${e.message}`, 'error');
+            progressStep.innerText = 'Upload failed.';
+            progressBar.style.backgroundColor = '#ef4444'; // red
+        }
+    };
+
+    xhr.onerror = function() {
+        btn.disabled = false;
+        showToast('Errore di rete durante l\'upload del file.', 'error');
+        progressStep.innerText = 'Upload failed.';
+        progressBar.style.backgroundColor = '#ef4444';
+    };
+
+    xhr.send(formData);
+}
 
 // ─── Modpack Management (Swap) ───────────────────────────────────────────────
 

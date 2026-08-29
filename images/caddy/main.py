@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 from mcstatus import JavaServer
@@ -956,6 +956,54 @@ def get_curseforge_task_status(task_id: str):
         "status": "success",
         "task": task
     }
+
+
+@app.post("/api/curseforge/upload")
+async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(...)):
+    """Uploads and extracts a custom modpack zip file."""
+    if not re.match(r"^[a-zA-Z0-9_-]+$", slug):
+        raise HTTPException(status_code=400, detail="Slug invalido (solo lettere, numeri, trattini e underscore).")
+    if not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Il file deve essere un archivio .zip")
+
+    target_dir = MODPACKS_DIR_PATH / slug
+    if target_dir.exists():
+        raise HTTPException(status_code=400, detail=f"Esiste già un modpack con lo slug '{slug}'.")
+
+    import tempfile
+    import zipfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_zip_path = Path(tmpdir) / "uploaded.zip"
+        
+        # Save uploaded file
+        with open(tmp_zip_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Raw server pack, just extract it
+            with zipfile.ZipFile(tmp_zip_path, 'r') as zf:
+                zf.extractall(target_dir)
+            
+            # Create a simple metadata file so the frontend knows something about it
+            meta_path = target_dir / "modpack_metadata.json"
+            if not meta_path.exists():
+                with open(meta_path, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "name": slug,
+                        "mc_version": "Unknown (Custom Pack)",
+                        "server_type": "CUSTOM",
+                        "loader_version": ""
+                    }, f)
+        except Exception as e:
+            # Cleanup on failure
+            if target_dir.exists():
+                shutil.rmtree(target_dir, ignore_errors=True)
+            raise HTTPException(status_code=500, detail=f"Errore durante l'estrazione: {str(e)}")
+
+    return {"status": "success", "message": f"Modpack '{slug}' caricato con successo."}
 
 
 @app.get("/api/curseforge/installed")
