@@ -4,7 +4,6 @@
 const I18N_TRANSLATIONS = {
     en: {
         // Navbar
-        nav_brand: "MC Server Control",
         nav_status: "📊 Status Dashboard",
         nav_config: "⚙️ Server Configurator",
         nav_tools: "🛠️ Server Tools",
@@ -242,7 +241,6 @@ const I18N_TRANSLATIONS = {
     },
     it: {
         // Navbar
-        nav_brand: "MC Server Control",
         nav_status: "📊 Status Dashboard",
         nav_config: "⚙️ Server Configurator",
         nav_tools: "🛠️ Server Tools",
@@ -488,7 +486,7 @@ function getLanguage() {
         if (saved && (saved === 'en' || saved === 'it')) {
             return saved;
         }
-    } catch (e) {}
+    } catch (e) { }
     return 'en';
 }
 
@@ -500,7 +498,7 @@ function setLanguage(lang) {
 
     try {
         localStorage.setItem('preferred_language', lang);
-    } catch (e) {}
+    } catch (e) { }
 
     document.documentElement.lang = lang;
 
@@ -564,7 +562,7 @@ function toggleLangDropdown(event) {
     const wrapper = document.getElementById('lang-dropdown-wrapper');
     const btn = document.getElementById('lang-dropdown-btn');
     if (!wrapper) return;
-    
+
     const isOpen = wrapper.classList.toggle('open');
     if (btn) {
         btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');

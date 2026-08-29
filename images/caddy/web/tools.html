@@ -7,7 +7,9 @@
     <title>Server Tools - Minecraft Server</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=13">
     <link rel="stylesheet" href="css/config.css?v=13">
 
@@ -100,11 +102,13 @@
     <nav class="top-nav">
         <div class="nav-left">
             <div class="nav-brand">
-                <span class="nav-icon"><img src="img/mc-2d-logo.png" alt="Logo" class="nav-icon-img" width="22" height="22"></span>
-                <span class="nav-title" data-i18n="nav_brand">MC Server Control</span>
+                <span class="nav-icon"><img src="img/mc-2d-logo.png" alt="Logo" class="nav-icon-img" width="22"
+                        height="22"></span>
             </div>
             <div class="lang-dropdown-wrapper" id="lang-dropdown-wrapper">
-                <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn" onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true" title="Select Language">
+                <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn"
+                    onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true"
+                    title="Select Language">
                     <span class="lang-flag" id="lang-flag">🇬🇧</span>
                     <span class="lang-code" id="lang-code">ENG</span>
                     <span class="lang-arrow">▼</span>
@@ -135,10 +139,14 @@
     <main class="config-container">
         <header class="config-header">
             <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%;">
-                <a href="index.html" title="Back to Dashboard" data-i18n-title="nav_back_dashboard" style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);" onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
+                <a href="index.html" title="Back to Dashboard" data-i18n-title="nav_back_dashboard"
+                    style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);"
+                    onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';"
+                    onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
                 <h1 style="margin: 0;" data-i18n="tools_title">Server Tools & Utilities</h1>
             </div>
-            <p class="subtitle" data-i18n="tools_subtitle">Execute maintenance scripts like Restic and Rclone directly from the web UI</p>
+            <p class="subtitle" data-i18n="tools_subtitle">Execute maintenance scripts like Restic and Rclone directly
+                from the web UI</p>
         </header>
 
         <!-- Restic Tools -->
@@ -147,13 +155,17 @@
                 <div class="tool-icon">🛡️</div>
                 <div>
                     <h2 class="tool-title" data-i18n="tools_restic_title">Restic Backups (restic-tools.sh)</h2>
-                    <p class="tool-desc" data-i18n="tools_restic_desc">Manage encrypted backups of your world and server data.</p>
+                    <p class="tool-desc" data-i18n="tools_restic_desc">Manage encrypted backups of your world and server
+                        data.</p>
                 </div>
             </div>
             <div class="tool-actions">
-                <button class="btn btn-secondary" onclick="runTool('restic', 'doctor')" data-i18n="tools_btn_doctor">🏥 Doctor (Check Repo)</button>
-                <button class="btn btn-accent" onclick="runTool('restic', 'unlock')" data-i18n="tools_btn_unlock">🔓 Unlock Repo</button>
-                <button class="btn btn-primary" onclick="runTool('restic', 'backup')" data-i18n="tools_btn_backup_offline">💾 Backup Offline</button>
+                <button class="btn btn-secondary" onclick="runTool('restic', 'doctor')" data-i18n="tools_btn_doctor">🏥
+                    Doctor (Check Repo)</button>
+                <button class="btn btn-accent" onclick="runTool('restic', 'unlock')" data-i18n="tools_btn_unlock">🔓
+                    Unlock Repo</button>
+                <button class="btn btn-primary" onclick="runTool('restic', 'backup')"
+                    data-i18n="tools_btn_backup_offline">💾 Backup Offline</button>
             </div>
             <div id="restic-console" class="console-output"></div>
         </section>
@@ -164,17 +176,21 @@
                 <div class="tool-icon">🔒</div>
                 <div>
                     <h2 class="tool-title" data-i18n="tools_mutex_title">Cloud Mutex (rclone-mutex.sh)</h2>
-                    <p class="tool-desc" data-i18n="tools_mutex_desc">Manage the cloud lock to prevent multiple servers from starting simultaneously.</p>
+                    <p class="tool-desc" data-i18n="tools_mutex_desc">Manage the cloud lock to prevent multiple servers
+                        from starting simultaneously.</p>
                 </div>
             </div>
             <div class="tool-actions">
-                <button class="btn btn-secondary" onclick="runTool('mutex', 'get')" data-i18n="tools_btn_mutex_get">🔍 Get Mutex Status</button>
-                <button class="btn btn-primary" onclick="runTool('mutex', 'set', '1')" data-i18n="tools_btn_mutex_lock">🔴 Lock (Set 1)</button>
-                <button class="btn btn-accent" onclick="runTool('mutex', 'set', '0')" data-i18n="tools_btn_mutex_unlock">🟢 Unlock (Set 0)</button>
+                <button class="btn btn-secondary" onclick="runTool('mutex', 'get')" data-i18n="tools_btn_mutex_get">🔍
+                    Get Mutex Status</button>
+                <button class="btn btn-primary" onclick="runTool('mutex', 'set', '1')"
+                    data-i18n="tools_btn_mutex_lock">🔴 Lock (Set 1)</button>
+                <button class="btn btn-accent" onclick="runTool('mutex', 'set', '0')"
+                    data-i18n="tools_btn_mutex_unlock">🟢 Unlock (Set 0)</button>
             </div>
             <div id="mutex-console" class="console-output"></div>
         </section>
-        
+
         <!-- Other Utilities -->
         <section class="tool-card">
             <div class="tool-header">
@@ -185,8 +201,10 @@
                 </div>
             </div>
             <div class="tool-actions">
-                <button class="btn btn-secondary" onclick="runTool('utils', 'disablemods')" data-i18n="tools_btn_disable_mods">🚫 Disable Client Mods</button>
-                <button class="btn btn-secondary" onclick="runTool('utils', 'sync')" data-i18n="tools_btn_cloud_sync">☁️ Cloud Sync (pull)</button>
+                <button class="btn btn-secondary" onclick="runTool('utils', 'disablemods')"
+                    data-i18n="tools_btn_disable_mods">🚫 Disable Client Mods</button>
+                <button class="btn btn-secondary" onclick="runTool('utils', 'sync')" data-i18n="tools_btn_cloud_sync">☁️
+                    Cloud Sync (pull)</button>
             </div>
             <div id="utils-console" class="console-output"></div>
         </section>
