@@ -7,7 +7,9 @@
     <title>Server Configuration - Minecraft Server</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=13">
     <link rel="stylesheet" href="css/config.css?v=13">
 
@@ -28,11 +30,16 @@
     <nav class="top-nav">
         <div class="nav-left">
             <div class="nav-brand">
-                <span class="nav-icon"><img src="img/mc-2d-logo.png" alt="Logo" class="nav-icon-img" width="22" height="22"></span>
-                <span class="nav-title" data-i18n="nav_brand">MC Server Control</span>
+                <span class="nav-icon"><img src="img/mc-2d-logo.png" alt="Logo" class="nav-icon-img" width="22"
+                        height="22"></span>
+                <span class="nav-title" data-i18n="nav_brand"><a href="index.html" class="nav-btn"
+                        data-i18n="nav_status">🏠 Home</a></span>
+
             </div>
             <div class="lang-dropdown-wrapper" id="lang-dropdown-wrapper">
-                <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn" onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true" title="Select Language">
+                <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn"
+                    onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true"
+                    title="Select Language">
                     <span class="lang-flag" id="lang-flag">🇬🇧</span>
                     <span class="lang-code" id="lang-code">ENG</span>
                     <span class="lang-arrow">▼</span>
@@ -63,12 +70,17 @@
     <main class="config-container">
         <header class="config-header">
             <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%;">
-                <a href="index.html" title="Back to Dashboard" data-i18n-title="nav_back_dashboard" style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);" onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
+                <a href="index.html" title="Back to Dashboard" data-i18n-title="nav_back_dashboard"
+                    style="text-decoration: none; color: #22c55e; font-size: 3.5rem; position: absolute; left: 0; transition: all 0.2s; cursor: pointer; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);"
+                    onmouseover="this.style.color='#4ade80'; this.style.transform='scale(1.1)';"
+                    onmouseout="this.style.color='#22c55e'; this.style.transform='scale(1)';">←</a>
                 <h1 style="margin: 0;" data-i18n="cfg_header_title">Server Environment Configurator</h1>
             </div>
-            <p class="subtitle" data-i18n="cfg_header_subtitle">Quick setup for server addresses, engine, cloud storage, and domain</p>
+            <p class="subtitle" data-i18n="cfg_header_subtitle">Quick setup for server addresses, engine, cloud storage,
+                and domain</p>
             <div class="status-indicator-bar" id="config-status-bar">
-                <span class="status-pill loading" id="status-pill" data-i18n="cfg_status_loading">⏳ Loading configuration...</span>
+                <span class="status-pill loading" id="status-pill" data-i18n="cfg_status_loading">⏳ Loading
+                    configuration...</span>
                 <span class="env-path-badge" id="env-path-display">env/.env</span>
             </div>
         </header>
@@ -114,7 +126,8 @@
                         <div class="card-icon">🎮</div>
                         <div>
                             <h2 data-i18n="sec_name_title">Server Name & Description</h2>
-                            <p class="card-desc" data-i18n="sec_name_desc">Server identifier and Message of the Day (MOTD)</p>
+                            <p class="card-desc" data-i18n="sec_name_desc">Server identifier and Message of the Day
+                                (MOTD)</p>
                         </div>
                     </div>
 
@@ -122,38 +135,63 @@
                         <div class="form-group full-width">
                             <label for="input-name">
                                 <span data-i18n="label_server_name">Server / Container Name</span>
-                                <span class="tooltip-icon" title="Unique identifier for Docker server container, cloud repository, and backups">ℹ️</span>
+                                <span class="tooltip-icon"
+                                    title="Unique identifier for Docker server container, cloud repository, and backups">ℹ️</span>
                             </label>
-                            <input type="text" id="input-name" class="form-input" placeholder="e.g. minecraft-server, all-the-mods" data-i18n-placeholder="ph_server_name" required>
-                            <small class="form-hint"><span data-i18n="hint_slug">Generated slug:</span> <span id="preview-slug" class="preview-tag">minecraft-server</span></small>
+                            <input type="text" id="input-name" class="form-input"
+                                placeholder="e.g. minecraft-server, all-the-mods" data-i18n-placeholder="ph_server_name"
+                                required>
+                            <small class="form-hint"><span data-i18n="hint_slug">Generated slug:</span> <span
+                                    id="preview-slug" class="preview-tag">minecraft-server</span></small>
                         </div>
 
                         <div class="form-group full-width">
                             <label for="input-motd">
                                 <span data-i18n="label_motd">Description / Message of the Day (MOTD)</span>
-                                <span class="optional-tag" data-i18n="opt_motd_colors">(Supports color codes §a, §6, §b, etc.)</span>
+                                <span class="optional-tag" data-i18n="opt_motd_colors">(Supports color codes §a, §6, §b,
+                                    etc.)</span>
                             </label>
-                            <input type="text" id="input-motd" class="form-input" placeholder="e.g. §6Main Server §7| §bForge 1.21.1" data-i18n-placeholder="ph_motd">
-                            
+                            <input type="text" id="input-motd" class="form-input"
+                                placeholder="e.g. §6Main Server §7| §bForge 1.21.1" data-i18n-placeholder="ph_motd">
+
                             <div class="color-palette-bar">
-                                <span class="color-tag" data-code="§0" style="background:#000000; color:#fff;" title="Black (§0)">§0</span>
-                                <span class="color-tag" data-code="§1" style="background:#0000aa; color:#fff;" title="Dark Blue (§1)">§1</span>
-                                <span class="color-tag" data-code="§2" style="background:#00aa00; color:#fff;" title="Dark Green (§2)">§2</span>
-                                <span class="color-tag" data-code="§3" style="background:#00aaaa; color:#fff;" title="Dark Aqua (§3)">§3</span>
-                                <span class="color-tag" data-code="§4" style="background:#aa0000; color:#fff;" title="Dark Red (§4)">§4</span>
-                                <span class="color-tag" data-code="§5" style="background:#aa00aa; color:#fff;" title="Dark Purple (§5)">§5</span>
-                                <span class="color-tag" data-code="§6" style="background:#ffaa00; color:#000;" title="Gold (§6)">§6</span>
-                                <span class="color-tag" data-code="§7" style="background:#aaaaaa; color:#000;" title="Gray (§7)">§7</span>
-                                <span class="color-tag" data-code="§8" style="background:#555555; color:#fff;" title="Dark Gray (§8)">§8</span>
-                                <span class="color-tag" data-code="§9" style="background:#5555ff; color:#fff;" title="Blue (§9)">§9</span>
-                                <span class="color-tag" data-code="§a" style="background:#55ff55; color:#000;" title="Green (§a)">§a</span>
-                                <span class="color-tag" data-code="§b" style="background:#55ffff; color:#000;" title="Aqua (§b)">§b</span>
-                                <span class="color-tag" data-code="§c" style="background:#ff5555; color:#fff;" title="Red (§c)">§c</span>
-                                <span class="color-tag" data-code="§d" style="background:#ff55ff; color:#fff;" title="Light Purple (§d)">§d</span>
-                                <span class="color-tag" data-code="§e" style="background:#ffff55; color:#000;" title="Yellow (§e)">§e</span>
-                                <span class="color-tag" data-code="§f" style="background:#ffffff; color:#000;" title="White (§f)">§f</span>
-                                <span class="color-tag" data-code="§l" style="background:#334155; color:#fff; font-weight:bold;" title="Bold (§l)">§l</span>
-                                <span class="color-tag" data-code="§r" style="background:#1e293b; color:#fff;" title="Reset (§r)">§r</span>
+                                <span class="color-tag" data-code="§0" style="background:#000000; color:#fff;"
+                                    title="Black (§0)">§0</span>
+                                <span class="color-tag" data-code="§1" style="background:#0000aa; color:#fff;"
+                                    title="Dark Blue (§1)">§1</span>
+                                <span class="color-tag" data-code="§2" style="background:#00aa00; color:#fff;"
+                                    title="Dark Green (§2)">§2</span>
+                                <span class="color-tag" data-code="§3" style="background:#00aaaa; color:#fff;"
+                                    title="Dark Aqua (§3)">§3</span>
+                                <span class="color-tag" data-code="§4" style="background:#aa0000; color:#fff;"
+                                    title="Dark Red (§4)">§4</span>
+                                <span class="color-tag" data-code="§5" style="background:#aa00aa; color:#fff;"
+                                    title="Dark Purple (§5)">§5</span>
+                                <span class="color-tag" data-code="§6" style="background:#ffaa00; color:#000;"
+                                    title="Gold (§6)">§6</span>
+                                <span class="color-tag" data-code="§7" style="background:#aaaaaa; color:#000;"
+                                    title="Gray (§7)">§7</span>
+                                <span class="color-tag" data-code="§8" style="background:#555555; color:#fff;"
+                                    title="Dark Gray (§8)">§8</span>
+                                <span class="color-tag" data-code="§9" style="background:#5555ff; color:#fff;"
+                                    title="Blue (§9)">§9</span>
+                                <span class="color-tag" data-code="§a" style="background:#55ff55; color:#000;"
+                                    title="Green (§a)">§a</span>
+                                <span class="color-tag" data-code="§b" style="background:#55ffff; color:#000;"
+                                    title="Aqua (§b)">§b</span>
+                                <span class="color-tag" data-code="§c" style="background:#ff5555; color:#fff;"
+                                    title="Red (§c)">§c</span>
+                                <span class="color-tag" data-code="§d" style="background:#ff55ff; color:#fff;"
+                                    title="Light Purple (§d)">§d</span>
+                                <span class="color-tag" data-code="§e" style="background:#ffff55; color:#000;"
+                                    title="Yellow (§e)">§e</span>
+                                <span class="color-tag" data-code="§f" style="background:#ffffff; color:#000;"
+                                    title="White (§f)">§f</span>
+                                <span class="color-tag" data-code="§l"
+                                    style="background:#334155; color:#fff; font-weight:bold;"
+                                    title="Bold (§l)">§l</span>
+                                <span class="color-tag" data-code="§r" style="background:#1e293b; color:#fff;"
+                                    title="Reset (§r)">§r</span>
                             </div>
 
                             <div class="motd-preview-card">
@@ -172,7 +210,8 @@
                         <div class="card-icon">🧱</div>
                         <div>
                             <h2 data-i18n="sec_engine_title">Minecraft Framework & Version</h2>
-                            <p class="card-desc" data-i18n="sec_engine_desc">Choose game engine and Minecraft version</p>
+                            <p class="card-desc" data-i18n="sec_engine_desc">Choose game engine and Minecraft version
+                            </p>
                         </div>
                     </div>
 
@@ -210,28 +249,41 @@
                     <!-- Dynamic Engine Specifics -->
                     <div class="engine-specific-box" id="engine-forge-box">
                         <div class="form-group">
-                            <label for="input-forge-version"><span data-i18n="label_forge_version">Forge Version</span> <span class="optional-tag" data-i18n="opt_forge_version">(Optional - leave empty for auto-detection)</span></label>
+                            <label for="input-forge-version"><span data-i18n="label_forge_version">Forge Version</span>
+                                <span class="optional-tag" data-i18n="opt_forge_version">(Optional - leave empty for
+                                    auto-detection)</span></label>
                             <input type="text" id="input-forge-version" class="form-input" placeholder="e.g. 47.3.0">
                         </div>
                     </div>
 
                     <div class="engine-specific-box" id="engine-neoforge-box" style="display:none;">
                         <div class="form-group">
-                            <label for="input-neoforge-version"><span data-i18n="label_neoforge_version">NeoForge Version</span> <span class="optional-tag" data-i18n="opt_neoforge_version">(Optional - leave empty for auto)</span></label>
-                            <input type="text" id="input-neoforge-version" class="form-input" placeholder="e.g. 21.1.65">
-                            <small class="form-hint" style="color:#fbbf24;" data-i18n="hint_neoforge_notice">⚡ Note: NeoForge is available only for Minecraft 1.20.2+ (for older versions like 1.19.2 select Forge).</small>
+                            <label for="input-neoforge-version"><span data-i18n="label_neoforge_version">NeoForge
+                                    Version</span> <span class="optional-tag" data-i18n="opt_neoforge_version">(Optional
+                                    - leave empty for auto)</span></label>
+                            <input type="text" id="input-neoforge-version" class="form-input"
+                                placeholder="e.g. 21.1.65">
+                            <small class="form-hint" style="color:#fbbf24;" data-i18n="hint_neoforge_notice">⚡ Note:
+                                NeoForge is available only for Minecraft 1.20.2+ (for older versions like 1.19.2 select
+                                Forge).</small>
                         </div>
                     </div>
 
                     <div class="engine-specific-box" id="engine-fabric-box" style="display:none;">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="input-fabric-launcher"><span data-i18n="label_fabric_launcher">Fabric Launcher Version</span> <span class="optional-tag" data-i18n="opt_optional">(Optional)</span></label>
-                                <input type="text" id="input-fabric-launcher" class="form-input" placeholder="e.g. 1.0.1">
+                                <label for="input-fabric-launcher"><span data-i18n="label_fabric_launcher">Fabric
+                                        Launcher Version</span> <span class="optional-tag"
+                                        data-i18n="opt_optional">(Optional)</span></label>
+                                <input type="text" id="input-fabric-launcher" class="form-input"
+                                    placeholder="e.g. 1.0.1">
                             </div>
                             <div class="form-group">
-                                <label for="input-fabric-loader"><span data-i18n="label_fabric_loader">Fabric Loader Version</span> <span class="optional-tag" data-i18n="opt_optional">(Optional)</span></label>
-                                <input type="text" id="input-fabric-loader" class="form-input" placeholder="e.g. 0.16.5">
+                                <label for="input-fabric-loader"><span data-i18n="label_fabric_loader">Fabric Loader
+                                        Version</span> <span class="optional-tag"
+                                        data-i18n="opt_optional">(Optional)</span></label>
+                                <input type="text" id="input-fabric-loader" class="form-input"
+                                    placeholder="e.g. 0.16.5">
                             </div>
                         </div>
                     </div>
@@ -243,7 +295,8 @@
                         <div class="card-icon">🌐</div>
                         <div>
                             <h2 data-i18n="sec_ips_title">Server IP Addresses (server_ips.env)</h2>
-                            <p class="card-desc" data-i18n="sec_ips_desc">Specify 3 IP addresses for the server (Standard/LAN, ZeroTier VPN 1, Radmin/Hamachi VPN 2). Saved in env/server_ips.env.</p>
+                            <p class="card-desc" data-i18n="sec_ips_desc">Specify 3 IP addresses for the server
+                                (Standard/LAN, ZeroTier VPN 1, Radmin/Hamachi VPN 2). Saved in env/server_ips.env.</p>
                         </div>
                     </div>
 
@@ -253,16 +306,19 @@
                                 <span data-i18n="label_ip_normal">🌐 Standard / LAN IP</span>
                                 <span class="tooltip-icon" title="Primary or local LAN IP address">ℹ️</span>
                             </label>
-                            <input type="text" id="input-ip-normal" class="form-input form-input-primary" placeholder="e.g. 127.0.0.1 or 192.168.1.100" data-i18n-placeholder="dash_ip_normal_ph">
+                            <input type="text" id="input-ip-normal" class="form-input form-input-primary"
+                                placeholder="e.g. 127.0.0.1 or 192.168.1.100" data-i18n-placeholder="dash_ip_normal_ph">
                             <small class="form-hint" data-i18n="hint_ip_normal">Primary or local IP</small>
                         </div>
 
                         <div class="form-group">
                             <label for="input-ip-vpn1">
                                 <span data-i18n="label_ip_vpn1">🔒 VPN 1 IP (e.g. ZeroTier)</span>
-                                <span class="tooltip-icon" title="IP assigned by primary VPN service like ZeroTier">ℹ️</span>
+                                <span class="tooltip-icon"
+                                    title="IP assigned by primary VPN service like ZeroTier">ℹ️</span>
                             </label>
-                            <input type="text" id="input-ip-vpn1" class="form-input" placeholder="e.g. 10.147.19.45" data-i18n-placeholder="dash_ip_vpn1_ph">
+                            <input type="text" id="input-ip-vpn1" class="form-input" placeholder="e.g. 10.147.19.45"
+                                data-i18n-placeholder="dash_ip_vpn1_ph">
                             <small class="form-hint" data-i18n="hint_ip_vpn1">ZeroTier / primary VPN address</small>
                         </div>
 
@@ -271,7 +327,8 @@
                                 <span data-i18n="label_ip_vpn2">🛡️ VPN 2 IP (e.g. Radmin / Hamachi / WireGuard)</span>
                                 <span class="tooltip-icon" title="IP assigned by secondary VPN service">ℹ️</span>
                             </label>
-                            <input type="text" id="input-ip-vpn2" class="form-input" placeholder="e.g. 26.15.20.10" data-i18n-placeholder="dash_ip_vpn2_ph">
+                            <input type="text" id="input-ip-vpn2" class="form-input" placeholder="e.g. 26.15.20.10"
+                                data-i18n-placeholder="dash_ip_vpn2_ph">
                             <small class="form-hint" data-i18n="hint_ip_vpn2">Secondary VPN or alternative IP</small>
                         </div>
                     </div>
@@ -281,28 +338,37 @@
             <!-- ══════════════ TAB 2: MODPACK & SALVATAGGI ══════════════ -->
             <div class="tab-pane" id="tab-modpacks" style="display: none;">
                 <!-- 1. Server Giocati (Salvataggi Mondo in servers_played/) -->
-                <section class="form-card modpack-management-section" id="modpack-management-card" style="border: 2px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);">
+                <section class="form-card modpack-management-section" id="modpack-management-card"
+                    style="border: 2px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);">
                     <div class="card-header">
                         <div class="card-icon">💾</div>
                         <div>
                             <h2 data-i18n="sec_played_title">Played Servers (World Saves in servers_played/)</h2>
-                            <p class="card-desc" data-i18n="sec_played_desc">Select existing server worlds with player progress to load into active server.</p>
+                            <p class="card-desc" data-i18n="sec_played_desc">Select existing server worlds with player
+                                progress to load into active server.</p>
                         </div>
                     </div>
 
-                    <div class="active-server-status-bar" id="active-server-status-bar" style="margin-bottom: 1rem; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
-                        <span><span data-i18n="status_active_server">🎮 Currently Active Server:</span> <strong id="active-server-name" style="color: #60a5fa;">Loading...</strong></span>
-                        <span class="badge badge-sm badge-success" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 4px 8px; border-radius: 6px;" data-i18n="badge_active_data">Active in ./data</span>
+                    <div class="active-server-status-bar" id="active-server-status-bar"
+                        style="margin-bottom: 1rem; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                        <span><span data-i18n="status_active_server">🎮 Currently Active Server:</span> <strong
+                                id="active-server-name" style="color: #60a5fa;">Loading...</strong></span>
+                        <span class="badge badge-sm badge-success"
+                            style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 4px 8px; border-radius: 6px;"
+                            data-i18n="badge_active_data">Active in ./data</span>
                     </div>
 
                     <div class="form-group" style="display: flex; gap: 1rem; align-items: flex-end;">
                         <div style="flex: 1;">
-                            <label for="select-modpack" class="form-label" data-i18n="label_select_played">Select Played Server to Load:</label>
+                            <label for="select-modpack" class="form-label" data-i18n="label_select_played">Select Played
+                                Server to Load:</label>
                             <select id="select-modpack" class="form-input">
                                 <option value="">Loading...</option>
                             </select>
                         </div>
-                        <button type="button" class="btn btn-primary" id="btn-swap-modpack" onclick="swapModpack()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);" data-i18n="btn_swap_modpack">
+                        <button type="button" class="btn btn-primary" id="btn-swap-modpack" onclick="swapModpack()"
+                            style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);"
+                            data-i18n="btn_swap_modpack">
                             🔄 Swap Server
                         </button>
                     </div>
@@ -320,19 +386,26 @@
                         <div class="card-icon">📦</div>
                         <div>
                             <h2 data-i18n="sec_cf_title">CurseForge Modpack Downloader</h2>
-                            <p class="card-desc"><span data-i18n="sec_cf_desc_prefix">Download clean modpacks from </span><a href="https://www.curseforge.com/minecraft/modpacks/" target="_blank" rel="noopener noreferrer">CurseForge</a><span data-i18n="sec_cf_desc_suffix"> into server_modpacks/ folder (without world).</span></p>
+                            <p class="card-desc"><span data-i18n="sec_cf_desc_prefix">Download clean modpacks from
+                                </span><a href="https://www.curseforge.com/minecraft/modpacks/" target="_blank"
+                                    rel="noopener noreferrer">CurseForge</a><span data-i18n="sec_cf_desc_suffix"> into
+                                    server_modpacks/ folder (without world).</span></p>
                         </div>
                     </div>
 
                     <div class="cf-search-box">
                         <div class="cf-input-wrapper">
                             <span class="cf-search-icon">🔗</span>
-                            <input type="text" id="input-cf-url" class="form-input cf-search-input" placeholder="Paste CurseForge link (e.g. https://www.curseforge.com/minecraft/modpacks/better-mc-forge-bmc4) or slug" data-i18n-placeholder="ph_cf_input" autocomplete="off">
-                            <button type="button" class="btn btn-secondary btn-cf-search" id="btn-cf-inspect" onclick="inspectCurseForgeModpack()" data-i18n="btn_cf_search">
+                            <input type="text" id="input-cf-url" class="form-input cf-search-input"
+                                placeholder="Paste CurseForge link (e.g. https://www.curseforge.com/minecraft/modpacks/better-mc-forge-bmc4) or slug"
+                                data-i18n-placeholder="ph_cf_input" autocomplete="off">
+                            <button type="button" class="btn btn-secondary btn-cf-search" id="btn-cf-inspect"
+                                onclick="inspectCurseForgeModpack()" data-i18n="btn_cf_search">
                                 🔍 Search Modpack
                             </button>
                         </div>
-                        <small class="form-hint" data-i18n="hint_cf_support">Supports full CurseForge URLs, slugs (e.g. all-the-mods-9) or numeric IDs.</small>
+                        <small class="form-hint" data-i18n="hint_cf_support">Supports full CurseForge URLs, slugs (e.g.
+                            all-the-mods-9) or numeric IDs.</small>
                     </div>
 
                     <!-- Modpack Preview Card (hidden by default) -->
@@ -347,17 +420,22 @@
                                 </div>
                                 <p id="cf-preview-summary" class="cf-preview-summary">Modpack summary...</p>
                                 <div class="cf-preview-meta">
-                                    <span><span data-i18n="meta_file">📁 File:</span> <strong id="cf-preview-filename">-</strong></span>
-                                    <span><span data-i18n="meta_downloads">📥 Downloads:</span> <strong id="cf-preview-downloads">-</strong></span>
-                                    <span><span data-i18n="meta_updated">📅 Updated:</span> <strong id="cf-preview-date">-</strong></span>
+                                    <span><span data-i18n="meta_file">📁 File:</span> <strong
+                                            id="cf-preview-filename">-</strong></span>
+                                    <span><span data-i18n="meta_downloads">📥 Downloads:</span> <strong
+                                            id="cf-preview-downloads">-</strong></span>
+                                    <span><span data-i18n="meta_updated">📅 Updated:</span> <strong
+                                            id="cf-preview-date">-</strong></span>
                                 </div>
                             </div>
                         </div>
                         <div class="cf-actions-row">
-                            <button type="button" class="btn btn-primary btn-install-modpack" id="btn-cf-install" onclick="startModpackDownload()" data-i18n="btn_cf_install">
+                            <button type="button" class="btn btn-primary btn-install-modpack" id="btn-cf-install"
+                                onclick="startModpackDownload()" data-i18n="btn_cf_install">
                                 ⬇️ Download & Install in server_modpacks/
                             </button>
-                            <button type="button" class="btn btn-accent" id="btn-cf-apply-form" onclick="applyPreviewToForm()" data-i18n="btn_cf_apply">
+                            <button type="button" class="btn btn-accent" id="btn-cf-apply-form"
+                                onclick="applyPreviewToForm()" data-i18n="btn_cf_apply">
                                 ⚡ Apply Modpack to Config
                             </button>
                         </div>
@@ -375,42 +453,51 @@
                         <div class="cf-console-wrapper">
                             <div class="cf-console-header">
                                 <span data-i18n="console_cf_header">📟 Installation Console Log</span>
-                                <button type="button" class="btn-console-clear" onclick="clearConsoleLog()" data-i18n="btn_console_clear">Clear</button>
+                                <button type="button" class="btn-console-clear" onclick="clearConsoleLog()"
+                                    data-i18n="btn_console_clear">Clear</button>
                             </div>
                             <pre class="cf-console-log" id="cf-console-log">Waiting for start...</pre>
                         </div>
                     </div>
 
                     <!-- Custom Modpack Uploader -->
-                    <div class="cf-upload-container" style="margin-top: 20px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div class="cf-upload-container"
+                        style="margin-top: 20px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <h3 style="margin-bottom: 10px; font-size: 1.1rem;">⬆️ Upload Custom Modpack (.zip)</h3>
                         <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 15px;">
-                            Upload a standard custom server pack. 
-                            <br><small style="color: #60a5fa;">Lo .zip deve contenere i file del server (es. <code>mods/</code>, <code>config/</code>, <code>world/</code>) direttamente alla radice dell'archivio, senza sottocartelle aggiuntive.</small>
+                            Upload a standard custom server pack.
+                            <br><small style="color: #60a5fa;">Lo .zip deve contenere i file del server (es.
+                                <code>mods/</code>, <code>config/</code>, <code>world/</code>) direttamente alla radice
+                                dell'archivio, senza sottocartelle aggiuntive.</small>
                         </p>
-                        
-                        <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+
+                        <div class="form-group"
+                            style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                             <div style="flex: 1; min-width: 200px;">
                                 <label for="input-custom-slug" class="form-label">Modpack Name (Folder Name)</label>
-                                <input type="text" id="input-custom-slug" class="form-input" placeholder="my-custom-pack" autocomplete="off">
+                                <input type="text" id="input-custom-slug" class="form-input"
+                                    placeholder="my-custom-pack" autocomplete="off">
                             </div>
                             <div style="flex: 2; min-width: 250px;">
                                 <label for="input-custom-zip" class="form-label">Select .zip file</label>
                                 <input type="file" id="input-custom-zip" class="form-input" accept=".zip">
                             </div>
-                            <button type="button" class="btn btn-primary" id="btn-custom-upload" onclick="uploadCustomModpack()">
+                            <button type="button" class="btn btn-primary" id="btn-custom-upload"
+                                onclick="uploadCustomModpack()">
                                 ⬆️ Upload & Extract
                             </button>
                         </div>
 
                         <!-- Upload Progress (hidden by default) -->
-                        <div class="cf-progress-container" id="upload-progress-container" style="display: none; margin-top: 15px;">
+                        <div class="cf-progress-container" id="upload-progress-container"
+                            style="display: none; margin-top: 15px;">
                             <div class="cf-progress-header">
                                 <span class="cf-progress-step" id="upload-progress-step">Uploading file...</span>
                                 <span class="cf-progress-pct" id="upload-progress-pct">0%</span>
                             </div>
                             <div class="progress-bar-track">
-                                <div class="progress-bar-fill" id="upload-progress-bar" style="width: 0%; background-color: #3b82f6;"></div>
+                                <div class="progress-bar-fill" id="upload-progress-bar"
+                                    style="width: 0%; background-color: #3b82f6;"></div>
                             </div>
                         </div>
                     </div>
@@ -419,13 +506,18 @@
                     <div class="cf-installed-container">
                         <div class="cf-installed-header">
                             <div>
-                                <h4 data-i18n="cf_installed_title">📂 Downloaded Modpacks (Ready to activate in server_modpacks/)</h4>
-                                <small style="color: var(--muted); font-size: 0.8rem;" data-i18n="cf_installed_sub">Clean files without world. Click "Activate on Server" to start a fresh playthrough.</small>
+                                <h4 data-i18n="cf_installed_title">📂 Downloaded Modpacks (Ready to activate in
+                                    server_modpacks/)</h4>
+                                <small style="color: var(--muted); font-size: 0.8rem;"
+                                    data-i18n="cf_installed_sub">Clean files without world. Click "Activate on Server"
+                                    to start a fresh playthrough.</small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="loadInstalledModpacks()" data-i18n="btn_refresh_list">🔄 Refresh List</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="loadInstalledModpacks()"
+                                data-i18n="btn_refresh_list">🔄 Refresh List</button>
                         </div>
                         <div class="cf-installed-list" id="cf-installed-list">
-                            <div class="cf-empty-notice" data-i18n="cf_empty_notice">No modpacks currently downloaded in server_modpacks/.</div>
+                            <div class="cf-empty-notice" data-i18n="cf_empty_notice">No modpacks currently downloaded in
+                                server_modpacks/.</div>
                         </div>
                     </div>
                 </section>
@@ -439,12 +531,14 @@
                         <div class="card-icon">🌐</div>
                         <div>
                             <h2 data-i18n="sec_ddns_title">Dynamic DNS Account (DDNS)</h2>
-                            <p class="card-desc" data-i18n="sec_ddns_desc">Assign a dynamic hostname to the server so friends can connect without remembering numeric IPs</p>
+                            <p class="card-desc" data-i18n="sec_ddns_desc">Assign a dynamic hostname to the server so
+                                friends can connect without remembering numeric IPs</p>
                         </div>
                     </div>
 
                     <div class="ddns-provider-grid" id="ddns-provider-grid">
-                        <div class="provider-card active" data-provider="duckdns" onclick="selectDDNSProvider('duckdns')">
+                        <div class="provider-card active" data-provider="duckdns"
+                            onclick="selectDDNSProvider('duckdns')">
                             <div class="provider-badge" data-i18n="provider_duckdns">🦆 DuckDNS</div>
                             <div class="provider-sub" data-i18n="provider_duckdns_sub">Recommended & Simple</div>
                         </div>
@@ -478,27 +572,34 @@
                         <div class="form-group">
                             <label for="input-ddns-provider" data-i18n="label_ddns_provider">DDNS Provider</label>
                             <input type="text" id="input-ddns-provider" class="form-input" placeholder="duckdns">
-                            <small class="form-hint"><span data-i18n="hint_caddy_plugin">Caddy Plugin:</span> <strong id="preview-ddns-plugin" class="accent-text">duckdns</strong></small>
+                            <small class="form-hint"><span data-i18n="hint_caddy_plugin">Caddy Plugin:</span> <strong
+                                    id="preview-ddns-plugin" class="accent-text">duckdns</strong></small>
                         </div>
 
                         <div class="form-group">
                             <label for="input-ddns-domain" data-i18n="label_ddns_domain">DDNS Domain Name</label>
-                            <input type="text" id="input-ddns-domain" class="form-input" placeholder="my-server.duckdns.org">
+                            <input type="text" id="input-ddns-domain" class="form-input"
+                                placeholder="my-server.duckdns.org">
                         </div>
 
                         <div class="form-group full-width">
                             <label for="input-ddns-token" data-i18n="label_ddns_token">DDNS Token / Password</label>
                             <div class="password-input-wrapper">
-                                <input type="password" id="input-ddns-token" class="form-input" placeholder="Enter provider token or password" data-i18n-placeholder="ph_ddns_token">
-                                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-ddns-token', this)">👁️</button>
+                                <input type="password" id="input-ddns-token" class="form-input"
+                                    placeholder="Enter provider token or password"
+                                    data-i18n-placeholder="ph_ddns_token">
+                                <button type="button" class="pwd-toggle-btn"
+                                    onclick="togglePasswordVisibility('input-ddns-token', this)">👁️</button>
                             </div>
-                            <small class="form-hint" id="ddns-hint-text">DuckDNS: Domain is usually "name.duckdns.org". Token is your DuckDNS Token.</small>
+                            <small class="form-hint" id="ddns-hint-text">DuckDNS: Domain is usually "name.duckdns.org".
+                                Token is your DuckDNS Token.</small>
                         </div>
 
                         <div class="form-group full-width">
                             <label class="checkbox-label" style="display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" id="input-ddns-skip" style="width: 20px; height: 20px;">
-                                <span data-i18n="chk_skip_ddns">Skip DDNS updates (disables container DDNS script, useful if using static IP or router DDNS)</span>
+                                <span data-i18n="chk_skip_ddns">Skip DDNS updates (disables container DDNS script,
+                                    useful if using static IP or router DDNS)</span>
                             </label>
                         </div>
                     </div>
@@ -509,25 +610,30 @@
                     <div class="card-header">
                         <div class="card-icon">☁️</div>
                         <div style="flex:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <h2 data-i18n="sec_rclone_title">Rclone Account & Cloud Storage</h2>
                                 <div style="display:flex; gap:8px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openAddRemoteModal()" data-i18n="btn_add_cloud_acc">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        onclick="openAddRemoteModal()" data-i18n="btn_add_cloud_acc">
                                         ➕ Add Cloud Account
                                     </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openRawRcloneModal()" data-i18n="btn_edit_rclone_conf">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        onclick="openRawRcloneModal()" data-i18n="btn_edit_rclone_conf">
                                         ✏️ Edit rclone.conf
                                     </button>
                                 </div>
                             </div>
-                            <p class="card-desc" data-i18n="sec_rclone_desc">Configure and manage cloud accounts (MEGA, Google Drive, etc.) for Restic backups and Mutex lock</p>
+                            <p class="card-desc" data-i18n="sec_rclone_desc">Configure and manage cloud accounts (MEGA,
+                                Google Drive, etc.) for Restic backups and Mutex lock</p>
                         </div>
                     </div>
 
                     <!-- Configured Remotes List -->
                     <div class="remotes-manager-box" id="remotes-manager-box">
                         <div class="remotes-manager-header">
-                            <span class="sub-label" data-i18n="label_remotes_configured">Configured accounts in env/rclone.conf:</span>
+                            <span class="sub-label" data-i18n="label_remotes_configured">Configured accounts in
+                                env/rclone.conf:</span>
                         </div>
                         <div class="remotes-list" id="remotes-list-container">
                             <!-- Populated dynamically via safe DOM manipulation -->
@@ -536,20 +642,26 @@
 
                     <div class="form-grid" style="margin-top: 14px;">
                         <div class="form-group full-width">
-                            <label for="input-rclone-service" data-i18n="label_active_rclone">Active Rclone Account for Server</label>
+                            <label for="input-rclone-service" data-i18n="label_active_rclone">Active Rclone Account for
+                                Server</label>
                             <div class="input-with-select">
-                                <input type="text" id="input-rclone-service" class="form-input" placeholder="mega" required>
-                                <select id="select-detected-remotes" class="form-select" onchange="applyDetectedRemote(this.value)">
+                                <input type="text" id="input-rclone-service" class="form-input" placeholder="mega"
+                                    required>
+                                <select id="select-detected-remotes" class="form-select"
+                                    onchange="applyDetectedRemote(this.value)">
                                     <option value="">Detected remotes in rclone.conf...</option>
                                 </select>
                             </div>
-                            <small class="form-hint"><span data-i18n="hint_mutex_path">The selected remote will be used for backups and cloud lock:</span> <code class="preview-tag" id="preview-mutex-path">mega:/minecraft-server</code></small>
+                            <small class="form-hint"><span data-i18n="hint_mutex_path">The selected remote will be used
+                                    for backups and cloud lock:</span> <code class="preview-tag"
+                                    id="preview-mutex-path">mega:/minecraft-server</code></small>
                         </div>
 
                         <div class="form-group full-width" style="margin-top: 10px;">
                             <label class="checkbox-label" style="display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" id="input-rclone-skip" style="width: 20px; height: 20px;">
-                                <span data-i18n="chk_skip_rclone">Skip Rclone Cloud operations (disables cloud mutex lock and remote backup upload)</span>
+                                <span data-i18n="chk_skip_rclone">Skip Rclone Cloud operations (disables cloud mutex
+                                    lock and remote backup upload)</span>
                             </label>
                         </div>
                     </div>
@@ -564,7 +676,8 @@
                         <div class="card-icon">⚡</div>
                         <div>
                             <h2 data-i18n="sec_ram_title">Performance & RAM Memory</h2>
-                            <p class="card-desc" data-i18n="sec_ram_desc">Allocate memory resources for the Minecraft server process</p>
+                            <p class="card-desc" data-i18n="sec_ram_desc">Allocate memory resources for the Minecraft
+                                server process</p>
                         </div>
                     </div>
 
@@ -599,7 +712,8 @@
                         <div class="card-icon">🎯</div>
                         <div>
                             <h2 data-i18n="sec_game_title">Game Options & Rules</h2>
-                            <p class="card-desc" data-i18n="sec_game_desc">Configure player limits, world seed, administrators and render chunk distances</p>
+                            <p class="card-desc" data-i18n="sec_game_desc">Configure player limits, world seed,
+                                administrators and render chunk distances</p>
                         </div>
                     </div>
 
@@ -611,45 +725,55 @@
 
                         <div class="form-group">
                             <label for="input-seed" data-i18n="label_seed">World Seed</label>
-                            <input type="text" id="input-seed" class="form-input" placeholder="Leave empty for random seed" data-i18n-placeholder="ph_seed">
+                            <input type="text" id="input-seed" class="form-input"
+                                placeholder="Leave empty for random seed" data-i18n-placeholder="ph_seed">
                         </div>
 
                         <div class="form-group">
                             <label for="input-ops" data-i18n="label_ops">Operators / Admins (comma separated)</label>
-                            <input type="text" id="input-ops" class="form-input" placeholder="player1,player2" data-i18n-placeholder="ph_ops">
+                            <input type="text" id="input-ops" class="form-input" placeholder="player1,player2"
+                                data-i18n-placeholder="ph_ops">
                         </div>
 
                         <div class="form-group">
                             <label for="input-rcon-password" data-i18n="label_rcon_pass">RCON Password</label>
                             <div class="password-input-wrapper">
                                 <input type="password" id="input-rcon-password" class="form-input" value="minecraft">
-                                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-rcon-password', this)">👁️</button>
+                                <button type="button" class="pwd-toggle-btn"
+                                    onclick="togglePasswordVisibility('input-rcon-password', this)">👁️</button>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="input-view-distance" data-i18n="label_view_dist">View Distance (Chunks)</label>
                             <div class="range-row">
-                                <input type="range" id="slider-view-distance" min="4" max="32" value="10" class="range-slider">
-                                <input type="number" id="input-view-distance" class="form-input range-num" min="2" max="64" value="10">
+                                <input type="range" id="slider-view-distance" min="4" max="32" value="10"
+                                    class="range-slider">
+                                <input type="number" id="input-view-distance" class="form-input range-num" min="2"
+                                    max="64" value="10">
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="input-sim-distance" data-i18n="label_sim_dist">Simulation Distance (Chunks)</label>
+                            <label for="input-sim-distance" data-i18n="label_sim_dist">Simulation Distance
+                                (Chunks)</label>
                             <div class="range-row">
-                                <input type="range" id="slider-sim-distance" min="2" max="16" value="5" class="range-slider">
-                                <input type="number" id="input-sim-distance" class="form-input range-num" min="2" max="32" value="5">
+                                <input type="range" id="slider-sim-distance" min="2" max="16" value="5"
+                                    class="range-slider">
+                                <input type="number" id="input-sim-distance" class="form-input range-num" min="2"
+                                    max="32" value="5">
                             </div>
                         </div>
 
                         <div class="form-group toggle-group full-width">
-                            <label for="input-online-mode" data-i18n="label_online_mode">Online Mode (Mojang Authentication)</label>
+                            <label for="input-online-mode" data-i18n="label_online_mode">Online Mode (Mojang
+                                Authentication)</label>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="input-online-mode">
                                 <span class="slider-toggle"></span>
                             </div>
-                            <small class="form-hint" id="online-mode-hint" data-i18n="hint_online_off">OFF (Allows offline/cracked connections)</small>
+                            <small class="form-hint" id="online-mode-hint" data-i18n="hint_online_off">OFF (Allows
+                                offline/cracked connections)</small>
                         </div>
                     </div>
                 </section>
@@ -660,7 +784,8 @@
                         <div class="card-icon">🛡️</div>
                         <div>
                             <h2 data-i18n="sec_restic_title">Restic Backups & Container Maintenance</h2>
-                            <p class="card-desc" data-i18n="sec_restic_desc">Encrypted snapshot configuration and automated container suspension</p>
+                            <p class="card-desc" data-i18n="sec_restic_desc">Encrypted snapshot configuration and
+                                automated container suspension</p>
                         </div>
                     </div>
 
@@ -671,25 +796,32 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="input-restic-password" data-i18n="label_restic_pass">Restic Encryption Password</label>
+                            <label for="input-restic-password" data-i18n="label_restic_pass">Restic Encryption
+                                Password</label>
                             <div class="password-input-wrapper">
                                 <input type="password" id="input-restic-password" class="form-input" value="minecraft">
-                                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('input-restic-password', this)">👁️</button>
+                                <button type="button" class="pwd-toggle-btn"
+                                    onclick="togglePasswordVisibility('input-restic-password', this)">👁️</button>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="input-restic-keep" data-i18n="label_restic_keep">Number of Snapshots to Keep</label>
-                            <input type="number" id="input-restic-keep" class="form-input" min="1" max="1000" value="10">
+                            <label for="input-restic-keep" data-i18n="label_restic_keep">Number of Snapshots to
+                                Keep</label>
+                            <input type="number" id="input-restic-keep" class="form-input" min="1" max="1000"
+                                value="10">
                         </div>
 
                         <div class="form-group">
-                            <label for="input-pause-empty" data-i18n="label_pause_empty">Pause if Empty (Seconds)</label>
-                            <input type="number" id="input-pause-empty" class="form-input" min="0" max="86400" value="300">
+                            <label for="input-pause-empty" data-i18n="label_pause_empty">Pause if Empty
+                                (Seconds)</label>
+                            <input type="number" id="input-pause-empty" class="form-input" min="0" max="86400"
+                                value="300">
                         </div>
 
                         <div class="form-group toggle-group full-width">
-                            <label for="input-enable-autostop" data-i18n="label_autostop">AutoStop Container when inactive</label>
+                            <label for="input-enable-autostop" data-i18n="label_autostop">AutoStop Container when
+                                inactive</label>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="input-enable-autostop">
                                 <span class="slider-toggle"></span>
@@ -699,7 +831,8 @@
                         <!-- Hidden inputs for paths & defaults -->
                         <input type="hidden" id="input-rclone-config" value="/etc/rclone/rclone.conf">
                         <input type="hidden" id="input-rclone-host" value="./env/rclone.conf">
-                        <input type="hidden" id="input-restic-image" value="docker.io/tofran/restic-rclone:0.17.0_1.68.2">
+                        <input type="hidden" id="input-restic-image"
+                            value="docker.io/tofran/restic-rclone:0.17.0_1.68.2">
                         <input type="hidden" id="input-enable-autopause" value="">
                     </div>
                 </section>
@@ -715,10 +848,12 @@
                 <button type="button" class="btn btn-secondary" onclick="openRawModal()" data-i18n="dock_view_env">
                     👁️ View .env
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="downloadEnvFile()" data-i18n="dock_download_env">
+                <button type="button" class="btn btn-secondary" onclick="downloadEnvFile()"
+                    data-i18n="dock_download_env">
                     📥 Download .env
                 </button>
-                <button type="button" class="btn btn-primary" id="btn-save-main" onclick="openConfirmModal()" data-i18n="dock_save_cfg">
+                <button type="button" class="btn btn-primary" id="btn-save-main" onclick="openConfirmModal()"
+                    data-i18n="dock_save_cfg">
                     💾 Save Configuration
                 </button>
             </div>
@@ -733,14 +868,17 @@
                 <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-summary-text" data-i18n="modal_confirm_desc">The following settings will be saved to env/.env (a backup will be created as .env.bak):</p>
+                <p class="modal-summary-text" data-i18n="modal_confirm_desc">The following settings will be saved to
+                    env/.env (a backup will be created as .env.bak):</p>
                 <div class="summary-list" id="confirm-summary-list">
                     <!-- Populated via safe DOM manipulation -->
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeConfirmModal()" data-i18n="modal_btn_cancel">Cancel</button>
-                <button class="btn btn-primary" id="btn-modal-confirm-save" onclick="executeSave()" data-i18n="modal_btn_confirm_save">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()"
+                    data-i18n="modal_btn_cancel">Cancel</button>
+                <button class="btn btn-primary" id="btn-modal-confirm-save" onclick="executeSave()"
+                    data-i18n="modal_btn_confirm_save">
                     ✅ Save to env/.env
                 </button>
             </div>
@@ -758,7 +896,8 @@
                 <pre class="code-block" id="raw-code-block"></pre>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="btn-copy-raw" onclick="copyRawEnv()" data-i18n="modal_btn_copy">📋 Copy</button>
+                <button class="btn btn-secondary" id="btn-copy-raw" onclick="copyRawEnv()" data-i18n="modal_btn_copy">📋
+                    Copy</button>
                 <button class="btn btn-primary" onclick="closeRawModal()" data-i18n="modal_btn_close">Close</button>
             </div>
         </div>
@@ -775,8 +914,10 @@
                 <form id="remote-form" onsubmit="return false;" class="form-grid">
                     <div class="form-group full-width">
                         <label for="remote-input-name" data-i18n="modal_remote_name">Remote Account Name</label>
-                        <input type="text" id="remote-input-name" class="form-input" placeholder="e.g. mega, gdrive, dropbox" required>
-                        <small class="form-hint" data-i18n="modal_remote_name_hint">Unique short name (e.g. mega)</small>
+                        <input type="text" id="remote-input-name" class="form-input"
+                            placeholder="e.g. mega, gdrive, dropbox" required>
+                        <small class="form-hint" data-i18n="modal_remote_name_hint">Unique short name (e.g.
+                            mega)</small>
                     </div>
 
                     <div class="form-group full-width">
@@ -796,21 +937,27 @@
 
                     <div class="form-group full-width">
                         <label for="remote-input-user" data-i18n="modal_remote_user">Email / Username</label>
-                        <input type="text" id="remote-input-user" class="form-input" placeholder="your-email@example.com" required>
+                        <input type="text" id="remote-input-user" class="form-input"
+                            placeholder="your-email@example.com" required>
                     </div>
 
                     <div class="form-group full-width">
                         <label for="remote-input-pass" data-i18n="modal_remote_pass">Password / API Key</label>
                         <div class="password-input-wrapper">
-                            <input type="password" id="remote-input-pass" class="form-input" placeholder="Password will be automatically obfuscated via rclone" data-i18n-placeholder="modal_remote_pass_hint" required>
-                            <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('remote-input-pass', this)">👁️</button>
+                            <input type="password" id="remote-input-pass" class="form-input"
+                                placeholder="Password will be automatically obfuscated via rclone"
+                                data-i18n-placeholder="modal_remote_pass_hint" required>
+                            <button type="button" class="pwd-toggle-btn"
+                                onclick="togglePasswordVisibility('remote-input-pass', this)">👁️</button>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAddRemoteModal()" data-i18n="modal_btn_cancel">Cancel</button>
-                <button class="btn btn-primary" id="btn-save-remote" onclick="saveRcloneRemote()" data-i18n="modal_btn_save_remote">
+                <button class="btn btn-secondary" onclick="closeAddRemoteModal()"
+                    data-i18n="modal_btn_cancel">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-remote" onclick="saveRcloneRemote()"
+                    data-i18n="modal_btn_save_remote">
                     💾 Save Account
                 </button>
             </div>
@@ -825,11 +972,14 @@
                 <button class="modal-close" onclick="closeRawRcloneModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <textarea class="code-editor" id="raw-rclone-textarea" rows="12" placeholder="[remote_name]&#10;type = mega&#10;user = ...&#10;pass = ..."></textarea>
+                <textarea class="code-editor" id="raw-rclone-textarea" rows="12"
+                    placeholder="[remote_name]&#10;type = mega&#10;user = ...&#10;pass = ..."></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRawRcloneModal()" data-i18n="modal_btn_cancel">Cancel</button>
-                <button class="btn btn-primary" id="btn-save-raw-rclone" onclick="saveRawRcloneConf()" data-i18n="modal_btn_save_rclone">
+                <button class="btn btn-secondary" onclick="closeRawRcloneModal()"
+                    data-i18n="modal_btn_cancel">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-raw-rclone" onclick="saveRawRcloneConf()"
+                    data-i18n="modal_btn_save_rclone">
                     💾 Save rclone.conf
                 </button>
             </div>
