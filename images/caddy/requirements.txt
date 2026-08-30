@@ -4,4 +4,4 @@ mcstatus==11.1.1
 pydantic>=2.6.0
 requests>=2.31.0
 python-multipart>=0.0.9
-
+patool>=2.2.0

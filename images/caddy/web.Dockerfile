@@ -7,8 +7,12 @@ RUN xcaddy build --with github.com/caddy-dns/$CADDY_DNS_PROVIDER
 FROM caddy:2.10-alpine
 
 # Install Python, pip, rclone, bash and Docker CLI for remote management/logging
-RUN apk add --no-cache rclone python3 py3-pip docker-cli docker-cli-compose bash
-
+RUN apk add --no-cache rclone python3 py3-pip docker-cli docker-cli-compose bash 7zip build-base && \
+    wget https://www.rarlab.com/rar/unrarsrc-7.0.1.tar.gz && \
+    tar -xzf unrarsrc-7.0.1.tar.gz && \
+    cd unrar && make -j$(nproc) && make install && \
+    cd .. && rm -rf unrar unrarsrc-7.0.1.tar.gz && \
+    apk del build-base
 # Install FastAPI API requirements
 WORKDIR /app
 COPY requirements.txt .

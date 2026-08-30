@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 from mcstatus import JavaServer
+import patoolib
 
 app = FastAPI(title="Minecraft Server Manager & Config API", version="1.0.0")
 
@@ -963,8 +964,9 @@ async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(.
     """Uploads and extracts a custom modpack zip file."""
     if not re.match(r"^[a-zA-Z0-9_-]+$", slug):
         raise HTTPException(status_code=400, detail="Slug invalido (solo lettere, numeri, trattini e underscore).")
-    if not file.filename.lower().endswith(".zip"):
-        raise HTTPException(status_code=400, detail="Il file deve essere un archivio .zip")
+    valid_extensions = (".zip", ".rar", ".7z", ".tar", ".tar.gz", ".tgz", ".bz2", ".xz")
+    if not any(file.filename.lower().endswith(ext) for ext in valid_extensions):
+        raise HTTPException(status_code=400, detail="Il file deve essere un archivio supportato (.zip, .rar, .7z, .tar.gz, etc.)")
 
     target_dir = MODPACKS_DIR_PATH / slug
     if target_dir.exists():
@@ -974,7 +976,8 @@ async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(.
     import zipfile
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_zip_path = Path(tmpdir) / "uploaded.zip"
+        file_ext = "".join(Path(file.filename).suffixes)
+        tmp_zip_path = Path(tmpdir) / f"uploaded{file_ext}"
         
         # Save uploaded file
         with open(tmp_zip_path, "wb") as buffer:
@@ -983,9 +986,8 @@ async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(.
         try:
             target_dir.mkdir(parents=True, exist_ok=True)
             
-            # Raw server pack, just extract it
-            with zipfile.ZipFile(tmp_zip_path, 'r') as zf:
-                zf.extractall(target_dir)
+            # Use patoolib to extract the archive
+            patoolib.extract_archive(str(tmp_zip_path), outdir=str(target_dir))
             
             # Create a simple metadata file so the frontend knows something about it
             meta_path = target_dir / "modpack_metadata.json"

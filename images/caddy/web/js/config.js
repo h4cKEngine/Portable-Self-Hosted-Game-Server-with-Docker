@@ -1436,11 +1436,13 @@ function uploadCustomModpack() {
         return;
     }
     if (!file) {
-        showToast('Devi selezionare un file .zip da caricare.', 'warning');
+        showToast('Devi selezionare un file archivio da caricare.', 'warning');
         return;
     }
-    if (!file.name.toLowerCase().endsWith('.zip')) {
-        showToast('Il file deve essere un archivio .zip', 'warning');
+    const validExtensions = ['.zip', '.rar', '.7z', '.tar', '.tar.gz', '.tgz', '.bz2', '.xz'];
+    const fileName = file.name.toLowerCase();
+    if (!validExtensions.some(ext => fileName.endsWith(ext))) {
+        showToast('Il file deve essere un archivio supportato (.zip, .rar, .7z, .tar.gz, etc.)', 'warning');
         return;
     }
 
