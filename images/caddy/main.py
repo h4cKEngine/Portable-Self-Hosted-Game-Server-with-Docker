@@ -1092,8 +1092,12 @@ def list_installed_modpacks():
 @app.delete("/api/curseforge/installed/{slug}")
 def delete_installed_modpack(slug: str):
     """Safely delete an installed modpack folder."""
-    clean_slug = slugify(slug)
-    target_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
+    exact_slug = slug.strip()
+    clean_slug = slugify(exact_slug)
+    
+    target_dir = (MODPACKS_DIR_PATH / exact_slug).resolve()
+    if not target_dir.is_dir():
+        target_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
 
     # Strict sandboxing boundary check
     if not str(target_dir).startswith(str(MODPACKS_DIR_PATH.resolve()) + os.sep):
@@ -1115,8 +1119,12 @@ def delete_installed_modpack(slug: str):
 @app.post("/api/curseforge/activate")
 def activate_modpack(req: CurseForgeActivateRequest):
     """Copies all modpack files from server_modpacks/<slug> into data/ and applies configuration."""
-    clean_slug = slugify(req.slug)
-    src_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
+    exact_slug = req.slug.strip()
+    clean_slug = slugify(exact_slug)
+    
+    src_dir = (MODPACKS_DIR_PATH / exact_slug).resolve()
+    if not src_dir.is_dir():
+        src_dir = (MODPACKS_DIR_PATH / clean_slug).resolve()
 
     if not str(src_dir).startswith(str(MODPACKS_DIR_PATH.resolve()) + os.sep):
         raise HTTPException(status_code=400, detail="Percorso non valido.")
