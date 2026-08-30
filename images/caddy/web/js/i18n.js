@@ -480,9 +480,34 @@ const I18N_TRANSLATIONS = {
 
 let currentLang = 'en';
 
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
 function getLanguage() {
     try {
-        const saved = localStorage.getItem('preferred_language');
+        let saved = getCookie('preferred_language');
+        if (!saved) {
+            saved = localStorage.getItem('preferred_language');
+            if (saved) setCookie('preferred_language', saved, 365);
+        }
         if (saved && (saved === 'en' || saved === 'it')) {
             return saved;
         }
@@ -497,6 +522,7 @@ function setLanguage(lang) {
     currentLang = lang;
 
     try {
+        setCookie('preferred_language', lang, 365);
         localStorage.setItem('preferred_language', lang);
     } catch (e) { }
 
