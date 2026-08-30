@@ -1118,10 +1118,14 @@ function applyModpackToConfig(modpack) {
     if (nameInput) nameInput.value = cleanSlug;
 
     const verInput = document.getElementById('input-version');
-    if (verInput) verInput.value = modpack.mc_version || '1.20.1';
+    if (verInput && modpack.mc_version && modpack.mc_version !== "Unknown (Custom Pack)") {
+        verInput.value = modpack.mc_version;
+    }
 
     const sType = (modpack.server_type || 'FORGE').toUpperCase();
-    selectServerType(sType);
+    if (sType !== 'CUSTOM') {
+        selectServerType(sType);
+    }
 
     if (sType === 'FORGE' && modpack.loader_version) {
         const fInput = document.getElementById('input-forge-version');
@@ -1136,13 +1140,22 @@ function applyModpackToConfig(modpack) {
 
     const motdInput = document.getElementById('input-motd');
     if (motdInput) {
-        motdInput.value = `§6${modpack.name || cleanSlug} §7| §b${sType} ${modpack.mc_version || ''}`;
+        const displayType = sType === 'CUSTOM' ? 'Custom' : sType;
+        const displayVer = modpack.mc_version === "Unknown (Custom Pack)" ? '' : (modpack.mc_version || '');
+        motdInput.value = `§6${modpack.name || cleanSlug} §7| §b${displayType} ${displayVer}`.trim();
         renderMotdPreview(motdInput.value);
     }
 
     updateDerivedPreviews();
     switchConfigTab('tab-server');
-    showToast(`Configurazione aggiornata per ${modpack.name || cleanSlug}!`, 'success');
+    
+    let toastMessage = `Configurazione aggiornata per ${modpack.name || cleanSlug}!`;
+    if (sType === 'CUSTOM') {
+        toastMessage += ' Ricordati di impostare manualmente Versione ed Engine per questo pacchetto personalizzato.';
+        showToast(toastMessage, 'warning');
+    } else {
+        showToast(toastMessage, 'success');
+    }
 }
 
 async function startModpackDownload() {
