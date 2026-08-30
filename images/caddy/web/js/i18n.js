@@ -67,7 +67,7 @@ const I18N_TRANSLATIONS = {
         tab_cloud_title: "3. Cloud & Domain",
         tab_cloud_sub: "DDNS, Rclone Account",
         tab_advanced_title: "4. Performance & Advanced",
-        tab_advanced_sub: "RAM, Restic, Autostop",
+        tab_advanced_sub: "RAM, Autostop",
 
         // Config Tab 1: Server & Network
         sec_name_title: "Server Name & Description",
@@ -304,7 +304,7 @@ const I18N_TRANSLATIONS = {
         tab_cloud_title: "3. Cloud & Dominio",
         tab_cloud_sub: "DDNS, Account Rclone",
         tab_advanced_title: "4. Avanzate",
-        tab_advanced_sub: "RAM, Restic, Autostop",
+        tab_advanced_sub: "RAM, Autostop",
 
         // Config Tab 1: Server & Network
         sec_name_title: "Nome Server & Descrizione",
