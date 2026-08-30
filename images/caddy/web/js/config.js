@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedTab && document.getElementById(savedTab)) {
             switchConfigTab(savedTab);
         }
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // ─── Tab Switching ─────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ function switchConfigTab(tabId) {
 
     try {
         localStorage.setItem('active_config_tab', tabId);
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function initEventListeners() {
@@ -242,7 +242,7 @@ function populateForm(cfg) {
     document.getElementById('input-fabric-launcher').value = cfg.fabric_launcher_version || '';
     document.getElementById('input-fabric-loader').value = cfg.fabric_loader_version || '';
 
-    // 2. Performance & Memory
+    // 2. Performance
     document.getElementById('input-init-memory').value = cfg.init_memory || '2G';
     document.getElementById('input-max-memory').value = cfg.memory || '6G';
 
@@ -1423,10 +1423,10 @@ async function deleteInstalledModpack(slug) {
 function uploadCustomModpack() {
     const slugInput = document.getElementById('input-custom-slug');
     const fileInput = document.getElementById('input-custom-zip');
-    
+
     const slug = slugInput.value.trim();
     const file = fileInput.files[0];
-    
+
     if (!slug) {
         showToast('Devi specificare un nome (slug) per il modpack.', 'warning');
         return;
@@ -1465,7 +1465,7 @@ function uploadCustomModpack() {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/curseforge/upload', true);
 
-    xhr.upload.onprogress = function(e) {
+    xhr.upload.onprogress = function (e) {
         if (e.lengthComputable) {
             const percentComplete = Math.round((e.loaded / e.total) * 100);
             progressBar.style.width = percentComplete + '%';
@@ -1476,7 +1476,7 @@ function uploadCustomModpack() {
         }
     };
 
-    xhr.onload = function() {
+    xhr.onload = function () {
         btn.disabled = false;
         try {
             const data = JSON.parse(xhr.responseText);
@@ -1497,7 +1497,7 @@ function uploadCustomModpack() {
         }
     };
 
-    xhr.onerror = function() {
+    xhr.onerror = function () {
         btn.disabled = false;
         showToast('Errore di rete durante l\'upload del file.', 'error');
         progressStep.innerText = 'Upload failed.';
@@ -1514,18 +1514,18 @@ async function loadAvailableModpacks() {
     const activeDisplay = document.getElementById('active-server-name');
     const playedListContainer = document.getElementById('played-servers-list');
     const swapBtn = document.getElementById('btn-swap-modpack');
-    
+
     try {
         const res = await fetch('/api/modpacks');
         if (!res.ok) throw new Error("Failed to fetch modpacks");
-        
+
         const data = await res.json();
         const { active, available, played_servers } = data;
 
         if (activeDisplay) {
             activeDisplay.textContent = active || 'Nessuno';
         }
-        
+
         if (select) {
             select.innerHTML = '';
         }
@@ -1642,7 +1642,7 @@ async function loadAvailableModpacks() {
                 playedListContainer.appendChild(item);
             });
         }
-        
+
     } catch (err) {
         console.error("Error loading modpacks:", err);
         if (select) {
@@ -1656,26 +1656,26 @@ async function swapToModpack(target) {
     if (!confirm(`Sei sicuro di voler attivare il server '${target}'?\n\nQuesto fermerà il server attuale, salverà i dati correnti in servers_played/ e caricherà il mondo di '${target}'.`)) {
         return;
     }
-    
+
     showToast(`Swap verso '${target}' avviato...`, 'info');
-    
+
     try {
         const res = await fetch('/api/modpacks/swap', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ modpack: target })
         });
-        
+
         if (!res.ok) {
             const err = await res.json();
             throw new Error(err.detail || 'Failed to initiate swap');
         }
-        
+
         showToast("Swap iniziato! Ricaricamento pagina tra 3 secondi...", 'success');
         setTimeout(() => {
             window.location.reload();
         }, 3000);
-        
+
     } catch (err) {
         console.error("Error swapping modpacks:", err);
         showToast("Errore durante lo swap: " + err.message, 'error');
@@ -1685,12 +1685,12 @@ async function swapToModpack(target) {
 async function swapModpack() {
     const select = document.getElementById('select-modpack');
     if (!select) return;
-    
+
     const target = select.value;
     if (!target) {
         alert("Seleziona un server giocato valido per lo swap.");
         return;
     }
-    
+
     await swapToModpack(target);
 }

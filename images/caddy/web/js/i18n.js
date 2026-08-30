@@ -66,7 +66,7 @@ const I18N_TRANSLATIONS = {
         tab_modpacks_sub: "Played Servers, CurseForge",
         tab_cloud_title: "3. Cloud & Domain",
         tab_cloud_sub: "DDNS, Rclone Account",
-        tab_advanced_title: "4. Performance & Advanced",
+        tab_advanced_title: "4. Performance",
         tab_advanced_sub: "RAM, Autostop",
 
         // Config Tab 1: Server & Network
@@ -163,8 +163,8 @@ const I18N_TRANSLATIONS = {
         hint_mutex_path: "The selected remote will be used for backups and cloud lock:",
         chk_skip_rclone: "Skip Rclone Cloud operations (disables cloud mutex lock and remote backup upload)",
 
-        // Config Tab 4: Performance & Advanced
-        sec_ram_title: "Performance & RAM Memory",
+        // Config Tab 4: Performance
+        sec_ram_title: "Performance",
         sec_ram_desc: "Allocate memory resources for the Minecraft server process",
         label_init_ram: "Initial RAM (Min)",
         label_max_ram: "Maximum RAM (Max)",

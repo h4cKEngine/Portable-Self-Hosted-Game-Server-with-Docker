@@ -989,6 +989,14 @@ async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(.
             # Use patoolib to extract the archive
             patoolib.extract_archive(str(tmp_zip_path), outdir=str(target_dir))
             
+            # Auto un-nest if the archive had a single root directory
+            extracted_items = list(target_dir.iterdir())
+            if len(extracted_items) == 1 and extracted_items[0].is_dir():
+                inner_dir = extracted_items[0]
+                for item in inner_dir.iterdir():
+                    shutil.move(str(item), str(target_dir))
+                inner_dir.rmdir()
+            
             # Create a simple metadata file so the frontend knows something about it
             meta_path = target_dir / "modpack_metadata.json"
             if not meta_path.exists():
