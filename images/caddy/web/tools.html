@@ -104,6 +104,9 @@
             <div class="nav-brand">
                 <a href="index.html" class="nav-btn nav-title"><img src="img/mc-2d-logo.png" alt="Logo" class="nav-icon-img" width="22" height="22" style="vertical-align: middle; margin-right: 4px; margin-bottom: 2px;"> Home</a>
             </div>
+            <button type="button" class="lang-dropdown-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme" style="margin-left: 8px; padding: 6px 10px;">
+                <span id="theme-icon">☀️</span>
+            </button>
             <div class="lang-dropdown-wrapper" id="lang-dropdown-wrapper">
                 <button type="button" class="lang-dropdown-btn" id="lang-dropdown-btn"
                     onclick="toggleLangDropdown(event)" aria-expanded="false" aria-haspopup="true"
@@ -210,6 +213,7 @@
 
     </main>
 
+    <script src="js/theme.js?v=13"></script>
     <script src="js/favicon.js?v=12"></script>
     <script src="js/i18n.js?v=12"></script>
     <script src="js/tools.js?v=12"></script>
