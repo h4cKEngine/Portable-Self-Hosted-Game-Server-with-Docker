@@ -111,11 +111,17 @@ for possible_utils in [Path("/app/utils"), Path("./utils").resolve(), Path(__fil
 
 try:
     import curseforge_modpack_installer as cf_installer
+    import modrinth_modpack_installer as md_installer
+    import technic_modpack_installer as tc_installer
 except ImportError:
     try:
         from utils import curseforge_modpack_installer as cf_installer
+        from utils import modrinth_modpack_installer as md_installer
+        from utils import technic_modpack_installer as tc_installer
     except ImportError:
         cf_installer = None
+        md_installer = None
+        tc_installer = None
 
 # Task store for ongoing and completed modpack installation jobs
 MODPACK_TASKS: Dict[str, Dict] = {}
@@ -390,12 +396,14 @@ class RcloneRawModel(BaseModel):
 
 
 class CurseForgeInfoRequest(BaseModel):
-    url_or_id: str = Field(..., min_length=1, max_length=500, description="CurseForge URL, slug, or numeric ID")
+    url_or_id: str = Field(..., min_length=1, max_length=500, description="Modpack URL, slug, or numeric ID")
+    provider: str = Field(default="auto", description="Provider: auto, curseforge, modrinth, technic")
 
 
 class CurseForgeInstallRequest(BaseModel):
-    url_or_id: str = Field(..., min_length=1, max_length=500, description="CurseForge URL, slug, or numeric ID")
+    url_or_id: str = Field(..., min_length=1, max_length=500, description="Modpack URL, slug, or numeric ID")
     server_dir_name: Optional[str] = Field(default=None, description="Optional custom folder name inside server_modpacks")
+    provider: str = Field(default="auto", description="Provider: auto, curseforge, modrinth, technic")
 
 
 class CurseForgeActivateRequest(BaseModel):
@@ -860,20 +868,58 @@ def save_config(config: ServerConfigModel):
 
 @app.post("/api/curseforge/info")
 def get_curseforge_modpack_info(req: CurseForgeInfoRequest):
-    """Fetches metadata and preview information for a CurseForge modpack."""
-    if not cf_installer:
-        raise HTTPException(status_code=500, detail="CurseForge installer module not available.")
-
+    """Fetches metadata and preview information for a modpack."""
     target = req.url_or_id.strip()
     if not target:
         raise HTTPException(status_code=400, detail="Modpack URL or ID cannot be empty.")
 
+    provider = req.provider.lower()
+    
+    if provider == "auto":
+        if "modrinth.com" in target or target.endswith(".mrpack"):
+            provider = "modrinth"
+        elif "technicpack.net" in target or "solder" in target or target.endswith(".zip"):
+            provider = "technic"
+        else:
+            provider = "curseforge"
+
     try:
-        info = cf_installer.inspect_modpack(target)
-        return {
-            "status": "success",
-            "modpack": info
-        }
+        if provider == "modrinth":
+            if not md_installer:
+                raise HTTPException(status_code=500, detail="Modrinth installer module not available.")
+            # Modrinth installer currently doesn't have an inspect_modpack function
+            # We can mock a basic response for the preview
+            return {
+                "status": "success",
+                "modpack": {
+                    "name": target.split("/")[-1].replace(".mrpack", ""),
+                    "summary": "Modrinth Modpack",
+                    "file_name": target,
+                    "download_count": "N/A",
+                    "date_modified": datetime.now().isoformat()
+                }
+            }
+        elif provider == "technic":
+            if not tc_installer:
+                raise HTTPException(status_code=500, detail="Technic installer module not available.")
+            return {
+                "status": "success",
+                "modpack": {
+                    "name": target.split("/")[-1].replace(".zip", ""),
+                    "summary": "Technic / Solder Modpack",
+                    "file_name": target,
+                    "download_count": "N/A",
+                    "date_modified": datetime.now().isoformat()
+                }
+            }
+        else:
+            if not cf_installer:
+                raise HTTPException(status_code=500, detail="CurseForge installer module not available.")
+            info = cf_installer.inspect_modpack(target)
+            return {
+                "status": "success",
+                "modpack": info
+            }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Errore durante l'ispezione del modpack: {str(e)}")
 
@@ -881,17 +927,25 @@ def get_curseforge_modpack_info(req: CurseForgeInfoRequest):
 @app.post("/api/curseforge/install")
 def start_curseforge_installation(req: CurseForgeInstallRequest):
     """Starts asynchronous modpack installation into server_modpacks/<slug>."""
-    if not cf_installer:
-        raise HTTPException(status_code=500, detail="CurseForge installer module not available.")
-
     target = req.url_or_id.strip()
     if not target:
         raise HTTPException(status_code=400, detail="Modpack URL or ID cannot be empty.")
+
+    provider = req.provider.lower()
+    
+    if provider == "auto":
+        if "modrinth.com" in target or target.endswith(".mrpack"):
+            provider = "modrinth"
+        elif "technicpack.net" in target or "solder" in target or target.endswith(".zip"):
+            provider = "technic"
+        else:
+            provider = "curseforge"
 
     task_id = str(uuid.uuid4())
     MODPACK_TASKS[task_id] = {
         "id": task_id,
         "target": target,
+        "provider": provider,
         "status": "pending",
         "progress": 0,
         "current_step": "Inizializzazione task...",
@@ -923,15 +977,38 @@ def start_curseforge_installation(req: CurseForgeInstallRequest):
             if req.server_dir_name:
                 clean_name = slugify(req.server_dir_name)
                 target_dir = MODPACKS_DIR_PATH / clean_name
-            else:
-                cf_installer.DEFAULT_SERVER_DIR = MODPACKS_DIR_PATH
 
-            res = cf_installer.install_modpack_task(
-                target=target,
-                server_dir=target_dir,
-                log_callback=log_cb,
-                progress_callback=progress_cb
-            )
+            if provider == "modrinth":
+                if not md_installer:
+                    raise Exception("Modrinth installer module non disponibile.")
+                md_installer.DEFAULT_SERVER_DIR = MODPACKS_DIR_PATH
+                res = md_installer.install_modpack_task(
+                    target_url=target,
+                    server_dir=target_dir,
+                    log_callback=log_cb,
+                    progress_callback=progress_cb
+                )
+            elif provider == "technic":
+                if not tc_installer:
+                    raise Exception("Technic installer module non disponibile.")
+                tc_installer.DEFAULT_SERVER_DIR = MODPACKS_DIR_PATH
+                res = tc_installer.install_modpack_task(
+                    target=target,
+                    server_dir=target_dir,
+                    log_callback=log_cb,
+                    progress_callback=progress_cb
+                )
+            else:
+                if not cf_installer:
+                    raise Exception("CurseForge installer module non disponibile.")
+                cf_installer.DEFAULT_SERVER_DIR = MODPACKS_DIR_PATH
+                res = cf_installer.install_modpack_task(
+                    target=target,
+                    server_dir=target_dir,
+                    log_callback=log_cb,
+                    progress_callback=progress_cb
+                )
+                
             task["status"] = "completed"
             task["progress"] = 100
             task["current_step"] = "Completato con successo!"

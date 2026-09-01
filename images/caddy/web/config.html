@@ -381,24 +381,30 @@
                     </div>
                 </section>
 
-                <!-- 2. Downloader Modpack CurseForge -->
+                <!-- 2. Universal Modpack Downloader -->
                 <section class="form-card cf-modpack-section" id="cf-modpack-card">
                     <div class="card-header">
                         <div class="card-icon">📦</div>
                         <div>
-                            <h2 data-i18n="sec_cf_title">CurseForge Modpack Downloader</h2>
+                            <h2 data-i18n="sec_cf_title">Universal Modpack Downloader</h2>
                             <p class="card-desc"><span data-i18n="sec_cf_desc_prefix">Download clean modpacks from
                                 </span><a href="https://www.curseforge.com/minecraft/modpacks/" target="_blank"
-                                    rel="noopener noreferrer">CurseForge</a><span data-i18n="sec_cf_desc_suffix"> into
+                                    rel="noopener noreferrer">CurseForge</a>, <a href="https://modrinth.com/modpacks" target="_blank" rel="noopener noreferrer">Modrinth</a>, <span data-i18n="sec_cf_desc_or">or</span> <a href="https://www.technicpack.net/modpacks" target="_blank" rel="noopener noreferrer">Technic</a><span data-i18n="sec_cf_desc_suffix"> into
                                     server_modpacks/ folder (without world).</span></p>
                         </div>
                     </div>
 
                     <div class="cf-search-box">
                         <div class="cf-input-wrapper">
-                            <span class="cf-search-icon">🔗</span>
-                            <input type="text" id="input-cf-url" class="form-input cf-search-input"
-                                placeholder="Paste CurseForge link (e.g. https://www.curseforge.com/minecraft/modpacks/better-mc-forge-bmc4) or slug"
+                            <select id="select-cf-provider" class="form-input" style="width: auto; max-width: 140px; padding-left: 10px;">
+                                <option value="auto">Auto-Detect</option>
+                                <option value="curseforge">CurseForge</option>
+                                <option value="modrinth">Modrinth</option>
+                                <option value="technic">Technic</option>
+                            </select>
+                            <span class="cf-search-icon" style="left: 155px;">🔗</span>
+                            <input type="text" id="input-cf-url" class="form-input cf-search-input" style="padding-left: 35px;"
+                                placeholder="Paste link or slug (e.g. better-mc-forge-bmc4)"
                                 data-i18n-placeholder="ph_cf_input" autocomplete="off">
                             <button type="button" class="btn btn-secondary btn-cf-search" id="btn-cf-inspect"
                                 onclick="inspectCurseForgeModpack()" data-i18n="btn_cf_search">

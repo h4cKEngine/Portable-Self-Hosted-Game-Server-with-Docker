@@ -1063,10 +1063,12 @@ async function inspectCurseForgeModpack() {
     const previewContainer = document.getElementById('cf-preview-container');
 
     try {
+        const urlOrId = input.value.trim();
+        const provider = document.getElementById('select-cf-provider').value;
         const res = await fetch('/api/curseforge/info', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url_or_id: target })
+            body: JSON.stringify({ url_or_id: urlOrId, provider: provider })
         });
 
         const data = await res.json();
@@ -1196,10 +1198,12 @@ async function startModpackDownload() {
     appendConsoleLog('[INFO] Invio richiesta di installazione all\'API...');
 
     try {
+        const urlOrId = input.value.trim();
+        const provider = document.getElementById('select-cf-provider').value;
         const res = await fetch('/api/curseforge/install', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url_or_id: target })
+            body: JSON.stringify({ url_or_id: urlOrId, provider: provider })
         });
 
         const data = await res.json();
