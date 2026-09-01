@@ -503,6 +503,39 @@
                         </div>
                     </div>
 
+                    <!-- Custom World Uploader -->
+                    <div class="cf-upload-container" id="world-upload-section"
+                        style="margin-top: 20px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5;">
+                        <h3 style="margin-bottom: 10px; font-size: 1.1rem;">🌍 Upload Custom World (Save)</h3>
+                        <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 15px;">
+                            Upload your world/save archive. <strong id="world-upload-status-text" style="color: #ef4444;">(Requires a modpack to be loaded first)</strong>
+                            <br><small style="color: #60a5fa;">L'archivio (zip, rar, etc.) deve contenere i file del mondo (es. <code>level.dat</code>) alla radice, oppure racchiusi in un'unica cartella principale.</small>
+                        </p>
+
+                        <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 2; min-width: 250px;">
+                                <label for="input-world-zip" class="form-label">World Archive (.zip, .rar...)</label>
+                                <input type="file" id="input-world-zip" class="form-input" accept=".zip,.rar,.7z,.tar,.tar.gz,.tgz" disabled>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-primary" id="btn-world-upload" onclick="uploadCustomWorld()" disabled>
+                                    📤 Upload World
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- World Upload Progress -->
+                        <div class="cf-progress-container" id="world-progress-container" style="display: none; margin-top: 15px;">
+                            <div class="cf-progress-header">
+                                <span class="cf-progress-step" id="world-progress-step">Uploading world...</span>
+                                <span class="cf-progress-pct" id="world-progress-pct">0%</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill" id="world-progress-bar" style="width: 0%; background-color: #10b981;"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Installed Modpacks in server_modpacks/ -->
                     <div class="cf-installed-container">
                         <div class="cf-installed-header">

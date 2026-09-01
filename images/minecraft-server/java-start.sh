@@ -415,7 +415,15 @@ main() {
       # WARNING: if /overrides is empty, * might fail if not handled, but cp -r /overrides/. /data/ is safer
       # or simply check if not empty.
       if [ "$(ls -A /overrides)" ]; then
-         cp -rf /overrides/. /data/
+         for item in /overrides/* /overrides/.[!.]*; do
+            [ ! -e "$item" ] && continue
+            name=$(basename "$item")
+            if [[ "$name" == "world" || "$name" == "world_nether" || "$name" == "world_the_end" || "$name" == "saves" ]]; then
+               log "Skipping $name from overrides to prevent progress loss."
+               continue
+            fi
+            cp -rf "$item" /data/
+         done
          touch "/data/.overrides_applied"
          log "Overrides applied."
       else

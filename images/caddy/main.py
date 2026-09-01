@@ -793,9 +793,14 @@ def get_config():
         for n, p in sections.items()
     ]
 
+    is_pack_loaded = False
+    if DATA_DIR_PATH.exists() and any(DATA_DIR_PATH.iterdir()):
+        is_pack_loaded = True
+
     return {
         "status": "success",
         "has_custom_env": has_custom_env,
+        "is_pack_loaded": is_pack_loaded,
         "config": config_data,
         "available_remotes": remotes,
         "remotes_info": remotes_info,
@@ -1014,6 +1019,49 @@ async def upload_custom_modpack(slug: str = Form(...), file: UploadFile = File(.
             raise HTTPException(status_code=500, detail=f"Errore durante l'estrazione: {str(e)}")
 
     return {"status": "success", "message": f"Modpack '{slug}' caricato con successo."}
+
+
+@app.post("/api/world/upload")
+async def upload_custom_world(file: UploadFile = File(...)):
+    """Uploads and extracts a custom world zip file."""
+    if not DATA_DIR_PATH.exists() or not any(DATA_DIR_PATH.iterdir()):
+        raise HTTPException(status_code=400, detail="Nessun modpack attualmente caricato. Carica prima un modpack.")
+        
+    valid_extensions = (".zip", ".rar", ".7z", ".tar", ".tar.gz", ".tgz", ".bz2", ".xz")
+    if not any(file.filename.lower().endswith(ext) for ext in valid_extensions):
+        raise HTTPException(status_code=400, detail="Il file deve essere un archivio supportato (.zip, .rar, .7z, .tar.gz, etc.)")
+
+    import tempfile
+    import zipfile
+
+    world_dir = DATA_DIR_PATH / "world"
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_ext = "".join(Path(file.filename).suffixes)
+        tmp_zip_path = Path(tmpdir) / f"world_upload{file_ext}"
+        
+        with open(tmp_zip_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        try:
+            if world_dir.exists():
+                shutil.rmtree(world_dir, ignore_errors=True)
+            world_dir.mkdir(parents=True, exist_ok=True)
+            
+            patoolib.extract_archive(str(tmp_zip_path), outdir=str(world_dir))
+            
+            # Auto un-nest if the archive had a single root directory (e.g. they zipped the world folder itself)
+            extracted_items = list(world_dir.iterdir())
+            if len(extracted_items) == 1 and extracted_items[0].is_dir():
+                inner_dir = extracted_items[0]
+                for item in inner_dir.iterdir():
+                    shutil.move(str(item), str(world_dir))
+                inner_dir.rmdir()
+                
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Errore durante l'estrazione del mondo: {str(e)}")
+
+    return {"status": "success", "message": "Mondo caricato con successo."}
 
 
 @app.get("/api/curseforge/installed")

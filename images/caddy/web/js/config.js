@@ -202,6 +202,25 @@ async function fetchConfig() {
             statusPill.textContent = '⚠️ Using .env-example defaults';
         }
 
+        const worldZipInput = document.getElementById('input-world-zip');
+        const worldUploadBtn = document.getElementById('btn-world-upload');
+        const worldUploadSection = document.getElementById('world-upload-section');
+        const worldUploadStatus = document.getElementById('world-upload-status-text');
+        
+        if (worldZipInput && worldUploadBtn && worldUploadSection) {
+            if (data.is_pack_loaded) {
+                worldZipInput.disabled = false;
+                worldUploadBtn.disabled = false;
+                worldUploadSection.style.opacity = '1';
+                worldUploadStatus.style.display = 'none';
+            } else {
+                worldZipInput.disabled = true;
+                worldUploadBtn.disabled = true;
+                worldUploadSection.style.opacity = '0.5';
+                worldUploadStatus.style.display = 'inline-block';
+            }
+        }
+
         const envPathBadge = document.getElementById('env-path-display');
         envPathBadge.textContent = data.env_path || 'env/.env';
     } catch (e) {
@@ -1502,6 +1521,81 @@ function uploadCustomModpack() {
                 setTimeout(() => { progressContainer.style.display = 'none'; }, 3000);
             } else {
                 throw new Error(data.detail || 'Errore sconosciuto durante l\'upload');
+            }
+        } catch (e) {
+            showToast(`Errore: ${e.message}`, 'error');
+            progressStep.innerText = 'Upload failed.';
+            progressBar.style.backgroundColor = '#ef4444'; // red
+        }
+    };
+
+    xhr.onerror = function () {
+        btn.disabled = false;
+        showToast('Errore di rete durante l\'upload del file.', 'error');
+        progressStep.innerText = 'Upload failed.';
+        progressBar.style.backgroundColor = '#ef4444';
+    };
+
+    xhr.send(formData);
+}
+
+// ─── Custom World Upload ─────────────────────────────────────────────────────
+
+function uploadCustomWorld() {
+    const fileInput = document.getElementById('input-world-zip');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showToast('Devi selezionare un file archivio da caricare.', 'warning');
+        return;
+    }
+    const validExtensions = ['.zip', '.rar', '.7z', '.tar', '.tar.gz', '.tgz', '.bz2', '.xz'];
+    const fileName = file.name.toLowerCase();
+    if (!validExtensions.some(ext => fileName.endsWith(ext))) {
+        showToast('Il file deve essere un archivio supportato (.zip, .rar, .7z, .tar.gz, etc.)', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btn-world-upload');
+    const progressContainer = document.getElementById('world-progress-container');
+    const progressBar = document.getElementById('world-progress-bar');
+    const progressPct = document.getElementById('world-progress-pct');
+    const progressStep = document.getElementById('world-progress-step');
+
+    btn.disabled = true;
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressPct.innerText = '0%';
+    progressStep.innerText = 'Uploading...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/world/upload', true);
+
+    xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressPct.innerText = percentComplete + '%';
+            if (percentComplete === 100) {
+                progressStep.innerText = 'Extracting world... Please wait.';
+            }
+        }
+    };
+
+    xhr.onload = function () {
+        btn.disabled = false;
+        try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status === 200 && data.status === 'success') {
+                showToast(`Mondo caricato ed estratto con successo!`, 'success');
+                progressStep.innerText = 'Upload complete.';
+                fileInput.value = '';
+                setTimeout(() => { progressContainer.style.display = 'none'; }, 3000);
+            } else {
+                throw new Error(data.detail || 'Errore sconosciuto durante l\'upload del mondo');
             }
         } catch (e) {
             showToast(`Errore: ${e.message}`, 'error');

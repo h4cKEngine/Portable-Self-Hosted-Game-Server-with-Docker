@@ -552,7 +552,7 @@ def extract_overrides(zip_path, server_dir):
             if info.is_dir() or not info.filename.startswith("overrides/"):
                 continue
             rel = info.filename[len("overrides/"):]
-            if not rel or rel.startswith("mods/"):
+            if not rel or rel.startswith("mods/") or rel.startswith("world/") or rel.startswith("world_nether/") or rel.startswith("world_the_end/") or rel.startswith("saves/"):
                 continue
             target = (server_dir / rel).resolve()
             if target != server_root and server_root not in target.parents:
