@@ -40,6 +40,8 @@ $StartShortcutName = "StartMcServer.lnk"
 $StartShortcutPath = Join-Path $DesktopDir $StartShortcutName
 $InstallShortcutName = "InstallServer.lnk"
 $InstallShortcutPath = Join-Path $DesktopDir $InstallShortcutName
+$UninstallShortcutName = "UninstallServer.lnk"
+$UninstallShortcutPath = Join-Path $DesktopDir $UninstallShortcutName
 $AppDataDir = Join-Path $env:LOCALAPPDATA "PortableMcServer"
 
 # Check WSL
@@ -84,11 +86,15 @@ if (Test-Path $InstallShortcutPath) {
     Remove-Item -Path $InstallShortcutPath -Force -ErrorAction SilentlyContinue
     Write-Host "  -> Removed $InstallShortcutName" -ForegroundColor Green
 }
+if (Test-Path $UninstallShortcutPath) {
+    Remove-Item -Path $UninstallShortcutPath -Force -ErrorAction SilentlyContinue
+    Write-Host "  -> Removed $UninstallShortcutName" -ForegroundColor Green
+}
 
 Write-Host "[INFO] Removing AppData directory..."
 if (Test-Path $AppDataDir) {
-    Remove-Item -Path $AppDataDir -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "  -> Removed $AppDataDir" -ForegroundColor Green
+    Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"Start-Sleep -Milliseconds 1500; Remove-Item -LiteralPath '$AppDataDir' -Recurse -Force -ErrorAction SilentlyContinue`"" -WindowStyle Hidden
+    Write-Host "  -> Scheduled removal for $AppDataDir" -ForegroundColor Green
 }
 
 Write-Host "`n=========================================================="
