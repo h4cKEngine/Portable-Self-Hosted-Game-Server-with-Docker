@@ -174,6 +174,21 @@ Write-Host "[INFO] Preparing environment in WSL path: $WslDir`n"
 $dirExists = (wsl -e bash -c "[ -d $WslDir ] && echo 1 || echo 0").Trim()
 
 if ($dirExists -eq "1") {
+    $isGit = (wsl -e bash -c "[ -d $WslDir/.git ] && echo 1 || echo 0").Trim()
+    if ($isGit -eq "0") {
+        Write-Host "[WARN] The directory $WslDir exists but is not a valid git repository." -ForegroundColor Yellow
+        Write-Host "[INFO] Wiping corrupted directory to perform a clean installation..." -ForegroundColor Cyan
+        $WslFullPath = (wsl -e bash -c "echo $WslDir" 2>$null).Trim()
+        if ($WslFullPath) {
+            wsl -u root -e bash -c "rm -rf $WslFullPath"
+        } else {
+            wsl -e bash -c "sudo rm -rf $WslDir"
+        }
+        $dirExists = "0"
+    }
+}
+
+if ($dirExists -eq "1") {
     Write-Host "[INFO] The directory $WslDir already exists in WSL."
     Write-Host "[INFO] Updating the project to the latest version (git pull)..."
     wsl -e bash -c "cd $WslDir && git config core.fileMode false && git pull"
