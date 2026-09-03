@@ -93,7 +93,8 @@ if (Test-Path $UninstallShortcutPath) {
 
 Write-Host "[INFO] Removing AppData directory..."
 if (Test-Path $AppDataDir) {
-    Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"Start-Sleep -Milliseconds 1500; Remove-Item -LiteralPath '$AppDataDir' -Recurse -Force -ErrorAction SilentlyContinue`"" -WindowStyle Hidden
+    $bgCmd = "cd \ ; for (`$i=0; `$i -lt 150; `$i++) { if (-not (Test-Path '$AppDataDir')) { break }; Remove-Item -LiteralPath '$AppDataDir' -Recurse -Force -ErrorAction SilentlyContinue; if (-not (Test-Path '$AppDataDir')) { break }; Start-Sleep -Seconds 2 }"
+    Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"$bgCmd`"" -WindowStyle Hidden
     Write-Host "  -> Scheduled removal for $AppDataDir" -ForegroundColor Green
 }
 
