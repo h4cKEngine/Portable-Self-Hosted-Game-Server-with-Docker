@@ -3,7 +3,7 @@
 """Scarica un modpack Modrinth e prepara un server Minecraft completo.
 
 Uso:
-    python utils/modrinth_modpack_installer.py <modpack_slug_o_id>
+    python utils/scripts/modrinth_modpack_installer.py <modpack_slug_o_id>
 
 Legge la pagina del modpack, scarica il file .mrpack più recente,
 estrae l'index, scarica le mod bypassando quelle solo-client e applica gli overrides.

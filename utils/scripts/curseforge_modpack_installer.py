@@ -3,7 +3,7 @@
 """Scarica un modpack CurseForge e prepara un server Minecraft completo.
 
 Uso:
-    python utils/curseforge_installer.py <modpackId | URL del modpack>
+    python utils/scripts/curseforge_modpack_installer.py <modpackId | URL del modpack>
 
 Legge la chiave API da env/.env (variabile CURSEFORGE_API_KEY), scarica il piu'
 recente .zip del modpack, estrae manifest.json e gli overrides (config,

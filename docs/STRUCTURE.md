@@ -86,12 +86,12 @@ You can use `utils/restic-tools.sh` to manually interact with the repo:
   - `restic-tools.sh`: Wrapper for backup and restore commands.
   - `cloud-sync.sh`: Synchronization of `data/` folder files with the cloud.
   - `swap-server.sh`: Utility to change the running server instance (modpack swapping).
-  - `curseforge_modpack_installer.py`: Script to download and install CurseForge modpacks.
+  - `scripts/curseforge_modpack_installer.py`: Script to download and install CurseForge modpacks.
   - `disablemods.sh` / `mods_options.sh`: Tools for managing and disabling specific mods.
   - `setup-web.sh`: Script for configuring the Web Dashboard.
   - `requirements.sh`: Installation of necessary system dependencies (unzip, curl, etc.).
   - Minor files (`backup_config_mc_client.*`, `host-agent.sh`, WSL utilities).
-  - Graphic icons (`mc-folder.png`, `mc-folder.ico`, `mc-2d-logo.png`, `mc-2d-logo.ico`).
+  - Graphic icons (`img/mc-folder.png`, `img/mc-folder.ico`, `img/mc-2d-logo.png`, `img/mc-2d-logo.ico`).
 
 ---
 

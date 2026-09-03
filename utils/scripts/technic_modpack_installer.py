@@ -3,7 +3,7 @@
 """Scarica un modpack Technic (Server Zip) e prepara un server Minecraft completo.
 
 Uso:
-    python utils/technic_modpack_installer.py <URL_diretto_allo_zip_del_server>
+    python utils/scripts/technic_modpack_installer.py <URL_diretto_allo_zip_del_server>
 
 Data l'inaccessibilità dell'API pubblica di Technicpack, questo script si aspetta
 un URL diretto al pacchetto "Server" fornito dagli autori del modpack.
