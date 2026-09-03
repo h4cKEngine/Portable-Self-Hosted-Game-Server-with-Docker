@@ -58,8 +58,16 @@ if ($dirExists -eq "1") {
     wsl -e bash -c "cd $WslDir && docker compose -p mc-dashboard -f docker-compose.dashboard.yml down -v 2>/dev/null || true"
     
     Write-Host "[INFO] Removing project directory from WSL..."
-    wsl -e bash -c "rm -rf $WslDir"
-    if ($LASTEXITCODE -eq 0) {
+    $WslUser = (wsl -e bash -c "whoami" 2>$null).Trim()
+    if ($WslUser) {
+        $WslFullPath = "/home/$WslUser/Portable-Self-Hosted-Game-Server-with-Docker"
+        wsl -u root -e bash -c "rm -rf $WslFullPath"
+    } else {
+        wsl -e bash -c "sudo rm -rf $WslDir"
+    }
+
+    $dirStillExists = (wsl -e bash -c "[ -d $WslDir ] && echo 1 || echo 0").Trim()
+    if ($dirStillExists -eq "0") {
         Write-Host "  -> WSL project directory removed." -ForegroundColor Green
     } else {
         Write-Host "  -> Failed to completely remove WSL project directory." -ForegroundColor Red
